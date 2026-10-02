@@ -1,0 +1,22 @@
+name: Implementation slice
+description: A small, testable step from the approved roadmap
+title: '[CF] '
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Learner outcome, scope and non-goals
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Positive and adversarial acceptance tests
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies, release gates and owner role
+    validations:
+      required: true
