@@ -7,7 +7,7 @@ if [[ "$repo" != "thanhtuyen662002/CodeForge-AI" ]]; then
   exit 2
 fi
 if [[ "${CODEFORGE_CONFIRM_RULESET:-}" != apply ]]; then
-  echo 'Review .github/rulesets/main.json and confirm a separate reviewer is available.' >&2
+  echo 'Review .github/rulesets/main.json and confirm a separate eligible reviewer is available.' >&2
   echo 'Then run: CODEFORGE_CONFIRM_RULESET=apply bash scripts/apply-ruleset.sh thanhtuyen662002/CodeForge-AI' >&2
   exit 2
 fi
@@ -19,9 +19,9 @@ if [[ -n "$existing" ]]; then
   echo 'Same-name ruleset exists. Refusing overwrite; inspect and reconcile manually.' >&2
   exit 3
 fi
-app_id="$(gh api "repos/$repo/commits/foundation%2Flearner-first-design/check-runs" --jq '.check_runs[] | select(.name == "merge-gate") | .app.id' | head -1)"
-if [[ "$app_id" != 15368 ]]; then
-  echo 'Expected GitHub Actions merge-gate is not verified. Run CI and inspect the check app first.' >&2
+verified="$(gh api "repos/$repo/commits/foundation%2Flearner-first-design/check-runs" --jq '[.check_runs[] | select(.name == "merge-gate" and .app.id == 15368 and .status == "completed" and .conclusion == "success")] | length > 0')"
+if [[ "$verified" != true ]]; then
+  echo 'A successful GitHub Actions merge-gate on the foundation head is not verified.' >&2
   exit 4
 fi
 result="$(mktemp)"
@@ -29,5 +29,13 @@ trap 'rm -f "$result"' EXIT
 gh api --method POST "repos/$repo/rulesets" --input "$root/.github/rulesets/main.json" > "$result"
 id="$(jq -er '.id' "$result")"
 gh api "repos/$repo/rulesets/$id" > "$result"
-jq -e '.enforcement == "active" and .target == "branch"' "$result" >/dev/null
-echo "Ruleset $id created and active. Inspect all fields and prove a failing PR cannot merge before closing G0."
+jq -e --slurpfile wanted "$root/.github/rulesets/main.json" '
+  . as $actual | $wanted[0] as $expected |
+  $actual.name == $expected.name and
+  $actual.target == $expected.target and
+  $actual.enforcement == $expected.enforcement and
+  $actual.bypass_actors == $expected.bypass_actors and
+  $actual.conditions == $expected.conditions and
+  (($actual.rules | sort_by(.type)) == ($expected.rules | sort_by(.type)))
+' "$result" >/dev/null
+echo "Ruleset $id created and read-back matches. Prove a failing PR cannot merge before closing G0."
