@@ -1,0 +1,30 @@
+{
+  "status": "test-fixtures-not-published",
+  "visibility": "public-practice-only",
+  "questions": [
+    {
+      "id": "logic-sequence-001", "version": 1, "familyId": "sequence-addition",
+      "skillId": "logic.sequence", "type": "single_choice", "difficulty": 1,
+      "prompt": "Trong quy luật mỗi số tăng thêm 2: 2, 4, 6, số tiếp theo là gì?",
+      "options": ["7", "8", "10"], "correct": ["8"],
+      "explanation": "Theo quy luật đã nêu, cộng thêm 2 vào 6 được 8.",
+      "provenance": "original-practice", "reviewStatus": "draft"
+    },
+    {
+      "id": "python-conditions-001", "version": 1, "familyId": "strict-comparison",
+      "skillId": "python.conditions", "type": "single_choice", "difficulty": 2,
+      "prompt": "Trong Python, biểu thức 5 > 5 có giá trị nào?",
+      "options": ["True", "False", "None"], "correct": ["False"],
+      "explanation": "Dấu > yêu cầu lớn hơn nghiêm ngặt; hai số bằng nhau nên kết quả False.",
+      "provenance": "original-practice", "reviewStatus": "draft"
+    },
+    {
+      "id": "sql-filter-001", "version": 1, "familyId": "sql-where-purpose",
+      "skillId": "sql.filter", "type": "single_choice", "difficulty": 1,
+      "prompt": "Mệnh đề nào lọc các hàng theo điều kiện trước khi nhóm trong một truy vấn SELECT?",
+      "options": ["WHERE", "ORDER BY", "HAVING"], "correct": ["WHERE"],
+      "explanation": "WHERE lọc hàng trước GROUP BY; HAVING lọc nhóm và ORDER BY sắp xếp.",
+      "provenance": "original-practice", "reviewStatus": "draft"
+    }
+  ]
+}
