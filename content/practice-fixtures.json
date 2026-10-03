@@ -51,6 +51,7 @@
         "columns": ["name", "active"],
         "rows": [["An", true], ["Binh", false], ["Chi", true], ["Dung", null]]
       },
+      "resultColumns": ["name", "active"],
       "expectedRows": [["An", true], ["Chi", true]],
       "explanation": "WHERE active = true chỉ giữ các hàng có giá trị boolean true; NULL không thỏa điều kiện.",
       "provenance": "original-practice", "reviewStatus": "draft"

@@ -38,21 +38,37 @@ test('public Python practice requires deterministic public cases', () => {
   }, skills), /invalid_public_cases/);
 });
 
-test('public SQL practice pins time anchor and row-order policy', () => {
+test('public Python practice permits deterministic empty stdin/stdout', () => {
+  assert.doesNotThrow(() => validatePublicPracticeQuestion({
+    ...base,
+    id: 'python-empty-io',
+    type: 'code',
+    language: 'python',
+    starterCode: 'print("ready", end="")',
+    referenceCode: 'print("ready", end="")',
+    publicCases: [
+      { input: '', expectedStdout: 'ready' },
+      { input: 'ignored\n', expectedStdout: '' },
+    ],
+  }, skills));
+});
+
+test('public SQL practice pins time anchor, result projection and row-order policy', () => {
   assert.doesNotThrow(() => validatePublicPracticeQuestion({
     ...base,
     id: 'sql-1',
     skillId: 'sql.filter',
     type: 'sql',
     dialect: 'postgresql',
-    referenceQuery: 'select name, active from learners where active = true',
+    referenceQuery: 'select name from learners where active = true',
     ordered: false,
     dataset: {
       asOf: '2026-01-15T00:00:00Z',
       columns: ['name', 'active'],
       rows: [['An', true], ['Binh', false]],
     },
-    expectedRows: [['An', true]],
+    resultColumns: ['name'],
+    expectedRows: [['An']],
   }, skills));
 
   assert.throws(() => validatePublicPracticeQuestion({
@@ -64,8 +80,26 @@ test('public SQL practice pins time anchor and row-order policy', () => {
     referenceQuery: 'select 1',
     ordered: false,
     dataset: { asOf: 'today', columns: ['value'], rows: [[1]] },
+    resultColumns: ['value'],
     expectedRows: [[1]],
   }, skills), /invalid_dataset_time_anchor/);
+
+  assert.throws(() => validatePublicPracticeQuestion({
+    ...base,
+    id: 'sql-3',
+    skillId: 'sql.filter',
+    type: 'sql',
+    dialect: 'postgresql',
+    referenceQuery: 'select name from learners',
+    ordered: false,
+    dataset: {
+      asOf: '2026-01-15T00:00:00Z',
+      columns: ['name', 'active'],
+      rows: [['An', true]],
+    },
+    resultColumns: ['name'],
+    expectedRows: [['An', true]],
+  }, skills), /invalid_expected_rows/);
 });
 
 test('public practice rejects confidential grading material', () => {

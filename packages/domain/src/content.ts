@@ -19,6 +19,12 @@ function requiredString(object: Record<string, unknown>, key: string, code: stri
   return value;
 }
 
+function stringValue(object: Record<string, unknown>, key: string, code: string): string {
+  const value = object[key];
+  if (typeof value !== 'string') throw new Error(code);
+  return value;
+}
+
 function stringArray(object: Record<string, unknown>, key: string, code: string): string[] {
   const value = object[key];
   if (!Array.isArray(value) || value.length === 0 ||
@@ -71,10 +77,10 @@ function validateCode(item: Record<string, unknown>): void {
   const inputs = new Set<string>();
   for (const candidate of cases) {
     const testCase = asObject(candidate, 'invalid_public_case');
-    const input = requiredString(testCase, 'input', 'invalid_public_case_input');
+    const input = stringValue(testCase, 'input', 'invalid_public_case_input');
     if (inputs.has(input)) throw new Error('duplicate_public_case_input');
     inputs.add(input);
-    requiredString(testCase, 'expectedStdout', 'invalid_public_case_output');
+    stringValue(testCase, 'expectedStdout', 'invalid_public_case_output');
   }
 }
 
@@ -91,7 +97,10 @@ function validateSql(item: Record<string, unknown>): void {
   const columns = stringArray(dataset, 'columns', 'invalid_dataset_columns');
   if (new Set(columns).size !== columns.length) throw new Error('duplicate_dataset_column');
   validateCells(dataset.rows, columns.length, 'invalid_dataset_rows');
-  validateCells(item.expectedRows, columns.length, 'invalid_expected_rows');
+
+  const resultColumns = stringArray(item, 'resultColumns', 'invalid_result_columns');
+  if (new Set(resultColumns).size !== resultColumns.length) throw new Error('duplicate_result_column');
+  validateCells(item.expectedRows, resultColumns.length, 'invalid_expected_rows');
 }
 
 /**
