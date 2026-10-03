@@ -6,7 +6,7 @@ export interface EnvironmentReadinessInput {
   readonly expectedSupabaseProjectRef: string;
   readonly supabaseUrl: string | null;
   readonly publishableKeyConfigured: boolean;
-  readonly privilegedServerKeyConfigured: boolean;
+  readonly migrationAuthorityVerified: boolean;
   readonly privilegedKeyExposedToBrowser: boolean;
   readonly vercelProjectIdConfigured: boolean;
   readonly vercelEnvironment: VercelEnvironment | null;
@@ -68,7 +68,7 @@ export function evaluateEnvironmentReadiness(
     input.productionReleaseApproved;
   const hostedDatabaseWritesAllowed =
     supabaseTargetMatches &&
-    input.privilegedServerKeyConfigured &&
+    input.migrationAuthorityVerified &&
     !input.privilegedKeyExposedToBrowser &&
     (nonProductionHostedWrite || productionHostedWrite);
 
@@ -88,6 +88,7 @@ export function evaluateEnvironmentReadiness(
   if (!input.publishableKeyConfigured) reasons.push('publishable_key_not_configured');
   if (input.privilegedKeyExposedToBrowser) reasons.push('privileged_key_exposed_to_browser');
   if (!input.migrationTargetApproved) reasons.push('migration_target_not_approved');
+  if (!input.migrationAuthorityVerified) reasons.push('migration_authority_not_verified');
   if (!input.vercelProjectIdConfigured) reasons.push('vercel_project_not_verified');
   if (input.vercelEnvironment !== 'production') reasons.push('vercel_environment_not_production');
   if (!input.productionReleaseApproved) reasons.push('production_release_not_approved');

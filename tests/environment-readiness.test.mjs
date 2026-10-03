@@ -13,7 +13,7 @@ const input = (changes = {}) => ({
   expectedSupabaseProjectRef: projectRef,
   supabaseUrl: projectUrl,
   publishableKeyConfigured: false,
-  privilegedServerKeyConfigured: false,
+  migrationAuthorityVerified: false,
   privilegedKeyExposedToBrowser: false,
   vercelProjectIdConfigured: false,
   vercelEnvironment: null,
@@ -50,30 +50,49 @@ test('wrong Supabase target cannot become browser-ready', () => {
   assert.equal(result.browserAccessAllowed, false);
 });
 
-test('development hosted writes require explicit target approval and server credential', () => {
-  const blocked = evaluateEnvironmentReadiness(input({
+test('development hosted writes require target approval and verified migration authority', () => {
+  const noTargetApproval = evaluateEnvironmentReadiness(input({
     environment: 'development',
     publishableKeyConfigured: true,
-    privilegedServerKeyConfigured: true,
+    migrationAuthorityVerified: true,
   }));
-  assert.equal(blocked.browserAccessAllowed, true);
-  assert.equal(blocked.hostedDatabaseWritesAllowed, false);
+  assert.equal(noTargetApproval.browserAccessAllowed, true);
+  assert.equal(noTargetApproval.hostedDatabaseWritesAllowed, false);
+
+  const noMigrationAuthority = evaluateEnvironmentReadiness(input({
+    environment: 'development',
+    publishableKeyConfigured: true,
+    migrationTargetApproved: true,
+  }));
+  assert.equal(noMigrationAuthority.hostedDatabaseWritesAllowed, false);
+  assert.ok(noMigrationAuthority.reasons.includes('migration_authority_not_verified'));
 
   const approved = evaluateEnvironmentReadiness(input({
     environment: 'development',
     publishableKeyConfigured: true,
-    privilegedServerKeyConfigured: true,
+    migrationAuthorityVerified: true,
     migrationTargetApproved: true,
   }));
   assert.equal(approved.hostedDatabaseWritesAllowed, true);
   assert.equal(approved.productionDeployAllowed, false);
 });
 
+test('application API privilege is not modeled as migration authority', () => {
+  const result = evaluateEnvironmentReadiness(input({
+    environment: 'staging',
+    publishableKeyConfigured: true,
+    migrationTargetApproved: true,
+    migrationAuthorityVerified: false,
+  }));
+  assert.equal(result.hostedDatabaseWritesAllowed, false);
+  assert.ok(result.reasons.includes('migration_authority_not_verified'));
+});
+
 test('privileged browser exposure blocks browser and hosted write readiness', () => {
   const result = evaluateEnvironmentReadiness(input({
     environment: 'staging',
     publishableKeyConfigured: true,
-    privilegedServerKeyConfigured: true,
+    migrationAuthorityVerified: true,
     privilegedKeyExposedToBrowser: true,
     migrationTargetApproved: true,
   }));
@@ -104,18 +123,29 @@ test('production deploy requires verified Vercel production target and release a
   assert.equal(approved.hostedDatabaseWritesAllowed, false);
 });
 
-test('production database writes require separate migration approval', () => {
-  const result = evaluateEnvironmentReadiness(input({
+test('production database writes require separate migration target and authority approval', () => {
+  const withoutAuthority = evaluateEnvironmentReadiness(input({
     environment: 'production',
     publishableKeyConfigured: true,
-    privilegedServerKeyConfigured: true,
     vercelProjectIdConfigured: true,
     vercelEnvironment: 'production',
     productionReleaseApproved: true,
     migrationTargetApproved: true,
   }));
-  assert.equal(result.productionDeployAllowed, true);
-  assert.equal(result.hostedDatabaseWritesAllowed, true);
+  assert.equal(withoutAuthority.productionDeployAllowed, true);
+  assert.equal(withoutAuthority.hostedDatabaseWritesAllowed, false);
+
+  const approved = evaluateEnvironmentReadiness(input({
+    environment: 'production',
+    publishableKeyConfigured: true,
+    migrationAuthorityVerified: true,
+    vercelProjectIdConfigured: true,
+    vercelEnvironment: 'production',
+    productionReleaseApproved: true,
+    migrationTargetApproved: true,
+  }));
+  assert.equal(approved.productionDeployAllowed, true);
+  assert.equal(approved.hostedDatabaseWritesAllowed, true);
 });
 
 test('invalid runtime environment fails closed', () => {

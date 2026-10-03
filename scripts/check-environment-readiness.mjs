@@ -4,7 +4,7 @@ import {
 
 const publicNames = Object.keys(process.env).filter((name) => name.startsWith('NEXT_PUBLIC_'));
 const privilegedKeyExposedToBrowser = publicNames.some((name) =>
-  /(SERVICE_ROLE|SECRET|PRIVATE|DATABASE_URL)/.test(name),
+  /(SERVICE_ROLE|SECRET|PRIVATE|DATABASE_URL|DB_PASSWORD|ACCESS_TOKEN)/.test(name),
 );
 
 const rawEnvironment = process.env.CODEFORGE_ENVIRONMENT ?? 'unknown';
@@ -21,7 +21,7 @@ const readiness = evaluateEnvironmentReadiness({
   expectedSupabaseProjectRef: process.env.CODEFORGE_SUPABASE_PROJECT_REF ?? '',
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? null,
   publishableKeyConfigured: Boolean(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY),
-  privilegedServerKeyConfigured: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+  migrationAuthorityVerified: process.env.CODEFORGE_MIGRATION_AUTHORITY_VERIFIED === 'true',
   privilegedKeyExposedToBrowser,
   vercelProjectIdConfigured: Boolean(process.env.VERCEL_PROJECT_ID),
   vercelEnvironment,
