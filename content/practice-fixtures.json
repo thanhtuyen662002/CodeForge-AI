@@ -25,6 +25,35 @@
       "options": ["WHERE", "ORDER BY", "HAVING"], "correct": ["WHERE"],
       "explanation": "WHERE lọc hàng trước GROUP BY; HAVING lọc nhóm và ORDER BY sắp xếp.",
       "provenance": "original-practice", "reviewStatus": "draft"
+    },
+    {
+      "id": "python-conditions-code-001", "version": 1, "familyId": "age-threshold-branching",
+      "skillId": "python.conditions", "type": "code", "difficulty": 2, "language": "python",
+      "prompt": "Đọc một số nguyên age. In adult nếu age >= 18, ngược lại in minor.",
+      "starterCode": "age = int(input())\n# Viết điều kiện và in kết quả.\n",
+      "referenceCode": "age = int(input())\nif age >= 18:\n    print('adult')\nelse:\n    print('minor')\n",
+      "publicCases": [
+        { "input": "18\n", "expectedStdout": "adult\n" },
+        { "input": "17\n", "expectedStdout": "minor\n" },
+        { "input": "0\n", "expectedStdout": "minor\n" }
+      ],
+      "explanation": "Ngưỡng 18 dùng phép so sánh >=; hai nhánh phải bao phủ cả trường hợp đúng và sai.",
+      "provenance": "original-practice", "reviewStatus": "draft"
+    },
+    {
+      "id": "sql-filter-query-001", "version": 1, "familyId": "sql-active-filter",
+      "skillId": "sql.filter", "type": "sql", "difficulty": 2, "dialect": "postgresql",
+      "prompt": "Trả về name và active của những learner đang active. Không yêu cầu thứ tự.",
+      "referenceQuery": "SELECT name, active FROM learners WHERE active = true",
+      "ordered": false,
+      "dataset": {
+        "asOf": "2026-01-15T00:00:00Z",
+        "columns": ["name", "active"],
+        "rows": [["An", true], ["Binh", false], ["Chi", true], ["Dung", null]]
+      },
+      "expectedRows": [["An", true], ["Chi", true]],
+      "explanation": "WHERE active = true chỉ giữ các hàng có giá trị boolean true; NULL không thỏa điều kiện.",
+      "provenance": "original-practice", "reviewStatus": "draft"
     }
   ]
 }
