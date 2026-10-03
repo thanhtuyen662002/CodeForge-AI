@@ -1,5 +1,46 @@
 export type PracticeCell = string | number | boolean | null;
 
+export type LearnerPracticeQuestion =
+  | {
+      id: string;
+      version: number;
+      familyId: string;
+      skillId: string;
+      difficulty: number;
+      prompt: string;
+      type: 'single_choice';
+      options: string[];
+    }
+  | {
+      id: string;
+      version: number;
+      familyId: string;
+      skillId: string;
+      difficulty: number;
+      prompt: string;
+      type: 'code';
+      language: 'python';
+      starterCode: string;
+      publicCases: Array<{ input: string }>;
+    }
+  | {
+      id: string;
+      version: number;
+      familyId: string;
+      skillId: string;
+      difficulty: number;
+      prompt: string;
+      type: 'sql';
+      dialect: 'postgresql';
+      ordered: boolean;
+      dataset: {
+        asOf: string;
+        columns: string[];
+        rows: PracticeCell[][];
+      };
+      resultColumns: string[];
+    };
+
 const forbiddenAssessmentKeys = new Set([
   'hiddentests',
   'privatetests',
@@ -134,4 +175,58 @@ export function validatePublicPracticeQuestion(
   if (item.type === 'code') return validateCode(item);
   if (item.type === 'sql') return validateSql(item);
   throw new Error('unsupported_practice_question_type');
+}
+
+/**
+ * Build the pre-submit learner DTO from a validated practice fixture.
+ * Correct answers, reference solutions, expected outputs/rows and explanations stay server-side.
+ */
+export function toLearnerPracticeQuestion(
+  question: unknown,
+  skillIds: ReadonlySet<string>,
+): LearnerPracticeQuestion {
+  validatePublicPracticeQuestion(question, skillIds);
+  const item = asObject(question, 'invalid_practice_question');
+  const common = {
+    id: item.id as string,
+    version: item.version as number,
+    familyId: item.familyId as string,
+    skillId: item.skillId as string,
+    difficulty: item.difficulty as number,
+    prompt: item.prompt as string,
+  };
+
+  if (item.type === 'single_choice') {
+    return {
+      ...common,
+      type: 'single_choice',
+      options: [...(item.options as string[])],
+    };
+  }
+
+  if (item.type === 'code') {
+    return {
+      ...common,
+      type: 'code',
+      language: 'python',
+      starterCode: item.starterCode as string,
+      publicCases: (item.publicCases as unknown[]).map((candidate) => ({
+        input: asObject(candidate, 'invalid_public_case').input as string,
+      })),
+    };
+  }
+
+  const dataset = asObject(item.dataset, 'invalid_sql_dataset');
+  return {
+    ...common,
+    type: 'sql',
+    dialect: 'postgresql',
+    ordered: item.ordered as boolean,
+    dataset: {
+      asOf: dataset.asOf as string,
+      columns: [...(dataset.columns as string[])],
+      rows: (dataset.rows as PracticeCell[][]).map((row) => [...row]),
+    },
+    resultColumns: [...(item.resultColumns as string[])],
+  };
 }

@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validatePublicPracticeQuestion } from '../dist/content.js';
+import {
+  toLearnerPracticeQuestion,
+  validatePublicPracticeQuestion,
+} from '../dist/content.js';
 
 const skills = new Set(['logic.sequence', 'python.conditions', 'sql.filter']);
 const base = {
@@ -100,6 +103,73 @@ test('public SQL practice pins time anchor, result projection and row-order poli
     resultColumns: ['name'],
     expectedRows: [['An', true]],
   }, skills), /invalid_expected_rows/);
+});
+
+test('learner code DTO excludes reference solution, expected outputs and explanation', () => {
+  const dto = toLearnerPracticeQuestion({
+    ...base,
+    type: 'code',
+    language: 'python',
+    starterCode: 'pass',
+    referenceCode: 'print("secret solution")',
+    publicCases: [
+      { input: '', expectedStdout: 'answer' },
+      { input: 'x\n', expectedStdout: 'other' },
+    ],
+  }, skills);
+
+  assert.deepEqual(dto, {
+    id: 'q1',
+    version: 1,
+    familyId: 'family-1',
+    skillId: 'python.conditions',
+    difficulty: 2,
+    prompt: 'Prompt',
+    type: 'code',
+    language: 'python',
+    starterCode: 'pass',
+    publicCases: [{ input: '' }, { input: 'x\n' }],
+  });
+  const serialized = JSON.stringify(dto);
+  assert.doesNotMatch(serialized, /referenceCode|expectedStdout|Explanation|secret solution|answer/);
+});
+
+test('learner SQL DTO excludes reference query, expected rows and explanation', () => {
+  const dto = toLearnerPracticeQuestion({
+    ...base,
+    id: 'sql-dto',
+    skillId: 'sql.filter',
+    type: 'sql',
+    dialect: 'postgresql',
+    referenceQuery: 'select secret from grading',
+    ordered: true,
+    dataset: {
+      asOf: '2026-01-15T00:00:00Z',
+      columns: ['name', 'active'],
+      rows: [['An', true], ['Binh', false]],
+    },
+    resultColumns: ['name'],
+    expectedRows: [['An']],
+  }, skills);
+
+  assert.deepEqual(dto, {
+    id: 'sql-dto',
+    version: 1,
+    familyId: 'family-1',
+    skillId: 'sql.filter',
+    difficulty: 2,
+    prompt: 'Prompt',
+    type: 'sql',
+    dialect: 'postgresql',
+    ordered: true,
+    dataset: {
+      asOf: '2026-01-15T00:00:00Z',
+      columns: ['name', 'active'],
+      rows: [['An', true], ['Binh', false]],
+    },
+    resultColumns: ['name'],
+  });
+  assert.doesNotMatch(JSON.stringify(dto), /referenceQuery|expectedRows|Explanation|grading/);
 });
 
 test('public practice rejects confidential grading material', () => {
