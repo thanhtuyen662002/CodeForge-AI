@@ -27,6 +27,12 @@ jobs:
       - run: bash -n scripts/apply-ruleset.sh
       - run: npm run typecheck
       - run: npm test
+      - name: Verify hosted environment stays fail-closed before classification
+        env:
+          CODEFORGE_ENVIRONMENT: unknown
+          CODEFORGE_SUPABASE_PROJECT_REF: qvufngaseebmaxzthrdi
+          NEXT_PUBLIC_SUPABASE_URL: https://qvufngaseebmaxzthrdi.supabase.co
+        run: node scripts/check-environment-readiness.mjs
   content:
     name: content
     runs-on: ubuntu-24.04

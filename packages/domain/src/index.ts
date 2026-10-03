@@ -156,3 +156,14 @@ export function compareRows(
   if (!ordered) { a.sort(); b.sort(); }
   return a.length === b.length && a.every((row, index) => row === b[index]);
 }
+
+export {
+  evaluateEnvironmentReadiness,
+  parseSupabaseProjectRef,
+} from './environment-readiness.js';
+export type {
+  DeploymentEnvironment,
+  EnvironmentReadiness,
+  EnvironmentReadinessInput,
+  VercelEnvironment,
+} from './environment-readiness.js';
