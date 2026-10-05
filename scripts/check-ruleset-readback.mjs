@@ -44,8 +44,9 @@ export function validateCreationSpec(spec) {
   if (spec.target !== 'branch') fail('ruleset spec target must be branch');
   if (spec.enforcement !== 'active') fail('ruleset spec enforcement must be active');
   if (!Array.isArray(spec.bypass_actors) || spec.bypass_actors.length !== 0) fail('ruleset spec must not contain bypass actors');
-  if (!isObject(spec.conditions) || !isObject(spec.conditions.ref_name) ||
-      !Array.isArray(spec.conditions.ref_name.include) || spec.conditions.ref_name.include.length !== 1 ||
+  assertExactKeys(spec.conditions, ['ref_name'], 'ruleset spec conditions');
+  assertExactKeys(spec.conditions.ref_name, ['include', 'exclude'], 'ruleset spec ref_name condition');
+  if (!Array.isArray(spec.conditions.ref_name.include) || spec.conditions.ref_name.include.length !== 1 ||
       spec.conditions.ref_name.include[0] !== '~DEFAULT_BRANCH' ||
       !Array.isArray(spec.conditions.ref_name.exclude) || spec.conditions.ref_name.exclude.length !== 0) {
     fail('ruleset spec must target only the default branch');
@@ -106,30 +107,57 @@ export function validateLiveRuleset(expected, actual) {
   if (actual.source_type !== 'Repository' || actual.source !== 'thanhtuyen662002/CodeForge-AI') fail('live ruleset source mismatch');
   if (!Array.isArray(actual.bypass_actors) || actual.bypass_actors.length !== 0) fail('live ruleset has bypass actors');
   if (actual.current_user_can_bypass !== 'never') fail('current user must not be able to bypass ruleset');
-  const liveRef = actual.conditions?.ref_name;
-  if (!isObject(liveRef) || !Array.isArray(liveRef.include) || liveRef.include.length !== 1 ||
+  assertExactKeys(actual.conditions, ['ref_name'], 'live ruleset conditions');
+  const liveRef = actual.conditions.ref_name;
+  assertExactKeys(liveRef, ['include', 'exclude'], 'live ruleset ref_name condition');
+  if (!Array.isArray(liveRef.include) || liveRef.include.length !== 1 ||
       liveRef.include[0] !== '~DEFAULT_BRANCH' || !Array.isArray(liveRef.exclude) || liveRef.exclude.length !== 0) {
     fail('live ruleset branch conditions mismatch');
   }
   assertRuleSetShape(actual.rules, 'live ruleset');
 
-  for (const type of ['deletion', 'non_fast_forward', 'required_linear_history']) getRule(actual.rules, type);
+  for (const type of ['deletion', 'non_fast_forward', 'required_linear_history']) {
+    const rule = getRule(actual.rules, type);
+    assertExactKeys(rule, ['type'], `live rule ${type}`);
+  }
 
-  const expPr = getRule(expected.rules, 'pull_request').parameters;
-  const livePr = getRule(actual.rules, 'pull_request').parameters;
+  const expPrRule = getRule(expected.rules, 'pull_request');
+  const livePrRule = getRule(actual.rules, 'pull_request');
+  assertExactKeys(livePrRule, ['type', 'parameters'], 'live pull_request rule');
+  const expPr = expPrRule.parameters;
+  const livePr = livePrRule.parameters;
+  assertExactKeys(livePr, [
+    ...Object.keys(expPr),
+    'required_reviewers',
+    'require_extra_approval_for_unattributed_changes',
+    'allowed_merge_methods',
+  ], 'live pull_request parameters');
   for (const key of Object.keys(expPr)) {
     if (livePr?.[key] !== expPr[key]) fail(`live pull_request parameter mismatch: ${key}`);
   }
-  if ('required_reviewers' in livePr && (!Array.isArray(livePr.required_reviewers) || livePr.required_reviewers.length !== 0)) {
+  if (!Array.isArray(livePr.required_reviewers) || livePr.required_reviewers.length !== 0) {
     fail('live ruleset unexpectedly requires named reviewers');
   }
+  if (livePr.require_extra_approval_for_unattributed_changes !== true) {
+    fail('live ruleset must require extra approval for unattributed changes');
+  }
+  if (!Array.isArray(livePr.allowed_merge_methods) || livePr.allowed_merge_methods.length < 1 ||
+      new Set(livePr.allowed_merge_methods).size !== livePr.allowed_merge_methods.length ||
+      livePr.allowed_merge_methods.some((method) => !['merge', 'squash', 'rebase'].includes(method))) {
+    fail('live ruleset allowed merge methods are malformed');
+  }
 
-  const expStatus = getRule(expected.rules, 'required_status_checks').parameters;
-  const liveStatus = getRule(actual.rules, 'required_status_checks').parameters;
-  if (liveStatus?.strict_required_status_checks_policy !== expStatus.strict_required_status_checks_policy) fail('live strict status-check policy mismatch');
-  if (liveStatus?.do_not_enforce_on_create !== expStatus.do_not_enforce_on_create) fail('live do_not_enforce_on_create mismatch');
-  if (!Array.isArray(liveStatus?.required_status_checks) || liveStatus.required_status_checks.length !== 1) fail('live required status check count mismatch');
+  const expStatusRule = getRule(expected.rules, 'required_status_checks');
+  const liveStatusRule = getRule(actual.rules, 'required_status_checks');
+  assertExactKeys(liveStatusRule, ['type', 'parameters'], 'live required_status_checks rule');
+  const expStatus = expStatusRule.parameters;
+  const liveStatus = liveStatusRule.parameters;
+  assertExactKeys(liveStatus, Object.keys(expStatus), 'live required_status_checks parameters');
+  if (liveStatus.strict_required_status_checks_policy !== expStatus.strict_required_status_checks_policy) fail('live strict status-check policy mismatch');
+  if (liveStatus.do_not_enforce_on_create !== expStatus.do_not_enforce_on_create) fail('live do_not_enforce_on_create mismatch');
+  if (!Array.isArray(liveStatus.required_status_checks) || liveStatus.required_status_checks.length !== 1) fail('live required status check count mismatch');
   const liveCheck = liveStatus.required_status_checks[0];
+  assertExactKeys(liveCheck, ['context', 'integration_id'], 'live required status check');
   if (liveCheck.context !== 'merge-gate' || liveCheck.integration_id !== ACTIONS_APP_ID) fail('live merge-gate check mismatch');
   return true;
 }
