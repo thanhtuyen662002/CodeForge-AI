@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "status": "draft",
+  "skills": [
+    { "id": "logic.sequence", "prerequisites": [] },
+    { "id": "programming.variables", "prerequisites": ["logic.sequence"] },
+    { "id": "programming.conditions", "prerequisites": ["programming.variables"] },
+    { "id": "python.conditions", "prerequisites": ["programming.conditions"] },
+    { "id": "sql.select", "prerequisites": ["programming.variables"] },
+    { "id": "sql.filter", "prerequisites": ["sql.select"] }
+  ]
+}

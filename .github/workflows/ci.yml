@@ -1,0 +1,74 @@
+name: Foundation CI
+on:
+  pull_request:
+  push:
+    branches: [main, 'foundation/**']
+  merge_group:
+permissions:
+  contents: read
+concurrency:
+  group: foundation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run lint
+      - run: bash -n scripts/apply-ruleset.sh
+      - run: npm run typecheck
+      - run: npm test
+  content:
+    name: content
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run content:check
+  security:
+    name: security
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run security:check
+      - run: npm audit --audit-level=high
+  merge-gate:
+    name: merge-gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    if: ${{ always() }}
+    needs: [quality, content, security]
+    steps:
+      - name: Require every dependency to pass
+        env:
+          QUALITY: ${{ needs.quality.result }}
+          CONTENT: ${{ needs.content.result }}
+          SECURITY: ${{ needs.security.result }}
+        run: |
+          test "$QUALITY" = success
+          test "$CONTENT" = success
+          test "$SECURITY" = success
