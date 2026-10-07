@@ -30,4 +30,6 @@ Cash allowances total$450; retain$50 overall contingency=$500. P0 $100 hard cap;
 2. **Recruit/interview and run fixed offer:** after prerequisites,15interviews and30eligible offers, separated funding/relationship, all denominators/labour; founder performs/explicitly authorizes communications and payment execution.
 3. **Close G0:** reconcile receipts/refunds/missingness/caps; publish aggregate decision and unlock P1 or STOP/PAUSE. No shifting thresholds after outcome.
 
-Exact issue URLs/live status: [PROJECT_STATE](PROJECT_STATE.yaml). Existing issues#2–#17 are historical strategy-hold, not a parallel delivery roadmap.
+Created: [P0-1 feasibility](https://github.com/thanhtuyen662002/CodeForge-AI/issues/20) → [P0-2 demand](https://github.com/thanhtuyen662002/CodeForge-AI/issues/21) → [P0-3 readout](https://github.com/thanhtuyen662002/CodeForge-AI/issues/22). All remain NOT_STARTED. Exact state: [PROJECT_STATE](PROJECT_STATE.yaml). Existing issues#2–#17 are historical strategy-hold, not a parallel delivery roadmap.
+
+P5 clinic execution assumes the same reviewed G1 assets already exist (e.g. B2C failed at G3). If B2C stops before G1, only manager discovery is available in this plan; do not collect clinic payments or promise delivery from a nonexistent corpus. A confirmed manager opportunity needs a separate frozen fallback protocol/cap decision before content investment, still respecting the one-pivot and overall limits.
