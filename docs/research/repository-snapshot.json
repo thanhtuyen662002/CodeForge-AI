@@ -1,0 +1,246 @@
+{
+  "checked_at_utc": "2026-10-07T02:50:13.0061422Z",
+  "source": "https://api.github.com/repos/thanhtuyen662002/CodeForge-AI",
+  "repository": "thanhtuyen662002/CodeForge-AI",
+  "created_at": "2026-10-02T16:31:52Z",
+  "default_branch": "main",
+  "initial_main_sha": "ada0ce62eb2721fb21e7a0524cb6c50f9934bc0d",
+  "branches": [
+    {
+      "name": "fix/cf01-governance-readback",
+      "sha": "a52ebea47a29b3f19772ac3b5229d15580291fe9",
+      "protected": false
+    },
+    {
+      "name": "foundation/cf01-negative-control-20261003",
+      "sha": "d6447e74cad5995c70471a230b9f58caaed13606",
+      "protected": false
+    },
+    {
+      "name": "foundation/cf02-env-contract-20261003",
+      "sha": "4ae51189e42c540f96b471fbebdce7e23e257984",
+      "protected": false
+    },
+    {
+      "name": "foundation/cf02-env-readiness-20261003",
+      "sha": "42b5a6aa678baabf711e1000e9b4127e870aecff",
+      "protected": false
+    },
+    {
+      "name": "foundation/cf05-content-contract-20261003",
+      "sha": "0fe35495e760c6f5e89ace24cd88ff0810c02c9e",
+      "protected": false
+    },
+    {
+      "name": "foundation/learner-first-design",
+      "sha": "42b5a6aa678baabf711e1000e9b4127e870aecff",
+      "protected": false
+    },
+    {
+      "name": "main",
+      "sha": "ada0ce62eb2721fb21e7a0524cb6c50f9934bc0d",
+      "protected": true
+    },
+    {
+      "name": "test/cf01-negative-control-20261003",
+      "sha": "d6447e74cad5995c70471a230b9f58caaed13606",
+      "protected": false
+    }
+  ],
+  "issues": [
+    {
+      "number": 17,
+      "title": "[Lead Tracker] CodeForge AI coordination and production acceptance",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/17"
+    },
+    {
+      "number": 16,
+      "title": "[CF-15] Mở rộng đủ MVP và ngân hàng bài tập theo cổng chất lượng",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/16"
+    },
+    {
+      "number": 15,
+      "title": "[CF-14] Pilot người học, privacy và diễn tập khôi phục trước public release",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/15"
+    },
+    {
+      "number": 14,
+      "title": "[CF-13] CMS nội dung có review, phiên bản bất biến và quy trình chấm lại",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/14"
+    },
+    {
+      "number": 13,
+      "title": "[CF-12] Exam simulator: timer server, autosave, điều hướng và xử lý gián đoạn",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/13"
+    },
+    {
+      "number": 12,
+      "title": "[CF-11] Nghiệm thu luồng học hoàn chỉnh bằng E2E với dịch vụ thật",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/12"
+    },
+    {
+      "number": 11,
+      "title": "[CF-10] AI tutor gợi ý tăng dần, chặn trong exam và có fallback không AI",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/11"
+    },
+    {
+      "number": 10,
+      "title": "[CF-09] Bài học ngắn, sổ lỗi và ôn tập không làm người mới nản",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/10"
+    },
+    {
+      "number": 9,
+      "title": "[CF-08] Python/SQL playground và hàng đợi chấm có trạng thái bền vững",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/9"
+    },
+    {
+      "number": 8,
+      "title": "[CF-07] Kiểm chứng sandbox thực: isolation, giới hạn tài nguyên và chi phí",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/8"
+    },
+    {
+      "number": 7,
+      "title": "[CF-06] Diagnostic thật, evidence ledger và đề xuất bài tiếp theo",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/7"
+    },
+    {
+      "number": 6,
+      "title": "[CF-05] Pipeline nội dung: 24 câu được duyệt, skill graph và chấm xác định",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/6"
+    },
+    {
+      "number": 5,
+      "title": "[CF-04] Supabase migrations và RLS: chứng minh cách ly dữ liệu giữa người học",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/5"
+    },
+    {
+      "number": 4,
+      "title": "[CF-03] Xây Next.js web và đăng ký/đăng nhập thật, có kiểm thử accessibility",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/4"
+    },
+    {
+      "number": 3,
+      "title": "[CF-02] Chuẩn bị môi trường Supabase và Vercel staging tách production",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/3"
+    },
+    {
+      "number": 2,
+      "title": "[CF-01] Kích hoạt và chứng minh GitHub rules chặn merge không hợp lệ",
+      "state": "open",
+      "html_url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/2"
+    }
+  ],
+  "pull_requests": [
+    {
+      "number": 19,
+      "title": "CF-01 negative control: prove failed merge-gate blocks main",
+      "state": "open",
+      "merged_at": null,
+      "head": "d6447e74cad5995c70471a230b9f58caaed13606",
+      "base": "main",
+      "url": "https://github.com/thanhtuyen662002/CodeForge-AI/pull/19"
+    },
+    {
+      "number": 18,
+      "title": "CF-01: verify governance ruleset read-back",
+      "state": "open",
+      "merged_at": null,
+      "head": "a52ebea47a29b3f19772ac3b5229d15580291fe9",
+      "base": "foundation/learner-first-design",
+      "url": "https://github.com/thanhtuyen662002/CodeForge-AI/pull/18"
+    },
+    {
+      "number": 1,
+      "title": "Foundation: learner-first design, adversarial review, domain tests and CI",
+      "state": "open",
+      "merged_at": null,
+      "head": "42b5a6aa678baabf711e1000e9b4127e870aecff",
+      "base": "main",
+      "url": "https://github.com/thanhtuyen662002/CodeForge-AI/pull/1"
+    }
+  ],
+  "ruleset": {
+    "id": 24379959,
+    "name": "CodeForge main",
+    "target": "branch",
+    "source_type": "Repository",
+    "source": "thanhtuyen662002/CodeForge-AI",
+    "enforcement": "active",
+    "conditions": {
+      "ref_name": {
+        "exclude": [],
+        "include": [
+          "~DEFAULT_BRANCH"
+        ]
+      }
+    },
+    "rules": [
+      {
+        "type": "deletion"
+      },
+      {
+        "type": "non_fast_forward"
+      },
+      {
+        "type": "required_linear_history"
+      },
+      {
+        "type": "pull_request",
+        "parameters": {
+          "required_approving_review_count": 1,
+          "dismiss_stale_reviews_on_push": true,
+          "required_reviewers": [],
+          "require_code_owner_review": false,
+          "require_last_push_approval": true,
+          "required_review_thread_resolution": true,
+          "require_extra_approval_for_unattributed_changes": true,
+          "allowed_merge_methods": [
+            "merge",
+            "squash",
+            "rebase"
+          ]
+        }
+      },
+      {
+        "type": "required_status_checks",
+        "parameters": {
+          "strict_required_status_checks_policy": true,
+          "do_not_enforce_on_create": false,
+          "required_status_checks": [
+            {
+              "context": "merge-gate",
+              "integration_id": 15368
+            }
+          ]
+        }
+      }
+    ],
+    "node_id": "RRS_lACqUmVwb3NpdG9yec5TkelAzgF0Ajc",
+    "created_at": "2026-10-02T17:22:13.377Z",
+    "updated_at": "2026-10-02T17:22:13.455Z",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/thanhtuyen662002/CodeForge-AI/rulesets/24379959"
+      },
+      "html": {
+        "href": "https://github.com/thanhtuyen662002/CodeForge-AI/rules/24379959"
+      }
+    }
+  },
+  "note": "Before strategy publication. Public API snapshot; bypass actors availability is not independently verified."
+}
