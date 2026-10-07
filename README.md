@@ -1,7 +1,19 @@
 # CodeForge AI
 
-Learner-first programming, data and AI practice platform.
+**Research/foundation. Decision: BUILD WITH CONDITIONS — a capped demand experiment only.** No deployed product, customer validation, learning efficacy or moat is claimed.
 
-Status: repository initialized for research, architecture, adversarial review and engineering foundation. No deployed application or completed MVP is claimed.
+Current thesis: two Python backend practice labs for developers already using coding agents, focused on finding counterexamples, testing an AI-generated change and explaining merge/reject decisions. Proposed price: **$49 for two labs**, unvalidated. Optional BYO agent; local deterministic practice checks; no hiring score or certification.
 
-Required infrastructure: Supabase for data/auth/storage; Vercel for the web application. Product specifications and CI will be delivered through a reviewable foundation pull request.
+The next step is **P0: ten working days, ≤20 founder hours and ≤$100**, with 15 interviews and 30 eligible offers. At least 8 concrete incidents and 5 unrelated self-funded full-price buyers are required to invest in content. Merchant/refund feasibility comes before charging. Failure means STOP or PAUSE according to the preregistered protocol; a waitlist does not pass.
+
+- [Founder decision and 90-day plan](docs/DECISION_MEMO.md)
+- [Complete strategy index](docs/INDEX.md)
+- [Market sources and checked dates](docs/MARKET_RESEARCH.md)
+- [Validation gates / kill criteria](docs/VALIDATION_PLAN.md)
+- [Independent red teams and reconciliation](docs/RED_TEAM.md)
+- [Current state and executable issue links](docs/PROJECT_STATE.yaml)
+- [Repository history and legacy backlog disposition](docs/RECONNAISSANCE.md)
+
+The old broad beginner/data/AI school and its open foundation backlog are on strategy hold. Supabase/Vercel are conditional options after demand and operational evidence, not P0 requirements. No app, cloud sandbox, AI tutor, leaderboard, season, custom agent integration or product implementation belongs in the planning phase.
+
+Read [AGENTS.md](AGENTS.md) before work. Documentation integrity check: `node scripts/check-planning.mjs`. This check does not establish product correctness or customer demand.
