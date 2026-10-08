@@ -2,7 +2,7 @@ name: Planning integrity
 on:
   pull_request:
   push:
-    branches: [main, 'codex/strategy-validation-*']
+    branches: [main, 'codex/strategy-validation-*', 'codex/system-blueprint-*']
   merge_group:
 permissions:
   contents: read

@@ -59,5 +59,38 @@ assert.ok(ledger.includes(state.checked_date), 'Market ledger checked date missi
 for (const group of ['E', 'P', 'A', 'D', 'K', 'G', 'R', 'I']) {
   assert.ok(new RegExp(`\\| ${group}1 \\|.*https://`).test(ledger), `Source group ${group} missing`);
 }
-console.log(`Planning integrity passed: ${docs.length} documents, ${localLinks} local links, 8 thesis scores, unit costs/budgets, 42 dispositions, 32 risks.`);
+const blueprint = json('docs/blueprint/model.json');
+assert.equal(blueprint.validation_status, state.validation_status);
+assert.equal(blueprint.current_new_recurring_infra_usd, 0);
+assert.equal(blueprint.stored_practice_history, false);
+assert.equal(state.strategy_merge.sha, 'a0e7296d78bec368ef1c22bd022a916c2bf6c754');
+assert.equal(state.main_integration, 'STRATEGY_PR23_MERGED_BLUEPRINT_PENDING');
+assert.equal(blueprint.screen_ids.length, 9);
+assert.equal(new Set(blueprint.screen_ids).size, 9);
+assert.equal(blueprint.feature_ids.length, 12);
+for (const feature of blueprint.feature_ids) assert.ok(read('docs/blueprint/FEATURES_AND_SCREENS.md').includes(`| ${feature} |`));
+const prototype = read('docs/blueprint/prototype/app.js');
+for (const screen of blueprint.screen_ids) assert.ok(prototype.includes(`function ${screen}()`), `Missing screen ${screen}`);
+for (const option of blueprint.hosting_options) {
+  close(option.web + option.vm_backup + option.database_prod_staging + option.smtp_allowance + option.domain_backup_allowance + option.contingency, option.cash_total, `${option.id} cash`);
+  close(option.cash_total + option.infra_ops_hours * blueprint.labour_usd_hour, option.cash_plus_infra_labour, `${option.id} labour`);
+}
+const roi = blueprint.automation_scenario;
+const managed = blueprint.hosting_options.find(o => o.id === 'managed');
+const benefit = roi.days / 7 * (roi.manual_hours_week - roi.remaining_manual_hours_week) * blueprint.labour_usd_hour;
+const recurring = roi.monthly_bills * managed.cash_plus_infra_labour;
+close(benefit, roi.benefit_usd, '90day benefit');
+close(recurring, roi.incremental_recurring_usd, '90day recurring');
+close((benefit - recurring - roi.setup_cash) / blueprint.labour_usd_hour, roi.max_build_hours, 'max build hours');
+close(benefit - recurring - roi.setup_cash - roi.build_hours_low * blueprint.labour_usd_hour, roi.net_at_low_build_usd, '90day net');
+const designReconciliation = read('docs/blueprint/RED_TEAM.md');
+for (const [prefix, count, file] of [['BI', 15, 'INVESTMENT_ATTACK'], ['BO', 18, 'OPERATIONS_ATTACK']]) {
+  const raw = read(`docs/blueprint/reviews/${file}.md`);
+  for (let n = 1; n <= count; n++) {
+    const id = `${prefix}-${String(n).padStart(2, '0')}`;
+    assert.ok(raw.includes(id), `Missing raw blueprint finding ${id}`);
+    assert.equal((designReconciliation.match(new RegExp(`\\| ${id} \\|`, 'g')) || []).length, 1, `Missing/duplicate blueprint disposition ${id}`);
+  }
+}
+console.log(`Planning integrity passed: ${docs.length} documents, ${localLinks} local links, 8 thesis scores, unit costs/budgets, 42 strategy + 33 blueprint dispositions, 32 risks, hosting/ROI model, 9 screens/12 features.`);
 console.log('No market, learning, payment, security-release, or product efficacy claim is validated by this check.');
