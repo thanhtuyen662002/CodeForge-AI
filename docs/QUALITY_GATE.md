@@ -12,7 +12,7 @@ Scope: quality of the planning decision, not market/product approval. [Independe
 | Defensibility | Candidate evidence→content improvement loop with gate | No moat now; copyability high | Do not fund data platform/network thesis |
 | Security/privacy | No cloud/upload/keys/transcripts, self-report labels, synthetic data, staged delivery | Local agent-edited code can be unsafe; no sandbox guarantee | No executable release before review/dryrun |
 | Red team |20investment+22operations findings, severity+oneaction each;32premortemfailures | WTP/value/distribution/content cost remain critical | Research permitted; platform STOP until evidence |
-| Durability | Source ledger with URLs/date, README/AGENTS/state, branch/PR/next-phase issues | Main integration requires eligible independent GitHub review | Do not bypass protections |
+| Durability | Source ledger with URLs/date, README/AGENTS/state, PR23 merged/next-phase issues | New blueprint is design-only; read live merge policy | No bypass; customer gates remain unpassed |
 
 ## Critical items must stay visible
 
@@ -22,4 +22,4 @@ Planning validation passed local links, numeric model arithmetic, state/budget c
 
 Publication read-back: [PR23](https://github.com/thanhtuyen662002/CodeForge-AI/pull/23), only three P0 issues [20](https://github.com/thanhtuyen662002/CodeForge-AI/issues/20)/[21](https://github.com/thanhtuyen662002/CodeForge-AI/issues/21)/[22](https://github.com/thanhtuyen662002/CodeForge-AI/issues/22);16legacy issues and3legacy PRs have strategy-hold. Tracker17 preserves historical evidence with a current strategy notice. Remote documentation [merge-gate passed](https://github.com/thanhtuyen662002/CodeForge-AI/actions/runs/37568609720/job/112621953948) on strategy commit `7f857824f2b4c318824a467de63eb2878d0b8ae2`. This is a commit-specific observation; the live PR checks are authoritative for subsequent metadata edits.
 
-Main read-back remains `ada0ce62eb2721fb21e7a0524cb6c50f9934bc0d`; PR23 is REVIEW_REQUIRED/BLOCKED under the active one-approval ruleset. Eligible GitHub approval remains required; no independent agent review supplies it. Planning-level PASS is not a PASS for G0–G6. No protection change, self-approval or merge was attempted.
+Historical pre-merge checkpoint: main was `ada0ce62eb2721fb21e7a0524cb6c50f9934bc0d`; PR23 was blocked by the former review policy. Subsequent owner-authorized checkpoint2026-10-07T09:09:51Z: PR23 merged normally at `a0e7296d78bec368ef1c22bd022a916c2bf6c754` after owner changed review count0/last-push false. [Main merge-gate passed](https://github.com/thanhtuyen662002/CodeForge-AI/actions/runs/37598703142). This task did not edit protections, self-approve or bypass. Planning PASS still does not pass G0–G6. The separate [blueprint](blueprint/README.md) adds design review, not customer evidence.

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <title>CodeForge — bản thiết kế trải nghiệm</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="messages.js" defer></script>
+  <script src="i18n.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#content">Đến nội dung</a>
+  <aside class="review-bar" aria-label="Điều khiển bản thiết kế">
+    <span><strong>BẢN THIẾT KẾ</strong> · Dữ liệu minh họa · Không thu tiền hay lưu dữ liệu</span>
+    <div class="review-controls">
+      <label>Màn hình <select id="screen-picker" aria-label="Chọn màn hình"></select></label>
+      <label>Tình huống <select id="scenario-picker" aria-label="Chọn tình huống"><option value="ready">Sẵn sàng</option><option value="pending">Chờ xác nhận</option><option value="withdrawn">Bài đang được sửa</option></select></label>
+    </div>
+  </aside>
+  <div class="language-bar">
+    <label for="language-picker">Ngôn ngữ</label>
+    <select id="language-picker" translate="no"></select>
+    <span class="translation-note">Bản dịch nháp — cần kiểm tra trước khi phát hành. Chưa có nội dung học được phát hành.</span>
+    <span id="locale-fallback" class="translation-note" role="status" hidden>Một số nội dung chưa có bản dịch và đang hiển thị bằng tiếng Anh.</span>
+  </div>
+  <header class="site-header">
+    <button class="brand" data-view="offer" aria-label="CodeForge, trang giới thiệu"><span class="brand-mark" aria-hidden="true">[·]</span><span>codeforge<span class="brand-dot">.</span></span></button>
+    <nav aria-label="Điều hướng chính">
+      <button data-view="offer">Khám phá</button><button data-view="library">Gói của bạn</button><button data-view="help">Trợ giúp</button>
+    </nav>
+    <span class="pilot-tag">PYTHON / VERIFICATION</span>
+  </header>
+  <main id="content" tabindex="-1"></main>
+  <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+  <footer><span>Ít bài hơn. Kiểm chứng sâu hơn.</span><button data-view="help">Dữ liệu & quyền riêng tư</button><span>Không chứng chỉ · Không xếp hạng</span></footer>
+</body>
+</html>

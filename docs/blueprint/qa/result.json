@@ -1,0 +1,16 @@
+{
+  "checked_at": "2026-10-07T09:34:10.398Z",
+  "browser": "147.0.7727.15",
+  "viewport_widths": [
+    1280,
+    390,
+    320
+  ],
+  "screen_state_viewport_cases": 81,
+  "errors": [],
+  "external_requests": [],
+  "keyboard_skip_and_main_focus": "PASS",
+  "payment_pending_quarantine": "PASS",
+  "no_persistence": "PASS",
+  "limits": "Synthetic UI only. No production auth/payment/security/lab testing."
+}

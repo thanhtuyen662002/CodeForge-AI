@@ -1,0 +1,25 @@
+{
+  "status": "DESIGN_NOT_IMPLEMENTED",
+  "checked_date": "2026-10-07",
+  "owner_priority": "LOWEST_EARLY_CASH_COST",
+  "selected_now": "STATIC_MANUAL_NO_VM_NO_APP_DB",
+  "conditional_host": "VERCEL_SUPABASE_ONLY_AFTER_GATES_AND_ROI",
+  "current_new_recurring_infra_usd": 0,
+  "labour_usd_hour": 30,
+  "baseline": {"mode":"static_manual", "new_app_infra_cash_month":0, "merchant_fixed_fee":null, "merchant_variable_fee":null, "private_delivery_cash":null, "minutes_per_order":null, "existing_bills":null, "unrestricted_cash":null},
+  "automation_scenario": {"days":90, "monthly_bills":3, "manual_hours_week":2, "remaining_manual_hours_week":0, "build_hours_low":80, "build_hours_high":140, "setup_cash":0, "benefit_usd":771.4285714285714, "incremental_recurring_usd":480, "max_build_hours":9.714285714285714, "net_at_low_build_usd":-2108.5714285714284, "cash_feasibility":"UNKNOWN_BLOCKS_PURCHASE"},
+  "stored_practice_history": false,
+  "ui_locales": ["en", "vi", "ja", "ko", "zh-Hans", "de", "fr", "es", "pt-BR"],
+  "translation_status": "DRAFT_NOT_NATIVE_REVIEWED",
+  "conceptual_table_count": 8,
+  "hosting_options": [
+    {"id":"managed", "web":20, "vm_backup":0, "database_prod_staging":35, "smtp_allowance":20, "domain_backup_allowance":10, "contingency":15, "infra_ops_hours":2, "cash_total":100, "cash_plus_infra_labour":160},
+    {"id":"vm_replacement", "web":12, "vm_backup":2.4, "database_prod_staging":35, "smtp_allowance":20, "domain_backup_allowance":10, "contingency":15, "infra_ops_hours":4, "cash_total":94.4, "cash_plus_infra_labour":214.4},
+    {"id":"vm_added", "web":32, "vm_backup":2.4, "database_prod_staging":35, "smtp_allowance":20, "domain_backup_allowance":10, "contingency":15, "infra_ops_hours":4, "cash_total":114.4, "cash_plus_infra_labour":234.4}
+  ],
+  "screen_ids": ["offer", "demo", "order", "library", "lab", "results", "debrief", "help", "operations"],
+  "feature_ids": ["F01", "F02", "F03", "F04", "F05", "F06", "F07", "F08", "F09", "F10", "F11", "F12"],
+  "implementation_gate": "G3 + G4 + first-order profit + manual bottleneck above2h/week for2weeks + fully loaded incremental automation payback within90days at actual volume + unrestricted cash covers setup and90days incremental invoices excluding existing bills, refund liabilities, holdbacks and speculative receipts",
+  "validation_status": "NOT_STARTED",
+  "prototype_data": "SYNTHETIC_NO_PAYMENT_NO_NETWORK_NO_PERSISTENCE"
+}

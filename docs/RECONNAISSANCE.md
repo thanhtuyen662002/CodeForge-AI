@@ -42,4 +42,4 @@ Open status không là lệnh thực thi. Chỉ issues P0 được link trong PR
 
 ## Trạng thái sau planning
 
-Xem [PROJECT_STATE](PROJECT_STATE.yaml) cho strategy PR và P0 issue URLs. Main vẫn cần independent eligible GitHub approval; independent agent red teams không thay approval đó. Planning đã tạo văn bản/kiểm tra tài liệu, **không** app, executable labs, payments, interviews hay deployments.
+Xem [PROJECT_STATE](PROJECT_STATE.yaml) cho trạng thái hiện hành. Audit phía trên là snapshot trước merge; ngày2026-10-07T09:09:51Z PR23 đã merge bình thường vào `a0e7296d78bec368ef1c22bd022a916c2bf6c754` sau khi owner đổi ruleset về0reviews/last-push false, strict merge-gate vẫn giữ, không bypass. Agent red teams không phải GitHub approval. Blueprint tiếp theo thêm thiết kế và prototype synthetic theo yêu cầu owner, **không** app production, executable labs, payments, interviews hay deployments.

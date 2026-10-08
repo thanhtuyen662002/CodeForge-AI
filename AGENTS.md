@@ -8,6 +8,10 @@ Current decision is BUILD WITH CONDITIONS for P0 research only; validation NOT_S
 
 P0 cap10workingdays/20h/$100; full90day160h/$500; budgets are ceilings, not authorization to buy services or contact people. Only P0 issues listed in PROJECT_STATE are executable. Do not create P1–P6 issues until evidence unlocks them. This planning change authorizes documentation/research/GitHub planning records; outreach/payment/publication execution needs a real owner instruction and resolved prerequisites.
 
+Owner additionally authorized the system blueprint and disconnected synthetic screen prototype under `docs/blueprint`, prioritizing scarce cash. This is design scope only. Default now: static/manual, no VM/app DB; Cloudflare Pages is a conditional publication candidate. No recurring purchase, app implementation or launch is inferred. Freeze further design after its review unless new evidence changes a decision.
+
+Owner's2026-10-08 language request, followed by choosing both regional groups, authorizes localization of this prototype/design. Draft UI locales: en,vi,ja,ko,zh-Hans,de,fr,es,pt-BR; further candidates/gates in blueprint/LOCALIZATION. Native technical review, translated learning-content availability and commercial country/support eligibility are separate from UI completeness. Run `node scripts/check-locales.mjs` for catalog edits and `node scripts/check-prototype-browser.cjs` with existing Playwright/Chromium for rendered coverage; no runtime translation service or silent changes to protocolv2 cohorts/thresholds.
+
 ## Evidence discipline
 
 - Label FACT/INFERENCE/HYPOTHESIS. Every material market fact needs direct URL and checked date. Vendor page establishes an offer, not traction/learning validity. Recheck volatile prices/quotas before using them to charge or purchase.
@@ -21,13 +25,13 @@ No product code in planning/P0; static offer/paper brief suffices. After G0 only
 
 Local venv is not a sandbox. Reviewed starter code does not guarantee safety of agent edits. Do not run learner-submitted code in CI or founder environment. Public repo keeps demo/manifests/advisories only; paid artifacts and probes delivered privately by stage. Self-reported checks must stay labelled self-reported.
 
-Future web default modular monolith; require G3/G4, first-order profit, manual bottleneck>2h/week for2weeks and≤90day payback at actual volume. Delete work or use merchant delivery first. Providers isolated at thin adapters; no premature generic LLM abstraction. Contracts/version/migration/security details in ARCHITECTURE.
+Future web default modular monolith; require G3/G4, first-order profit, manual bottleneck>2h/week for2weeks and≤90day fully loaded incremental payback at actual volume, plus separate unrestricted cash coverage excluding refund liabilities. The2h trigger alone does not fund an app. Delete work or use merchant delivery first. No app practice-history/feedback persistence or pre-purchase CodeForge login by default after blueprint attacks. Providers isolated at thin adapters; no premature generic LLM abstraction. Contracts/version/migration/security details in ARCHITECTURE and blueprint/SYSTEM_DESIGN.
 
 ## Git and checks
 
 Use `codex/` branches from intended reviewed base; preserve unrelated changes. Run `node scripts/check-planning.mjs` and `git diff --check` for planning changes. Its merge-gate is documentation integrity only; future executable content/product requires appropriate tests and a new gate design.
 
-Never self-approve, lower protections, bypass required checks/reviews or merge deliberately failing negative controls. Current main ruleset requires strict `merge-gate` and independent approval. Keep PR links/issues/state synchronized, and attach created PRs to the chat. No deploy/provision/production migration is implied by planning authorization.
+Never self-approve, lower protections, bypass required checks/reviews or merge deliberately failing negative controls. Owner changed ruleset24379959 on2026-10-07: review count0, last-push approval false; strict `merge-gate` remains, bypass actors empty. PR23 merged normally; read live settings/checks before future merge rather than assuming this checkpoint remains current. Agent review never replaces an eligible review when required or a competent content review. Keep PR links/issues/state synchronized and attach created PRs to the chat. No deploy/provision/production migration is implied by planning authorization.
 
 ## Adversarial review
 

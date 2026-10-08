@@ -11,6 +11,7 @@ Checked 2026-10-07. Start with [Founder decision](DECISION_MEMO.md), then [curre
 | Can a tiny team maintain it? | [Content strategy](CONTENT_STRATEGY.md), [moat analysis](MOAT.md) |
 | What is the cheapest valid test? | [MVP](MVP.md), [frozen prelaunch protocol](VALIDATION_PLAN.md), [draft validation assets](VALIDATION_ASSETS.md) |
 | How would it work safely? | [Conditional architecture](ARCHITECTURE.md), [threat model](SECURITY_THREAT_MODEL.md) |
+| What are the screens, cheapest host and detailed contracts? | [Reconciled system blueprint](blueprint/README.md), [synthetic prototype](blueprint/prototype/index.html) |
 | Why might it fail? | [32-case premortem](RISK_REGISTER.md), [red-team reconciliation](RED_TEAM.md) |
 | Where are the independent attacks? | [Investment committee](reviews/INVESTMENT_RED_TEAM.md), [operations](reviews/OPERATIONS_RED_TEAM.md) |
 | What happens next? | [Roadmap](ROADMAP.md), [quality gate](QUALITY_GATE.md), [independent final review](reviews/FINAL_QUALITY_REVIEW.md), [agent instructions](../AGENTS.md) |

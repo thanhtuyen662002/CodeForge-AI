@@ -2,7 +2,7 @@ name: Planning integrity
 on:
   pull_request:
   push:
-    branches: [main, 'codex/strategy-validation-*']
+    branches: [main, 'codex/strategy-validation-*', 'codex/system-blueprint-*']
   merge_group:
 permissions:
   contents: read
@@ -22,4 +22,5 @@ jobs:
         with:
           node-version: '24'
       - run: node scripts/check-planning.mjs
+      - run: node scripts/check-locales.mjs
       - run: git diff --check

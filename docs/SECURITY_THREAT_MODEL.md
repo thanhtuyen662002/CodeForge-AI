@@ -4,6 +4,8 @@
 
 Assets: learner machine/secrets, release supply chain, contact/payment ledger, evaluation honesty, founder budget/time. Trust zones: canonical reviewed content; learner-controlled filesystem/agent; voluntary data; merchant source of payments; future web/auth/database. Local report untrusted; a digest does not attest execution or human authorship.
 
+The later owner-requested [blueprint attack/reconciliation](blueprint/RED_TEAM.md) adds18 technical findings and15 investment findings. Current refinements remove app practice/feedback storage, deny direct buyer Storage access, distinguish webhook receipt from applied effect, handle deletion/restore races and grant corrective releases explicitly. See [contracts](blueprint/SYSTEM_DESIGN.md) and [recovery gates](blueprint/OPERATIONS_AND_RELEASE.md). These are required design controls, not implemented or pentested protections.
+
 | Threat | Concrete attack / consequence | Cheapest boundary + verification gate |
 |---|---|---|
 | Malicious challenge repo | Changed README tells agent to upload credentials; starter imports harmful module | No third-party repo ingestion. Review all files/instructions, canonical release/commit, no hooks/install scripts, reviewer record before publish |
