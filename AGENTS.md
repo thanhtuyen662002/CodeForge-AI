@@ -10,6 +10,8 @@ P0 cap10workingdays/20h/$100; full90day160h/$500; budgets are ceilings, not auth
 
 Owner additionally authorized the system blueprint and disconnected synthetic screen prototype under `docs/blueprint`, prioritizing scarce cash. This is design scope only. Default now: static/manual, no VM/app DB; Cloudflare Pages is a conditional publication candidate. No recurring purchase, app implementation or launch is inferred. Freeze further design after its review unless new evidence changes a decision.
 
+Owner's2026-10-08 language request, followed by choosing both regional groups, authorizes localization of this prototype/design. Draft UI locales: en,vi,ja,ko,zh-Hans,de,fr,es,pt-BR; further candidates/gates in blueprint/LOCALIZATION. Native technical review, translated learning-content availability and commercial country/support eligibility are separate from UI completeness. Run `node scripts/check-locales.mjs` for catalog edits and `node scripts/check-prototype-browser.cjs` with existing Playwright/Chromium for rendered coverage; no runtime translation service or silent changes to protocolv2 cohorts/thresholds.
+
 ## Evidence discipline
 
 - Label FACT/INFERENCE/HYPOTHESIS. Every material market fact needs direct URL and checked date. Vendor page establishes an offer, not traction/learning validity. Recheck volatile prices/quotas before using them to charge or purchase.

@@ -10,6 +10,7 @@ The next step is **P0: ten working days, ≤20 founder hours and ≤$100**, with
 - [Complete strategy index](docs/INDEX.md)
 - [System blueprint, hosting choice and adversarial review](docs/blueprint/README.md)
 - [Interactive screen prototype — synthetic, local only](docs/blueprint/prototype/index.html)
+- [Language expansion — nine draft UI languages and release gates](docs/blueprint/LOCALIZATION.md)
 - [Market sources and checked dates](docs/MARKET_RESEARCH.md)
 - [Validation gates / kill criteria](docs/VALIDATION_PLAN.md)
 - [Independent red teams and reconciliation](docs/RED_TEAM.md)

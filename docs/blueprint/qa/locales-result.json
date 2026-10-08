@@ -1,0 +1,39 @@
+{
+  "checked_at": "2026-10-08T07:22:25.391Z",
+  "browser": "147.0.7727.15",
+  "locales": [
+    "en",
+    "vi",
+    "ja",
+    "ko",
+    "zh-Hans",
+    "de",
+    "fr",
+    "es",
+    "pt-BR"
+  ],
+  "screen_state_viewport_cases": 729,
+  "viewport_widths": [
+    1280,
+    390,
+    320
+  ],
+  "external_requests": [],
+  "errors": [],
+  "checks": [
+    "uncatalogued prose guard",
+    "text and attribute fallback language",
+    "complete rendered translations",
+    "placeholder/ARIA text",
+    "language URL/reload",
+    "unsupported locale fallback",
+    "missing message fallback disclosure",
+    "preserve unsent input and selected request",
+    "four help options",
+    "USD price invariant",
+    "localized notices",
+    "no persistence",
+    "keyboard skip"
+  ],
+  "limits": "Structural/browser checks only; translations are drafts, not native-speaker or instructional approval."
+}

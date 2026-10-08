@@ -16,6 +16,7 @@
   "github_approval": "OWNER_CHANGED_REVIEW_COUNT_TO_ZERO_LAST_PUSH_FALSE_NO_AGENT_SELF_APPROVAL",
   "ruleset_checkpoint": {"id":24379959, "checked_date":"2026-10-07", "required_approving_review_count":0, "require_last_push_approval":false, "strict_merge_gate":true, "bypass_actors":[]},
   "validation_status": "NOT_STARTED",
+  "localization": {"scope":"OWNER_AUTHORIZED_DISCONNECTED_PROTOTYPE_AND_DESIGN_BOTH_GROUPS", "checked_date":"2026-10-08", "ui_locales":["en","vi","ja","ko","zh-Hans","de","fr","es","pt-BR"], "status":"DRAFT_TRANSLATIONS_NOT_NATIVE_REVIEWED", "released_learning_locales":[], "candidate_locales":["id","zh-Hant","hi","ar"], "prototype_message_count":209, "author_browser_cases":729, "independent_browser_cases":243, "technical_review":"PASS_LQ01_LQ02_CLOSED_WITH_RELEASE_BLOCKERS", "review_document":"docs/blueprint/reviews/LOCALIZATION_REVIEW.md", "new_recurring_services":0, "international_customer_validation":"NOT_STARTED", "protocol_v2_unchanged":true, "document":"docs/blueprint/LOCALIZATION.md"},
   "active_phase": "P0_PREPARATION",
   "execution_start_date": null,
   "customer_counts": null,

@@ -49,6 +49,8 @@ F12/auth is a conditional claim state after purchase, not a separate onboarding 
 
 ## Prototype contract
 
+Owner-requested localization extension2026-10-08, both regional groups selected: language selector supports draft English, Vietnamese, Japanese, Korean, Simplified Chinese, German, French, Spanish and Brazilian Portuguese. It covers all nine screens; current language is independent of the screen/scenario. See [LOCALIZATION](LOCALIZATION.md) for review gates, English fallback and the distinction between UI language and an actual translated learning offer. Frozen Vietnamese customer protocol is unchanged.
+
 [Open the prototype](prototype/index.html). It is a standalone local artifact with synthetic sample states, no external assets/API/network/payment, no code download/runner and no personal data storage. Navigation and scenario buttons let a reviewer inspect normal, pending and withdrawn states. A permanent reviewer banner identifies it as a design, and any apparent payment/download action explicitly stays a simulation. All sample figures are invented UI fixtures, not CodeForge metrics.
 
 Responsive target: readable at390px and desktop1280px, keyboard-accessible navigation, visible focus, meaningful labels and status announcements. Reduced-motion users see no motion-dependent information. Diagrams/text must not rely on colour alone. No fake testimonial, user count, scarcity, guaranteed improvement or hiring value.

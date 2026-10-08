@@ -22,4 +22,5 @@ jobs:
         with:
           node-version: '24'
       - run: node scripts/check-planning.mjs
+      - run: node scripts/check-locales.mjs
       - run: git diff --check

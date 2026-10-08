@@ -22,6 +22,7 @@ The screen prototype depicts the possible S2 experience so decisions can be revi
 |---|---|
 | Cheapest hosting and when a VM becomes justified | [HOSTING_DECISION](HOSTING_DECISION.md) |
 | Features, journeys, screens and error states | [FEATURES_AND_SCREENS](FEATURES_AND_SCREENS.md) |
+| English and international language expansion | [LOCALIZATION](LOCALIZATION.md) |
 | Modules, data, API and security boundaries | [SYSTEM_DESIGN](SYSTEM_DESIGN.md) |
 | Release, recovery, tests and workload envelope | [OPERATIONS_AND_RELEASE](OPERATIONS_AND_RELEASE.md) |
 | Clickable design, synthetic data only | [Prototype](prototype/index.html) |

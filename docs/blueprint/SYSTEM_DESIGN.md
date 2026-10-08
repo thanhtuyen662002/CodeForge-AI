@@ -35,6 +35,8 @@ Two hosting vendors are not two total dependencies: merchant, SMTP and private b
 
 ## Technology choices
 
+Localization extension: [LOCALIZATION](LOCALIZATION.md) specifies static catalogs and language selection in the synthetic prototype. No runtime translation API, country-specific database or language-profile storage. Future locale routes are a presentation concern in the same app; source content/evaluator versions stay shared. This does not add a service or alter paid-country eligibility.
+
 S0 prototype/offer: plain HTML/CSS and small browser interaction; no framework build required. S1 content: Python standard library, one supported runtime minor selected and exactly tested at G1; do not claim the learner runtime is tested today. Git versions manifests/public demo; paid authoring storage is private.
 
 S2: TypeScript, currently-supported stable Next.js (observed Active LTS16) + React version supported by that release; Node24 LTS with latest security patch at implementation. One app, standard server runtime, ordinary forms/semantic CSS. No monorepo framework, ORM, design-system package or LLM SDK by default. Use Supabase client/SSR SDK behind small adapters; versioned SQL migrations and generated DB types. Zod or a similarly small schema validator is a conditional implementation choice, not installed now. Use existing Node test runner and a few browser integration tests; Python unittest for trusted lab fixtures.
