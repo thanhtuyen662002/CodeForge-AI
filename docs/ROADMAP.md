@@ -1,6 +1,25 @@
 # Evidence-gated roadmap
 
-2026-10-07. Không phase nào đã chạy. P0 là next executable phase; P1–P6 là options, không backlog cam kết. Canonical thresholds ở [VALIDATION_PLAN](VALIDATION_PLAN.md); effort trong [MVP](MVP.md). Không mở issue cho phase chưa được unlock.
+## Current owner-authorized execution order — 2026-10-24
+
+The owner explicitly authorized the full approved requirements-traceability scope and production acceptance. The historical P0-only implementation restriction below is superseded; market-validation facts and thresholds remain unproven. No product capability, provider access, production environment, or release gate is presumed complete.
+
+1. **G0 — governance/foundation:** restore and read back the independent-review policy; verify required checks and failed-merge blocking; reconcile foundation PR #1 against current main without overwriting owner-authored branches.
+2. **G1 — identity/data:** verify access to the exact Supabase project and a separate staging environment; implement Auth, migrations, grants, RLS, private Storage, and anon/learner-A/learner-B/staff negative tests.
+3. **G2 — assessment integrity:** implement server-authoritative diagnostics, deadlines, immutable versions, revision conflict, idempotent submit/grading, evidence ledger, and safe learner DTOs.
+4. **G3 — execution isolation:** prove an owned disposable Python/SQL runtime, deny-egress/resource limits/cleanup, and trusted grading outside the guest before enabling graded execution.
+5. **G4 — tutor safety:** consent, approved context only, progressive hints, server-side exam denial, quotas/budget, evaluations, and static fallback.
+6. **G5 — complete learner flow:** real registration → diagnostic → skill profile → matched lesson → Python/SQL submission → official grading → explanation → persisted dashboard after re-login, with two-user isolation.
+7. **G6 — full content/UX:** reviewed versioned content, CMS/review/correction/regrade, exam simulator, accessibility/mobile/keyboard/offline/error states, and pilot evidence.
+8. **G7 — production operations:** privacy/age/retention policy, export/delete, backup/restore and rollback drills, observability, budget/owner coverage, successful Vercel production deployment, and post-deploy smoke.
+
+Every gate must be an evidence-linked checklist. Missing credentials/runtime means NOT_RUN; use no fake backend. No paid-provider activation, new spend, external outreach/payment, destructive DB mutation, production migration, or production deployment without the necessary explicit approval and rights. Production acceptance requires the complete committed scope, exact-SHA CI/security, real integration/E2E, verified provider environment, sandbox/tutor evidence, operational readiness, and a final evidence-linked report.
+
+## Historical P0-only plan — 2026-10-07 (retained for market-validation evidence, not current implementation authorization)
+
+The original P0 thresholds below remain valid for demand claims; this scope change does not mark any phase complete.
+
+2026-10-07. P0 was the original next phase; P1–P6 were options, not a committed backlog. Canonical thresholds remain in [VALIDATION_PLAN](VALIDATION_PLAN.md); effort is in [MVP](MVP.md). No phase is marked complete merely because scope authorization changed.
 
 | Phase | Hypothesis | Deliverable | Acceptance / metric | Cost cap / allowance | Risk | Exit |
 |---|---|---|---|---|---|---|
@@ -24,7 +43,7 @@ Cash allowances total$450; retain$50 overall contingency=$500. P0 $100 hard cap;
 - P5 only if managers already identified and sufficient time/cash remains. It can replace failed B2C with one gated pivot; cannot use combined employer/personal counts to rescue G0/G3. Repeat window may exceedday90→defer, do not claim pass.
 - Day90: make STOP/PAUSE/finite-product decision. P6 needs observed≥3months, not an obligation to scale onday91.
 
-## Only three P0 work items
+## Historical P0 work items (still valid research, no longer exclusive implementation scope)
 
 1. **Freeze feasibility and protocol:** merchant/refund route, calendar, reviewer feasibility, private ledger/restore, existing provider billing inventory, two paper briefs. No executable labs or new paid resources.
 2. **Recruit/interview and run fixed offer:** after prerequisites,15interviews and30eligible offers, separated funding/relationship, all denominators/labour; founder performs/explicitly authorizes communications and payment execution.

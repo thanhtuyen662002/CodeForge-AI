@@ -1,12 +1,20 @@
 # CodeForge working rules
 
+## Owner scope override — 2026-10-24
+
+The owner explicitly directs the Lead to deliver the full approved requirements-traceability scope and production acceptance. This supersedes the historical P0-only/no-platform-implementation restriction for implementation authorization. It does not imply demand or learning validation passed, or that any product/deployment capability exists. G0–G7 remain hard evidence gates; every capability stays unaccepted until evidence is linked.
+
+This does not authorize new spend, paid-provider activation, external outreach/payment/publication, destructive database operations, production migrations, or production deployment without separate explicit approval, verified rights/target environment, and a rollback plan. Missing credentials/runtime are NOT_RUN, never fake success. Live ruleset #24379959 is ACTIVE but currently requires zero approving reviews; treat this as a G0 governance blocker and never self-approve or merge around it.
+
+## Source of truth and current scope
+
 ## Source of truth and current scope
 
 Read `docs/PROJECT_STATE.yaml`, `docs/DECISION_MEMO.md`, `docs/VALIDATION_PLAN.md`, and the live issue before starting. Latest explicit owner instruction wins. GitHub/repository evidence wins over chat recollection. Do not infer launch, payment, user count, review approval or deployed resources from a design document.
 
-Current decision is BUILD WITH CONDITIONS for P0 research only; validation NOT_STARTED. Primary: finite Python backend verification pack, $49 hypothesis, optional BYO agent, local public deterministic practice. Previous foundation product direction/backlog is strategy-hold. Do not execute old queued tickets simply because open. Existing resources/history must not be deleted or treated as unused without read-back.
+Historical strategy decision is BUILD WITH CONDITIONS; validation remains NOT_STARTED. The $49 finite Python backend verification pack and BYO-agent path remain hypotheses, not validated demand. The owner scope override above supersedes the former P0-only implementation restriction, but does not turn old issues into completed work. Re-read every issue/PR and preserve existing resources/history.
 
-P0 cap10workingdays/20h/$100; full90day160h/$500; budgets are ceilings, not authorization to buy services or contact people. Only P0 issues listed in PROJECT_STATE are executable. Do not create P1–P6 issues until evidence unlocks them. This planning change authorizes documentation/research/GitHub planning records; outreach/payment/publication execution needs a real owner instruction and resolved prerequisites.
+P0 cap10workingdays/20h/$100; full90day160h/$500; budgets are ceilings, not authorization to buy services or contact people. P0 issues remain valid research work, but are no longer the only authorized implementation scope. Do not duplicate backlog issues or mark P1–P6 accepted without evidence. Outreach/payment/publication execution still needs explicit owner authorization and resolved prerequisites.
 
 ## Evidence discipline
 
@@ -17,17 +25,17 @@ P0 cap10workingdays/20h/$100; full90day160h/$500; budgets are ceilings, not auth
 
 ## Product/architecture boundaries
 
-No product code in planning/P0; static offer/paper brief suffices. After G0 only reviewed bounded content, not platform. No cloud execution, uploads of learner code, stored API keys, hosted LLM calls, hiring score, surveillance, hidden-test secrecy claim, seasons, custom agent integration, microservices, Kubernetes, queues or vector DB without a new evidence-based decision.
+Product implementation is owner-authorized in bounded, reviewable PRs. Every capability remains disabled until its relevant G0–G7 evidence passes. Do not run learner code on the main app/CI host or Supabase app DB; SQL practice uses synthetic disposable databases. No stored provider API keys, hiring-score claims, surveillance, hidden-test secrecy claims, seasons, custom agent integrations, microservices, Kubernetes, queues, or vector DB without a separate evidence-based decision.
 
 Local venv is not a sandbox. Reviewed starter code does not guarantee safety of agent edits. Do not run learner-submitted code in CI or founder environment. Public repo keeps demo/manifests/advisories only; paid artifacts and probes delivered privately by stage. Self-reported checks must stay labelled self-reported.
 
-Future web default modular monolith; require G3/G4, first-order profit, manual bottleneck>2h/week for2weeks and≤90day payback at actual volume. Delete work or use merchant delivery first. Providers isolated at thin adapters; no premature generic LLM abstraction. Contracts/version/migration/security details in ARCHITECTURE.
+Future web default remains a modular monolith. Owner authorization permits bounded implementation, but paid/hosted services and recurring infrastructure remain gated by owner approval, relevant G3/G4 evidence, actual first-order economics, a measured manual bottleneck, ≤90-day fully loaded incremental payback at actual volume, and unrestricted cash coverage excluding refund liabilities. The 2h trigger alone does not authorize spend. Implement only minimum server-authoritative learner progress/evidence needed for the approved flow, with ownership checks, retention, export/delete and correction controls. Isolate providers behind thin adapters; avoid a premature generic LLM abstraction. Contracts/version/migration/security details remain in ARCHITECTURE.
 
 ## Git and checks
 
 Use `codex/` branches from intended reviewed base; preserve unrelated changes. Run `node scripts/check-planning.mjs` and `git diff --check` for planning changes. Its merge-gate is documentation integrity only; future executable content/product requires appropriate tests and a new gate design.
 
-Never self-approve, lower protections, bypass required checks/reviews or merge deliberately failing negative controls. Current main ruleset requires strict `merge-gate` and independent approval. Keep PR links/issues/state synchronized, and attach created PRs to the chat. No deploy/provision/production migration is implied by planning authorization.
+Never self-approve, lower protections, bypass required checks/reviews or merge deliberately failing negative controls. Live ruleset #24379959 is active with strict `merge-gate` but currently requires zero approving reviews and no independent reviewers. Do not merge until an authorized administrator restores and reads back the independent-review policy. Keep PR links/issues/state synchronized. No deploy/provision/production migration is implied by scope authorization.
 
 ## Adversarial review
 

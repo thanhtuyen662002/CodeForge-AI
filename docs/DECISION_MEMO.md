@@ -1,4 +1,11 @@
-# Founder decision — 2026-10-07
+# Founder decision — 2026-10-07 (historical strategy record)
+
+## Superseding owner scope authorization — 2026-10-24
+
+The owner explicitly directed the CodeForge AI Lead to deliver the full approved requirements-traceability scope and production acceptance. This supersedes the historical P0-only/no-platform-implementation restriction for implementation authorization. It does not change the evidence: customer validation remains NOT_STARTED; willingness-to-pay, incremental learning value, distribution, reviewer availability, and economics remain unverified; no product application or production deployment is proven. Product implementation may proceed in bounded, reviewable PRs, while G0–G7 remain mandatory and no capability may be called accepted without its evidence. This authorization alone does not approve new spend, paid services, external outreach/payments, destructive DB operations, production migrations, or production deployment. Those require the necessary owner approval, verified rights/environment, and rollback plan.
+
+The original 2026-10-07 decision below is preserved as historical context for the market hypothesis and risk analysis. Its P0-only implementation restriction is superseded; its research thresholds, no-fabricated-evidence rule, and safety conditions remain applicable.
+
 
 **BUILD WITH CONDITIONS: chỉ thực hiện P0 để mua thông tin. Dừng đầu tư platform cho tới khi có bằng chứng.** Nếu không có willingness-to-pay hoặc agent + checklist miễn phí đủ tốt, STOP là kết quả thành công của planning.
 
