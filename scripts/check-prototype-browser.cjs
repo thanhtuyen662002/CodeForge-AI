@@ -26,7 +26,7 @@ const output=path.resolve(__dirname,'../docs/blueprint/qa');
   await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('href'),'#content');
   // Keyboard-only Help path: tab to the screen selector, choose Help, then reach and operate its request selector.
   await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('id'),'screen-picker');
-  await page.keyboard.press('End');await page.keyboard.press('ArrowUp');await page.keyboard.press('Enter');
+  await page.keyboard.press('Home');for(let i=0;i<7;i++)await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');
   assert.equal(await page.locator('#screen-picker').inputValue(),'help');
   let focusId=null;
   for(let i=0;i<30;i++){focusId=await page.locator(':focus').getAttribute('id');if(focusId==='request-kind')break;await page.keyboard.press('Tab');}
