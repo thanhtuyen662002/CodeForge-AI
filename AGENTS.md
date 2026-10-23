@@ -18,7 +18,7 @@ P0 cap10workingdays/20h/$100; full90day160h/$500; budgets are ceilings, not auth
 
 - Label FACT/INFERENCE/HYPOTHESIS. Every material market fact needs direct URL and checked date. Vendor page establishes an offer, not traction/learning validity. Recheck volatile prices/quotas before using them to charge or purchase.
 - Preserve failed experiments and raw red-team critiques. Never change a threshold after inspecting results to manufacture success. Record new protocol version before new cohort; old results retain old criteria.
-- Count missing/failed setup in denominators; separate self-funded, reimbursed, employer-funded and friend cohorts. Publish only de-identified aggregate data. No user contacts, receipts, source code, credentials or transcripts in this public repo.
+- Count missing/failed setup in denominators; separate self-funded, reimbursed, employer-funded and friend cohorts. Publish only de-identified aggregate data. No user contacts, receipts, learner-submitted source code, credentials or transcripts in this public repo; this restriction does not prohibit the authorized application source.
 - No agent-generated approval substitutes for an eligible GitHub reviewer or competent independent content reviewer. Unresolved critical risks block dependent steps, not hide under future work.
 
 ## Product/architecture boundaries
