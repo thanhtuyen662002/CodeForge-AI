@@ -3,47 +3,270 @@
   "format_note": "JSON syntax is a YAML 1.2 subset; parsed by the dependency-free planning checker.",
   "checked_date": "2026-10-07",
   "repository": "thanhtuyen662002/CodeForge-AI",
-  "decision": "BUILD_WITH_CONDITIONS",
-  "authorized_strategy_scope": "P0 validation assets and gated demand experiment; not platform implementation",
-  "strategy_status": "MERGED_RECONCILED_P0_STRATEGY",
+  "decision": "OWNER_AUTHORIZED_BUILD_WITH_RELEASE_GATES",
+  "authorized_strategy_scope": "Full approved requirements-traceability and production-acceptance implementation; owner instruction 2026-10-24 supersedes the prior P0-only implementation restriction; G0-G7 remain hard evidence gates; no unapproved spend or production operations.",
+  "strategy_status": "OWNER_SCOPE_OVERRIDE_AUTHORIZED_PENDING_REVIEWABLE_RECONCILIATION",
   "branch": "codex/system-blueprint-20261007",
   "strategy_pr": "https://github.com/thanhtuyen662002/CodeForge-AI/pull/23",
-  "main_integration": "STRATEGY_PR23_MERGED_BLUEPRINT_PENDING",
-  "strategy_merge": {"sha":"a0e7296d78bec368ef1c22bd022a916c2bf6c754", "merged_at":"2026-10-07T09:09:51Z", "method":"NORMAL_SQUASH_NO_BYPASS"},
-  "blueprint": {"status":"DESIGN_RECONCILED_INDEPENDENT_REVIEW_PASS_PR_OPEN", "entry":"docs/blueprint/README.md", "pr":"https://github.com/thanhtuyen662002/CodeForge-AI/pull/24", "owner_instruction":"Design architecture/features/screens and attack; minimize early cash", "new_recurring_infra_usd":0, "chosen_now":"STATIC_MANUAL_NO_VM_NO_APP_DB", "product_code":false, "disconnected_synthetic_prototype":true, "independent_findings":33, "final_review":"PASS_WITH_EXPLICIT_EXECUTION_BLOCKERS_BQ01_BQ02_CLOSED", "record_checkpoint_date":"2026-10-08", "goal_effort_snapshot":{"recorded_active_seconds":2325,"observed_at":"2026-10-08T01:58:27Z","human_hours":null,"agent_usage_cash_cost":null,"meaning":"Cumulative active goal time at this checkpoint, not total wall-clock or human billable hours; final publication adds time"}},
+  "main_integration": "STRATEGY_PR23_MERGED_BLUEPRINT_PR24_OPEN_SCOPE_OVERRIDE_PATCH_IN_REVIEW",
+  "strategy_merge": {
+    "sha": "a0e7296d78bec368ef1c22bd022a916c2bf6c754",
+    "merged_at": "2026-10-07T09:09:51Z",
+    "method": "NORMAL_SQUASH_NO_BYPASS"
+  },
+  "blueprint": {
+    "status": "DESIGN_RECONCILED_INDEPENDENT_REVIEW_PASS_PR_OPEN",
+    "entry": "docs/blueprint/README.md",
+    "pr": "https://github.com/thanhtuyen662002/CodeForge-AI/pull/24",
+    "owner_instruction": "Design architecture/features/screens and attack; minimize early cash",
+    "new_recurring_infra_usd": 0,
+    "chosen_now": "STATIC_MANUAL_NO_VM_NO_APP_DB",
+    "product_code": false,
+    "disconnected_synthetic_prototype": true,
+    "independent_findings": 33,
+    "final_review": "PASS_WITH_EXPLICIT_EXECUTION_BLOCKERS_BQ01_BQ02_CLOSED",
+    "record_checkpoint_date": "2026-10-08",
+    "goal_effort_snapshot": {
+      "recorded_active_seconds": 2325,
+      "observed_at": "2026-10-08T01:58:27Z",
+      "human_hours": null,
+      "agent_usage_cash_cost": null,
+      "meaning": "Cumulative active goal time at this checkpoint, not total wall-clock or human billable hours; final publication adds time"
+    }
+  },
   "independent_agent_red_teams": "COMPLETE_42_FINDINGS_RECONCILED",
   "independent_final_review": "PASS_WITH_EXPLICIT_EXECUTION_BLOCKERS_9_FINDINGS_CORRECTED",
-  "github_approval": "OWNER_CHANGED_REVIEW_COUNT_TO_ZERO_LAST_PUSH_FALSE_NO_AGENT_SELF_APPROVAL",
-  "ruleset_checkpoint": {"id":24379959, "checked_date":"2026-10-07", "required_approving_review_count":0, "require_last_push_approval":false, "strict_merge_gate":true, "bypass_actors":[]},
+  "github_approval": "LIVE_READBACK_2026-10-24: required approving review count is 0; governance defect; independent reviewer not evidenced",
+  "ruleset_checkpoint": {
+    "id": 24379959,
+    "checked_date": "2026-10-24",
+    "enforcement": "active",
+    "required_approving_review_count": 0,
+    "required_reviewers": [],
+    "require_last_push_approval": false,
+    "strict_merge_gate": true,
+    "bypass_actors": [],
+    "governance_result": "BLOCKED_INDEPENDENT_REVIEW_POLICY"
+  },
   "validation_status": "NOT_STARTED",
-  "localization": {"scope":"OWNER_AUTHORIZED_DISCONNECTED_PROTOTYPE_AND_DESIGN_BOTH_GROUPS", "checked_date":"2026-10-08", "ui_locales":["en","vi","ja","ko","zh-Hans","de","fr","es","pt-BR"], "status":"DRAFT_TRANSLATIONS_NOT_NATIVE_REVIEWED", "released_learning_locales":[], "candidate_locales":["id","zh-Hant","hi","ar"], "prototype_message_count":209, "author_browser_cases":729, "independent_browser_cases":243, "technical_review":"PASS_LQ01_LQ02_CLOSED_WITH_RELEASE_BLOCKERS", "review_document":"docs/blueprint/reviews/LOCALIZATION_REVIEW.md", "new_recurring_services":0, "international_customer_validation":"NOT_STARTED", "protocol_v2_unchanged":true, "document":"docs/blueprint/LOCALIZATION.md"},
-  "active_phase": "P0_PREPARATION",
+  "localization": {
+    "scope": "OWNER_AUTHORIZED_DISCONNECTED_PROTOTYPE_AND_DESIGN_BOTH_GROUPS",
+    "checked_date": "2026-10-08",
+    "ui_locales": [
+      "en",
+      "vi",
+      "ja",
+      "ko",
+      "zh-Hans",
+      "de",
+      "fr",
+      "es",
+      "pt-BR"
+    ],
+    "status": "DRAFT_TRANSLATIONS_NOT_NATIVE_REVIEWED",
+    "released_learning_locales": [],
+    "candidate_locales": [
+      "id",
+      "zh-Hant",
+      "hi",
+      "ar"
+    ],
+    "prototype_message_count": 209,
+    "author_browser_cases": 729,
+    "independent_browser_cases": 243,
+    "technical_review": "PASS_LQ01_LQ02_CLOSED_WITH_RELEASE_BLOCKERS",
+    "review_document": "docs/blueprint/reviews/LOCALIZATION_REVIEW.md",
+    "new_recurring_services": 0,
+    "international_customer_validation": "NOT_STARTED",
+    "protocol_v2_unchanged": true,
+    "document": "docs/blueprint/LOCALIZATION.md"
+  },
+  "active_phase": "FOUNDATION_GOVERNANCE_RECONCILIATION",
   "execution_start_date": null,
   "customer_counts": null,
   "payments": null,
   "product_implemented": false,
   "deployed_application_verified": false,
-  "provider_state": "Historical Supabase report in issue 17; current health/billing not independently verified; Vercel unknown",
+  "provider_state": "CodeForge ref qvufngaseebmaxzthrdi was not visible in current Supabase project listing; get_project returned permission denied. Vercel access is not available in this session. Exact environment/health/billing remain NOT_VERIFIED.",
   "primary_thesis": "Finite Python backend verification drill pack",
   "fallback_thesis": "Fixed-scope team review clinic, only after separate manager demand gate",
   "price_hypothesis_usd": 49,
   "paid_labs": 2,
   "static_measurement_probes": 4,
-  "p0_limits": {"working_days": 10, "hours": 20, "cash_usd": 100, "interviews": 15, "eligible_offers": 30, "targeted_contacts": 60},
-  "p0_thresholds": {"concrete_incidents": 8, "self_funded_full_price_payments": 5},
-  "total_90_day_limits": {"hours": 160, "cash_usd": 500, "eligible_offers": 120, "targeted_contacts": 240, "pivots": 1},
-  "next_executable_issues": [
-    {"number": 20, "url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/20", "scope": "P0 feasibility/protocol", "state": "OPEN_NOT_STARTED"},
-    {"number": 21, "url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/21", "scope": "P0 interviews/fixed offer", "depends_on": [20], "state": "OPEN_NOT_STARTED"},
-    {"number": 22, "url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/22", "scope": "G0 aggregate decision", "depends_on": [20,21], "state": "OPEN_NOT_STARTED"}
-  ],
-  "legacy_backlog": {"issue_numbers": [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17], "pr_numbers": [1,18,19], "disposition": "STRATEGY_HOLD", "github_labels_applied": true},
+  "p0_limits": {
+    "working_days": 10,
+    "hours": 20,
+    "cash_usd": 100,
+    "interviews": 15,
+    "eligible_offers": 30,
+    "targeted_contacts": 60
+  },
+  "p0_thresholds": {
+    "concrete_incidents": 8,
+    "self_funded_full_price_payments": 5
+  },
+  "total_90_day_limits": {
+    "hours": 160,
+    "cash_usd": 500,
+    "eligible_offers": 120,
+    "targeted_contacts": 240,
+    "pivots": 1
+  },
+  "legacy_backlog": {
+    "issue_numbers": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "pr_numbers": [
+      1,
+      18,
+      19
+    ],
+    "disposition": "OWNER_SCOPE_OVERRIDE_AUTHORIZED; legacy issue labels still require live reconciliation before dispatch",
+    "github_labels_applied": true
+  },
   "tracker": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/17",
-  "publication_readback": "Strategy23 merged; blueprint24 separate open design PR; tracker17 retains historical body with current merge/design notice; P0 issue20/21/22 links now target main protocol; no new implementation issues",
-  "ci_evidence": {"checked_commit": "a0e7296d78bec368ef1c22bd022a916c2bf6c754", "check": "merge-gate", "result": "SUCCESS", "url": "https://github.com/thanhtuyen662002/CodeForge-AI/actions/runs/37598703142", "latest_head_authority": "Read live checks for the blueprint PR; this observation is strategy main after merge"},
-  "critical_unknowns": ["Self-funded WTP", "Incremental learning value vs agent plus free checklist", "Repeatable distribution and CAC", "Competent independent content reviewer availability", "Actual content/support economics", "Merchant/refund eligibility before charging"],
+  "publication_readback": "PR23 is merged; PR24 remains open; owner scope override is authorized by current instruction and being reconciled in a reviewable patch; legacy issues still carry strategy-hold labels pending synchronization.",
+  "ci_evidence": {
+    "checked_commit": "a0e7296d78bec368ef1c22bd022a916c2bf6c754",
+    "check": "merge-gate",
+    "result": "SUCCESS",
+    "url": "https://github.com/thanhtuyen662002/CodeForge-AI/actions/runs/37598703142",
+    "latest_head_authority": "Read live checks for the blueprint PR; this observation is strategy main after merge"
+  },
+  "critical_unknowns": [
+    "Self-funded WTP",
+    "Incremental learning value vs agent plus free checklist",
+    "Repeatable distribution and CAC",
+    "Competent independent content reviewer availability",
+    "Actual content/support economics",
+    "Merchant/refund eligibility before charging",
+    "Independent GitHub reviewer and compliant approval policy",
+    "Access to exact Supabase project qvufngaseebmaxzthrdi",
+    "Vercel project/deployment access",
+    "Real isolated sandbox runtime and cost/limit evidence",
+    "Full product implementation and G0-G7 release evidence"
+  ],
   "canonical_protocol": "docs/VALIDATION_PLAN.md",
   "protocol_version": 2,
   "kill_rule": "Do not build platform to rescue failed G0/G3; insufficient sample is PAUSE, observed demand/value failure is STOP per protocol",
-  "prohibited_current_scope": ["Cloud learner-code execution", "AI tutor or judge", "Hiring or verified skills claims", "Leaderboards", "Seasons", "Stored provider API keys", "Product implementation before gate", "PII in public repository"]
+  "prohibited_current_scope": [
+    "Hiring or verified-skills claims",
+    "Leaderboards",
+    "Seasons",
+    "Stored provider API keys",
+    "Unapproved paid-provider activation or infrastructure spend",
+    "External outreach/payment/publication without explicit authorization and resolved prerequisites",
+    "Production database mutation or deployment without verified target environment, rights, and rollback plan",
+    "PII in public repository"
+  ],
+  "state_updated_date": "2026-10-24",
+  "p0_validation_issues": [
+    {
+      "number": 20,
+      "url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/20",
+      "scope": "P0 feasibility/protocol",
+      "state": "OPEN_NOT_STARTED"
+    },
+    {
+      "number": 21,
+      "url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/21",
+      "scope": "P0 interviews/fixed offer",
+      "depends_on": [
+        20
+      ],
+      "state": "OPEN_NOT_STARTED"
+    },
+    {
+      "number": 22,
+      "url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/22",
+      "scope": "G0 aggregate decision",
+      "depends_on": [
+        20,
+        21
+      ],
+      "state": "OPEN_NOT_STARTED"
+    }
+  ],
+  "next_execution_order": [
+    "G0: restore and read back the independent-review ruleset; verify protected merge behavior",
+    "Foundation: reconcile the stale PR #1 against current main without overwriting owner-authored branches",
+    "G1: verify the exact Supabase project/environment and staging access; implement/test auth, RLS, and private storage",
+    "G2: implement server-authoritative assessment, revisions, idempotency, grading, and evidence",
+    "G3: prove an owned isolated execution runtime and trusted external grader before enabling graded code/SQL",
+    "G4: implement gated tutor with consent, quotas, exam denial, and static fallback",
+    "G5: prove the complete persisted learner flow on real staging services",
+    "G6: finish reviewed content, CMS, exam, accessibility, and pilot correction flows",
+    "G7: prove privacy, export/delete, backup/restore, rollback, observability, budget ownership, and production deployment"
+  ],
+  "owner_scope_override": {
+    "date": "2026-10-24",
+    "authority": "Explicit owner instruction to CodeForge AI Lead",
+    "authorized_scope": "Full approved requirements traceability and production acceptance",
+    "supersedes": "P0-only/no-platform-implementation restriction",
+    "repository_reconciliation": "REVIEWABLE_PATCH_IN_PROGRESS",
+    "validation_status": "NOT_STARTED",
+    "product_implementation": "AUTHORIZED_NOT_STARTED",
+    "production_acceptance": "NOT_ACCEPTED",
+    "external_spend_and_production_operations": "REQUIRE_SEPARATE_APPROVAL_AND_VERIFIED_RIGHTS"
+  },
+  "gated_capabilities": [
+    {
+      "gate": "G1",
+      "capability": "Supabase Auth, RLS, grants, private Storage and migrations",
+      "status": "OPEN_NOT_VERIFIED"
+    },
+    {
+      "gate": "G2",
+      "capability": "Server-authoritative assessment and grading integrity",
+      "status": "OPEN_NOT_VERIFIED"
+    },
+    {
+      "gate": "G3",
+      "capability": "Isolated Python/SQL execution and trusted external grader",
+      "status": "OPEN_NOT_VERIFIED"
+    },
+    {
+      "gate": "G4",
+      "capability": "AI tutor with consent, quota, exam denial and static fallback",
+      "status": "OPEN_NOT_VERIFIED"
+    },
+    {
+      "gate": "G5",
+      "capability": "Complete learner flow and persistence after re-login",
+      "status": "OPEN_NOT_VERIFIED"
+    },
+    {
+      "gate": "G6",
+      "capability": "Reviewed content, CMS, exam and accessibility/pilot",
+      "status": "OPEN_NOT_VERIFIED"
+    },
+    {
+      "gate": "G7",
+      "capability": "Production deployment and operational/privacy readiness",
+      "status": "OPEN_NOT_VERIFIED"
+    }
+  ],
+  "latest_main_ci_evidence": {
+    "checked_date": "2026-10-24",
+    "checked_commit": "c13586483d1bfc90e6ec7d6375fe6ca8debf5998",
+    "check": "merge-gate",
+    "result": "SUCCESS",
+    "url": "https://github.com/thanhtuyen662002/CodeForge-AI/actions/runs/39914790388",
+    "scope": "Planning/document integrity only; not product build, Auth/RLS, sandbox, E2E or deployment"
+  }
 }
