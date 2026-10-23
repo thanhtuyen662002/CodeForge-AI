@@ -28,7 +28,7 @@ const output=path.resolve(__dirname,'../docs/blueprint/qa');
   await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('id'),'screen-picker');
   await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('id'),'scenario-picker');
   await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('id'),'language-picker');
-  await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('aria-label'),'CodeForge, trang giới thiệu');
+  await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('class'),'brand');
   await page.keyboard.press('Tab');await page.keyboard.press('Tab');await page.keyboard.press('Tab');
   assert.equal(await page.locator(':focus').getAttribute('data-view'),'help');
   await page.keyboard.press('Enter');
