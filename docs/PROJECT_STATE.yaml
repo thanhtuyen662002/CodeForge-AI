@@ -15,12 +15,12 @@
     "method": "NORMAL_SQUASH_NO_BYPASS"
   },
   "blueprint": {
-    "status": "DESIGN_RECONCILED_INDEPENDENT_REVIEW_PASS_PR_OPEN",
+    "status": "DESIGN_RECONCILED_PR24_OPEN_SCOPE_OVERRIDE_PR27_OPEN_NOT_IMPLEMENTED",
     "entry": "docs/blueprint/README.md",
     "pr": "https://github.com/thanhtuyen662002/CodeForge-AI/pull/24",
-    "owner_instruction": "Design architecture/features/screens and attack; minimize early cash",
+    "owner_instruction": "Original blueprint minimized early cash; owner instruction 2026-10-24 now authorizes full approved traceability implementation with G0-G7 gates and no unapproved spend",
     "new_recurring_infra_usd": 0,
-    "chosen_now": "STATIC_MANUAL_NO_VM_NO_APP_DB",
+    "chosen_now": "NO_PAID_INFRASTRUCTURE_UNTIL_GATE; OWNER_AUTHORIZED_IMPLEMENTATION_WITH_G0_G7_GATES",
     "product_code": false,
     "disconnected_synthetic_prototype": true,
     "independent_findings": 33,
@@ -163,7 +163,7 @@
   ],
   "canonical_protocol": "docs/VALIDATION_PLAN.md",
   "protocol_version": 2,
-  "kill_rule": "Do not build platform to rescue failed G0/G3; insufficient sample is PAUSE, observed demand/value failure is STOP per protocol",
+  "kill_rule": "Market/demand claims remain subject to protocol v2; STOP/PAUSE applies to the commercial thesis, while the owner-authorized implementation scope remains bounded by G0-G7 and separate spend/production approvals. Do not claim validation or release acceptance without evidence.",
   "prohibited_current_scope": [
     "Hiring or verified-skills claims",
     "Leaderboards",
@@ -218,7 +218,7 @@
     "authority": "Explicit owner instruction to CodeForge AI Lead",
     "authorized_scope": "Full approved requirements traceability and production acceptance",
     "supersedes": "P0-only/no-platform-implementation restriction",
-    "repository_reconciliation": "REVIEWABLE_PATCH_IN_PROGRESS",
+    "repository_reconciliation": "PR27_OPEN_CI_PASS_REVIEW_REQUIRED",
     "validation_status": "NOT_STARTED",
     "product_implementation": "AUTHORIZED_NOT_STARTED",
     "production_acceptance": "NOT_ACCEPTED",
