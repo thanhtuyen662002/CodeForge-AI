@@ -24,10 +24,12 @@ jobs:
           node-version: '24'
       - run: node scripts/check-planning.mjs
       - run: node scripts/check-locales.mjs
-      - name: Install pinned Playwright and Chromium
-        run: |
-          npm install --no-save --package-lock=false playwright@1.63.0
-          npx playwright install --with-deps chromium
+      - name: Install pinned Playwright package
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: npm install --no-save --package-lock=false playwright@1.63.0
+      - name: Install pinned Chromium
+        run: npx playwright install --with-deps chromium
       - name: Run prototype browser and keyboard smoke
         run: node scripts/check-prototype-browser.cjs
       - name: Check committed diff whitespace
