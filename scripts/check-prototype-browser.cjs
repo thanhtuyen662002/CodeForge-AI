@@ -1,4 +1,4 @@
-// Optional local browser QA using an already installed Playwright/Chromium. No dependency install.
+// Reproducible local/CI browser QA. CI installs a pinned Playwright/Chromium pair; local runs may reuse an existing install.
 const {chromium}=require(process.env.CODEFORGE_PLAYWRIGHT_MODULE || 'playwright');
 const fs=require('node:fs');const assert=require('node:assert/strict');
 const http=require('node:http');const path=require('node:path');
@@ -24,6 +24,15 @@ const output=path.resolve(__dirname,'../docs/blueprint/qa');
   const locales=['en','vi','ja','ko','zh-Hans','de','fr','es','pt-BR'];const screens=['offer','demo','order','library','lab','results','debrief','help','operations'];
   await page.goto(base);assert.equal(await page.locator('html').getAttribute('lang'),'en');
   await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('href'),'#content');
+  // Keyboard-only Help path: tab to the screen selector, choose Help, then reach and operate its request selector.
+  await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('id'),'screen-picker');
+  await page.keyboard.press('End');await page.keyboard.press('ArrowUp');await page.keyboard.press('Enter');
+  assert.equal(await page.locator('#screen-picker').inputValue(),'help');
+  let focusId=null;
+  for(let i=0;i<30;i++){focusId=await page.locator(':focus').getAttribute('id');if(focusId==='request-kind')break;await page.keyboard.press('Tab');}
+  assert.equal(focusId,'request-kind','keyboard Tab reaches Help request selector');
+  await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');
+  assert.equal(await page.locator('#request-kind').evaluate(e=>e.selectedIndex),1,'keyboard selects Help request option');
   for(const locale of locales){
    await page.selectOption('#language-picker',locale);assert.equal(new URL(page.url()).searchParams.get('lang'),locale);
    for(const width of [1280,390,320]){
