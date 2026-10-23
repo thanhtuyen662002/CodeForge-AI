@@ -45,7 +45,7 @@
 ,
   "state_updated_date": "2026-10-24",
   "ruleset_checkpoint": {"id": 24379959, "checked_date": "2026-10-24", "enforcement": "active", "required_approving_review_count": 0, "required_reviewers": [], "require_last_push_approval": false, "strict_merge_gate": true, "bypass_actors": [], "governance_result": "BLOCKED_INDEPENDENT_REVIEW_POLICY"},
-  "owner_scope_override": {"date": "2026-10-24", "authority": "Explicit owner instruction to CodeForge AI Lead", "authorized_scope": "Full approved requirements traceability and production acceptance", "supersedes": "P0-only/no-platform-implementation restriction", "repository_reconciliation": "MAIN_BASE_PATCH_PENDING_INDEPENDENT_REVIEW", "validation_status": "NOT_STARTED", "product_implementation": "AUTHORIZED_NOT_STARTED", "production_acceptance": "NOT_ACCEPTED", "external_spend_and_production_operations": "REQUIRE_SEPARATE_APPROVAL_AND_VERIFIED_RIGHTS"},
+  "owner_scope_override": {"date": "2026-10-24", "authority": "Explicit owner instruction to CodeForge AI Lead", "authorized_scope": "Full approved requirements traceability and production acceptance", "supersedes": "P0-only/no-platform-implementation restriction", "repository_reconciliation": "PR28_OPEN_PENDING_INDEPENDENT_REVIEW", "validation_status": "NOT_STARTED", "product_implementation": "AUTHORIZED_NOT_STARTED", "production_acceptance": "NOT_ACCEPTED", "external_spend_and_production_operations": "REQUIRE_SEPARATE_APPROVAL_AND_VERIFIED_RIGHTS"},
   "gated_capabilities": [
     {"gate": "G0", "capability": "Repository governance and independent-review enforcement", "status": "BLOCKED_INDEPENDENT_REVIEW_POLICY"},
     {"gate": "G1", "capability": "Supabase Auth, RLS, grants, private Storage and migrations", "status": "OPEN_NOT_VERIFIED"},
