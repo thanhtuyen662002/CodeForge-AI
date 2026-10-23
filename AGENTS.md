@@ -8,8 +8,6 @@ This does not authorize new spend, paid-provider activation, external outreach/p
 
 ## Source of truth and current scope
 
-## Source of truth and current scope
-
 Read `docs/PROJECT_STATE.yaml`, `docs/DECISION_MEMO.md`, `docs/VALIDATION_PLAN.md`, and the live issue before starting. Latest explicit owner instruction wins. GitHub/repository evidence wins over chat recollection. Do not infer launch, payment, user count, review approval or deployed resources from a design document.
 
 Historical strategy decision is BUILD WITH CONDITIONS; validation remains NOT_STARTED. The $49 finite Python backend verification pack and BYO-agent path remain hypotheses, not validated demand. The owner scope override above supersedes the former P0-only implementation restriction, but does not turn old issues into completed work. Re-read every issue/PR and preserve existing resources/history.
