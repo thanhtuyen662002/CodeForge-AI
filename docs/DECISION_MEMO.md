@@ -1,4 +1,11 @@
-# Founder decision — 2026-10-07
+# Founder decision — 2026-10-07 (historical strategy record)
+
+## Superseding owner scope authorization — 2026-10-24
+
+The owner explicitly directed the CodeForge AI Lead to deliver the full approved requirements-traceability scope and production acceptance. This supersedes the historical P0-only/no-platform-implementation restriction for implementation authorization. It does not change the evidence: customer validation remains NOT_STARTED; willingness-to-pay, incremental learning value, distribution, reviewer availability, and economics remain unverified; no product application or production deployment is proven. Product implementation may proceed in bounded, reviewable PRs, while G0–G7 remain mandatory and no capability may be called accepted without its evidence. This authorization alone does not approve new spend, paid services, external outreach/payments, destructive DB operations, production migrations, or production deployment. Those require the necessary owner approval, verified rights/environment, and rollback plan.
+
+The original 2026-10-07 decision below is preserved as historical context for the market hypothesis and risk analysis. Its P0-only implementation restriction is superseded; its research thresholds, no-fabricated-evidence rule, and safety conditions remain applicable.
+
 
 **BUILD WITH CONDITIONS: chỉ thực hiện P0 để mua thông tin. Dừng đầu tư platform cho tới khi có bằng chứng.** Nếu không có willingness-to-pay hoặc agent + checklist miễn phí đủ tốt, STOP là kết quả thành công của planning.
 
@@ -15,7 +22,7 @@
 11. **Operating cost:** CodeForge LLM/cloud-execution $0 trong MVP. Shadow labour$30/h; content40h=$1,200; pack variable economic cost$9.965, contribution79.7% **trước** content/CAC/fixed. Với100 sales giả định content$12/pack; chỉ25 sales thì lỗ$8.965/pack sau content. Optional host$80/mo chưa cần.
 12. **Rủi ro lớn nhất:** không ai tự trả, agent thay thế value, đo completion thay learning, khó recruit, content/reviewer/support tốn hơn dự kiến. Merchant và reviewer còn unresolved, không được che bằng roadmap.
 13. **Kill:** trong10 ngày làm việc/20h/$100:15 interviews,30eligible offers,≥8 incidents và≥5 stranger self-funded payments. Đủ mẫu mà fail→STOP B2C. Không recruit/merchant feasible trongcap→PAUSE. Sau đó cần G2 onboarding, G3 self-serve$49, G4 learning/repeat, G6 actual margins; [protocol](VALIDATION_PLAN.md) là canonical.
-14. **Không xây:** general coding school, AI tutor/judge, browser IDE/cloud sandbox, hidden-test service, seasons, leaderboard, certificate/hiring passport, custom agent integrations, microservices/queues/vector DB. Supabase/Vercel là lựa chọn có điều kiện, không requirement P0.
+14. **Historical P0 exclusions — reconciled by owner scope authorization:** this was the 2026-10-07 no-platform decision, not a permanent ban on the later owner-approved requirements. The approved traceability scope includes an accessible browser coding workspace, isolated Python/SQL execution after G3, AI tutor after G4, and exam/CMS capabilities after their gates. Do not enable these before evidence passes. Still out of scope unless separately authorized: general coding-school expansion, hiring/verified-skills claims, surveillance, seasons, leaderboards, certificates/hiring passports, custom agent integrations, microservices, queues, and vector DB. Supabase/Vercel remain conditional on verified project access, approved budget, and release gates.
 15. **90 ngày:** ngày1–14 P0; nếu pass,15–28 content/review;29–38 pilot/comparator;ngày39 G3offers, payment cutoff45 và refund-mature readout59; sau pass tuyển thêm đếnngày70, đọc delayed outcomes ngày90. Lịch trễ có thể dẫn PAUSE, không nới gate. G5 team clinic$300 chỉ khi manager demand riêng và budget còn; không ép chạy song song. Tổng160h/$500, một pivot tối đa; thiếu mẫu→PAUSE.
 
 **Open blockers được chấp nhận chỉ để làm research:** WTP, incremental value và distribution. **Blockers trước charge/release:** merchant/refund readiness, feasible delivery promise; competent independent content reviewer và G1 trước executable release. **Blockers trước merge:** required CI + eligible independent GitHub approval. Hai agent phản biện không phải human approval hoặc content expert sign-off.
