@@ -64,7 +64,16 @@ assert.equal(blueprint.validation_status, state.validation_status);
 assert.equal(blueprint.current_new_recurring_infra_usd, 0);
 assert.equal(blueprint.stored_practice_history, false);
 assert.equal(state.strategy_merge.sha, 'a0e7296d78bec368ef1c22bd022a916c2bf6c754');
-assert.equal(state.main_integration, 'STRATEGY_PR23_MERGED_BLUEPRINT_PENDING');
+assert.equal(state.main_integration, 'STRATEGY_PR23_MERGED_BLUEPRINT_PR24_OPEN_SCOPE_OVERRIDE_PATCH_IN_REVIEW');
+assert.equal(state.decision, 'OWNER_AUTHORIZED_BUILD_WITH_RELEASE_GATES');
+assert.equal(state.owner_scope_override?.production_acceptance, 'NOT_ACCEPTED');
+assert.equal(state.owner_scope_override?.validation_status, 'NOT_STARTED');
+assert.equal(state.product_implemented, false, 'Owner authorization must not imply implementation');
+assert.equal(state.deployed_application_verified, false, 'Owner authorization must not imply deployment');
+assert.equal(state.ruleset_checkpoint?.governance_result, 'BLOCKED_INDEPENDENT_REVIEW_POLICY');
+for (const gate of ['G1','G2','G3','G4','G5','G6','G7']) {
+  assert.equal(state.gated_capabilities.find(item => item.gate === gate)?.status, 'OPEN_NOT_VERIFIED', `${gate} must remain open until evidence exists`);
+}
 assert.equal(blueprint.screen_ids.length, 9);
 assert.equal(new Set(blueprint.screen_ids).size, 9);
 assert.equal(blueprint.feature_ids.length, 12);
