@@ -24,9 +24,14 @@ const output=path.resolve(__dirname,'../docs/blueprint/qa');
   const locales=['en','vi','ja','ko','zh-Hans','de','fr','es','pt-BR'];const screens=['offer','demo','order','library','lab','results','debrief','help','operations'];
   await page.goto(base);assert.equal(await page.locator('html').getAttribute('lang'),'en');
   await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('href'),'#content');
-  // Keyboard-only Help path: tab to the screen selector, choose Help, then reach and operate its request selector.
+  // Keyboard-only Help path: tab through the header, activate Help, then reach and operate its request selector.
   await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('id'),'screen-picker');
-  await page.keyboard.press('Home');for(let i=0;i<7;i++)await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');
+  await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('id'),'scenario-picker');
+  await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('id'),'language-picker');
+  await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('aria-label'),'CodeForge, trang giới thiệu');
+  await page.keyboard.press('Tab');await page.keyboard.press('Tab');await page.keyboard.press('Tab');
+  assert.equal(await page.locator(':focus').getAttribute('data-view'),'help');
+  await page.keyboard.press('Enter');
   assert.equal(await page.locator('#screen-picker').inputValue(),'help');
   let focusId=null;
   for(let i=0;i<30;i++){focusId=await page.locator(':focus').getAttribute('id');if(focusId==='request-kind')break;await page.keyboard.press('Tab');}
