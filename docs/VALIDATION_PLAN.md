@@ -1,5 +1,7 @@
 # Validation protocol v2 — reconciled trước launch
 
+> **Implementation-scope clarification — 2026-10-24:** Protocol v2 remains frozen and its status remains **NOT STARTED**. The owner's current explicit instruction authorizes the full approved implementation/production-acceptance scope in parallel with honest validation tracking; this protocol is a business-evidence gate, not a prohibition on engineering work. Do not change its cohort, thresholds, budget or kill rules after observing outcomes. This note does not authorize outreach, payment/collection, provider activation, production deployment/mutation, or spending. G0–G7 and product/deployment statuses must remain evidence-based; no gate passes because this note exists.
+
 2026-10-07. Status: **NOT STARTED**; mọi count = chưa đo, không phải 0 người từ một experiment đã chạy. Các ngưỡng là quyết định đầu tư HYPOTHESIS, không phải benchmark thị trường. Commit protocol này trước tuyển người. Ngày T0 = ngày bắt đầu experiment được ghi; không giả sử đã launch hôm nay.
 
 ## Population và rules
