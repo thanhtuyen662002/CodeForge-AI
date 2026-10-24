@@ -81,7 +81,7 @@ document.addEventListener('click', event => {
     case 'quarantine': scenario = 'withdrawn'; render(); showNotice('Đã đổi trạng thái mẫu sang tạm dừng. Không có bản phát hành thật bị thay đổi.'); break;
   }
 });
-picker.addEventListener('change', () => { screen = picker.value; render(); });
-scenarioPicker.addEventListener('change', () => { scenario = scenarioPicker.value; render(); });
+picker.addEventListener('change', () => { screen = picker.value; render(false); });
+scenarioPicker.addEventListener('change', () => { scenario = scenarioPicker.value; render(false); });
 document.addEventListener('codeforge:language', () => { document.title = `${CodeForgeI18n.text(screens[screen])} — CodeForge`; });
 render(false);
