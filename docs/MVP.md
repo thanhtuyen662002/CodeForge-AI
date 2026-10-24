@@ -1,5 +1,7 @@
 # MVP — experiment trước platform
 
+> **Scope authority reconciliation — 2026-10-24:** This document preserves the historical cash-first/P0 validation proposal; it is not a prohibition on the owner's explicit authorization to implement the full approved CodeForge requirements-traceability scope. That authorization does **not** mean demand or learning validation passed, nor that any release gate passed. Keep validation `NOT_STARTED`, G0 blocked until repository governance is actually repaired, G1–G7 unverified until evidence exists, and product/deployment status factual. This note does not authorize paid outreach, charges, provider activation, production mutation, or new spending. The frozen business-validation protocol below must not be silently changed or used to block independently verifiable engineering work; capabilities remain disabled until their own gates pass.
+
 2026-10-07. Tất cả phạm vi, effort và ngân sách dưới đây là HYPOTHESIS/giới hạn đề xuất; **chưa implement, chưa deploy**.
 
 ## P0: cheapest valid experiment
