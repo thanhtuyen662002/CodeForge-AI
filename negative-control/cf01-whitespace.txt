@@ -1,0 +1,1 @@
+This line intentionally has trailing whitespace for a controlled merge-gate negative control. 
