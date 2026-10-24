@@ -26,7 +26,16 @@ const output=path.resolve(__dirname,'../docs/blueprint/qa');
   await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('href'),'#content');
   // Keyboard-only Help path: tab through the header, activate Help, then reach and operate its request selector.
   await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('id'),'screen-picker');
+  // Keyboard-operated pickers must retain focus after rerender, and the next Tab must advance normally.
+  const initialHeading=await page.locator('#content h1').textContent();
+  await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');
+  assert.equal(await page.locator('#screen-picker').inputValue(),'demo');
+  assert.equal(await page.evaluate(()=>document.activeElement.id),'screen-picker');
+  assert.notEqual(await page.locator('#content h1').textContent(),initialHeading,'screen selection updates content');
   await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('id'),'scenario-picker');
+  await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');
+  assert.equal(await page.locator('#scenario-picker').inputValue(),'pending');
+  assert.equal(await page.evaluate(()=>document.activeElement.id),'scenario-picker');
   await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('id'),'language-picker');
   await page.keyboard.press('Tab');assert.equal(await page.locator(':focus').getAttribute('class'),'brand');
   await page.keyboard.press('Tab');await page.keyboard.press('Tab');await page.keyboard.press('Tab');
