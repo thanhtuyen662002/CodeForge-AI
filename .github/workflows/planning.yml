@@ -23,6 +23,16 @@ jobs:
         with:
           node-version: '24'
       - run: node scripts/check-planning.mjs
+      - name: Content publication safety regression tests
+        run: node --test tests/content-publication-safety.test.mjs
+      - name: Validate synthetic public content fixture
+        run: node scripts/check-content-publication-safety.mjs tests/fixtures/content-safety/public-item.valid.json
+      - name: Reject hidden grading fixture
+        run: |
+          if node scripts/check-content-publication-safety.mjs tests/fixtures/content-safety/hidden-answer.invalid.json; then
+            echo 'Expected private grading fixture to be rejected.' >&2
+            exit 1
+          fi
       - name: Check committed diff whitespace
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
