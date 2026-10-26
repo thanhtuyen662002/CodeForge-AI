@@ -37,6 +37,11 @@ test('rejects duplicate JSON object keys before parsing, including nested escape
   assert.ok(nestedErrors.some(error => error.includes('duplicate JSON object key')), nestedErrors.join('\n'));
 });
 
+test('rejects oversized raw JSON before scanning', () => {
+  const errors = validateCandidate(' '.repeat(64 * 1024 + 1));
+  assert.ok(errors.some(error => error.includes('exceeds 65536 bytes')), errors.join('\\n'));
+});
+
 test('rejects unknown public fields instead of silently widening the contract', () => {
   const item = fixture('public-item.valid.json');
   item.unreviewedExtension = { value: true };
