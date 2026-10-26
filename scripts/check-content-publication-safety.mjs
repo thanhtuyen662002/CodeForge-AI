@@ -124,7 +124,7 @@ function assertNoDuplicateObjectKeys(jsonText) {
 
   // parseCandidateJson validates grammar first; this scanner checks the raw
   // source, not the lossy object produced by JSON.parse.
-  skipValue(0, '
+  skipValue(0, '$');
   whitespace();
   if (cursor !== jsonText.length) throw new Error('unexpected trailing JSON content');
 }
