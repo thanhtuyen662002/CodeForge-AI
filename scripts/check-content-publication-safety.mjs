@@ -132,6 +132,7 @@ function assertNoDuplicateObjectKeys(jsonText) {
 
 function parseCandidateJson(jsonText) {
   if (typeof jsonText !== 'string') throw new TypeError('candidate JSON must be text');
+  if (Buffer.byteLength(jsonText, 'utf8') > MAX_FILE_BYTES) throw new Error('candidate JSON exceeds ' + MAX_FILE_BYTES + ' bytes');
   const item = JSON.parse(jsonText);
   assertNoDuplicateObjectKeys(jsonText);
   return item;
