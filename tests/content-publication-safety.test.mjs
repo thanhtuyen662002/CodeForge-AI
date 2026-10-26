@@ -8,23 +8,29 @@ import { validateCandidate } from '../scripts/check-content-publication-safety.m
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fixture = name => JSON.parse(readFileSync(path.join(root, 'tests/fixtures/content-safety', name), 'utf8'));
+const validateItem = item => validateCandidate(JSON.stringify(item));
 const checker = path.join(root, 'scripts/check-content-publication-safety.mjs');
 
 test('accepts a synthetic candidate with explicit provenance and classification', () => {
-  assert.deepEqual(validateCandidate(fixture('public-item.valid.json')), []);
+  assert.deepEqual(validateItem(fixture('public-item.valid.json')), []);
 });
 
 test('rejects missing provenance', () => {
-  assert.ok(validateCandidate(fixture('missing-provenance.invalid.json')).some(error => error.includes('provenance')));
+  assert.ok(validateItem(fixture('missing-provenance.invalid.json')).some(error => error.includes('provenance')));
 });
 
 test('rejects missing FACT / INFERENCE / PRACTICE_CONTENT classification', () => {
-  assert.ok(validateCandidate(fixture('missing-classification.invalid.json')).some(error => error.includes('classification')));
+  assert.ok(validateItem(fixture('missing-classification.invalid.json')).some(error => error.includes('classification')));
 });
 
 test('rejects nested private grading / expected-output fields', () => {
-  const errors = validateCandidate(fixture('hidden-answer.invalid.json'));
+  const errors = validateItem(fixture('hidden-answer.invalid.json'));
   assert.ok(errors.some(error => error.includes('forbidden answer/grading/private field')));
+});
+
+test('requires raw JSON text so duplicate-key checks cannot be bypassed by pre-parsing', () => {
+  const errors = validateCandidate({ schemaVersion: 1 });
+  assert.ok(errors.some(error => error.includes('must be raw text')), errors.join('\\n'));
 });
 
 test('rejects duplicate JSON object keys before parsing, including nested escaped equivalents', () => {
@@ -45,14 +51,14 @@ test('rejects oversized raw JSON before scanning', () => {
 test('rejects unknown public fields instead of silently widening the contract', () => {
   const item = fixture('public-item.valid.json');
   item.unreviewedExtension = { value: true };
-  assert.ok(validateCandidate(item).some(error => error.includes('unknown field')));
+  assert.ok(validateItem(item).some(error => error.includes('unknown field')));
 });
 
 test('rejects duplicate skills and invalid difficulty', () => {
   const item = fixture('public-item.valid.json');
   item.skills = ['retry-safety', 'retry-safety'];
   item.difficulty = 11;
-  const errors = validateCandidate(item);
+  const errors = validateItem(item);
   assert.ok(errors.some(error => error.includes('skills')));
   assert.ok(errors.some(error => error.includes('difficulty')));
 });
@@ -60,7 +66,7 @@ test('rejects duplicate skills and invalid difficulty', () => {
 test('rejects impossible provenance calendar dates', () => {
   const item = fixture('public-item.valid.json');
   item.provenance.checkedAt = '2026-02-31';
-  assert.ok(validateCandidate(item).some(error => error.includes('real ISO calendar date')));
+  assert.ok(validateItem(item).some(error => error.includes('real ISO calendar date')));
 });
 
 test('CLI exits zero for valid fixture and nonzero for forbidden answer data', () => {
