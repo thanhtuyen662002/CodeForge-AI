@@ -27,6 +27,16 @@ test('rejects nested private grading / expected-output fields', () => {
   assert.ok(errors.some(error => error.includes('forbidden answer/grading/private field')));
 });
 
+test('rejects duplicate JSON object keys before parsing, including nested escaped equivalents', () => {
+  const raw = readFileSync(path.join(root, 'tests/fixtures/content-safety/duplicate-key-hidden-answer.invalid.json'), 'utf8');
+  const errors = validateCandidate(raw);
+  assert.ok(errors.some(error => error.includes('duplicate JSON object key')), errors.join('\n'));
+
+  const nestedEscaped = '{"items":[{"key":1,"\\u006bey":2}]}';
+  const nestedErrors = validateCandidate(nestedEscaped);
+  assert.ok(nestedErrors.some(error => error.includes('duplicate JSON object key')), nestedErrors.join('\n'));
+});
+
 test('rejects unknown public fields instead of silently widening the contract', () => {
   const item = fixture('public-item.valid.json');
   item.unreviewedExtension = { value: true };
@@ -55,4 +65,10 @@ test('CLI exits zero for valid fixture and nonzero for forbidden answer data', (
   assert.match(good.stdout, /human content review and release authorization are still required/);
   assert.equal(bad.status, 1);
   assert.match(bad.stderr, /forbidden answer\/grading\/private field/);
+});
+
+test('CLI fails closed on a duplicate allowed key that hides nested grading data', () => {
+  const duplicate = spawnSync(process.execPath, [checker, path.join(root, 'tests/fixtures/content-safety/duplicate-key-hidden-answer.invalid.json')], { encoding: 'utf8' });
+  assert.equal(duplicate.status, 1);
+  assert.match(duplicate.stderr, /duplicate JSON object key/);
 });
