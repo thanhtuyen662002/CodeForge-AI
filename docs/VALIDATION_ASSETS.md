@@ -38,11 +38,11 @@ Ghi categories/pseudonym, current workaround, prior paid behaviour, funding owne
 
 ## Standard outreach draft — founder thực hiện khi launch
 
-“Mình đang kiểm tra liệu kỹ sư Python backend đang dùng coding agent hằng tuần có cần bài thực hành ngắn để kiểm chứng thay đổi do AI tạo ra. Mình muốn nghe cách bạn đang kiểm tra code trong một buổi25 phút, kể cả khi workflow hiện tại đã đủ tốt. Không cần chia sẻ code/dữ liệu công ty. Mình có một demo tĩnh và sẽ ghi rõ pilot nào miễn phí, phần nào trả tiền; tham gia trao đổi không buộc mua.”
+“Mình đang kiểm tra liệu kỹ sư Python backend đang dùng coding agent hằng tuần có cần bài thực hành ngắn để kiểm chứng thay đổi do AI tạo ra. Mình muốn nghe cách bạn đang kiểm tra code trong một buổi25 phút, kể cả khi workflow hiện tại đã đủ tốt. Không cần chia sẻ code/dữ liệu công ty. Mình có một bản mô tả/demo giấy nội bộ, chưa phải sản phẩm phát hành; tham gia trao đổi không buộc mua.”
 
 Không gửi trong task này; cần kênh phù hợp và moderator consent nếu community yêu cầu. Không invent recipient/address. New self-serve G3 cohort không dùng interview rapport này để pass.
 
-## Manager interview / clinic offer
+## Manager interview / clinic offer — giả thuyết dự phòng, chưa phải dịch vụ đang bán
 
 Hỏi lần gần nhất review rework khiến team chậm; training hay công cụ review giải quyết tốt hơn; budget owner; mua service nào gần đây; procurement mất bao lâu. Offer fallback cố định$300,≤6 người, một buổi thực hành/debrief tổng scope≤5h sales+delivery, synthetic cases, aggregate learning notes. Không individual employee ranks, hiring recommendation hoặc company-code ingestion. Manager chỉ trả nếu có ranking→reject deal.
 
