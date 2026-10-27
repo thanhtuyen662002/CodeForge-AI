@@ -69,6 +69,20 @@ test('rejects impossible provenance calendar dates', () => {
   assert.ok(validateItem(item).some(error => error.includes('real ISO calendar date')));
 });
 
+test('rejects malformed and trailing JSON through validator and CLI', () => {
+  const malformed = readFileSync(path.join(root, 'tests/fixtures/content-safety/malformed-json.invalid.json'), 'utf8');
+  const malformedErrors = validateCandidate(malformed);
+  assert.ok(malformedErrors.some(error => error.includes('candidate JSON is invalid')), malformedErrors.join('\n'));
+
+  const trailingErrors = validateCandidate('{"schemaVersion":1} trailing');
+  assert.ok(trailingErrors.some(error => error.includes('candidate JSON is invalid')), trailingErrors.join('\n'));
+
+  const cli = spawnSync(process.execPath, [checker, path.join(root, 'tests/fixtures/content-safety/malformed-json.invalid.json')], { encoding: 'utf8' });
+  assert.equal(cli.status, 1);
+  assert.match(cli.stderr, /INVALID candidate/);
+  assert.match(cli.stderr, /candidate JSON is invalid/);
+});
+
 test('CLI exits zero for valid fixture and nonzero for forbidden answer data', () => {
   const good = spawnSync(process.execPath, [checker, path.join(root, 'tests/fixtures/content-safety/public-item.valid.json')], { encoding: 'utf8' });
   const bad = spawnSync(process.execPath, ['scripts/check-content-publication-safety.mjs', 'tests/fixtures/content-safety/hidden-answer.invalid.json'], { cwd: root, encoding: 'utf8' });
