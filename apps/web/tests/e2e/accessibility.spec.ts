@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const rgbChannels = (color: string): [number, number, number] => {
-  const channels = color.match(/[\\d.]+/g)?.slice(0, 3).map(Number);
+  const channels = color.match(/[\d.]+/g)?.slice(0, 3).map(Number);
   if (!channels || channels.length !== 3 || channels.some((value) => !Number.isFinite(value))) {
     throw new Error(`Expected a computed RGB color, received: ${color}`);
   }
