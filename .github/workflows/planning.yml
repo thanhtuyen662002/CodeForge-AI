@@ -1,6 +1,8 @@
 name: Planning integrity
 on:
   pull_request:
+    # Revalidate when a PR's base changes; default pull_request types omit edited.
+    types: [opened, synchronize, reopened, edited]
   push:
     branches: [main, 'codex/strategy-validation-*']
   merge_group:
