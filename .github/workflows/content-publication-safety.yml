@@ -1,6 +1,8 @@
 name: Content publication safety
 on:
   pull_request:
+    # Revalidate the safety suite when a PR's base changes.
+    types: [opened, synchronize, reopened, edited]
     paths:
       - '.github/workflows/content-publication-safety.yml'
       - 'scripts/check-content-publication-safety.mjs'
