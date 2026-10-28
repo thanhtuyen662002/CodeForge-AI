@@ -4,7 +4,7 @@ This is the first buildable App Router shell, not an authenticated or production
 
 ## Local checks
 
-- Node.js 26.8.0 (see `.nvmrc`)
+- Node.js 24.22.1 (see `.nvmrc`)
 - `npm ci`
 - `npm run lint`
 - `npm run typecheck`
