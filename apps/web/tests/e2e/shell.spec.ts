@@ -25,7 +25,7 @@ test("keyboard users can skip to content and navigate by working anchor links", 
   const overviewLink = page.getByRole("link", { name: "Tổng quan" });
   await expect(overviewLink).toBeFocused();
   await page.keyboard.press("Tab");
-  const pathwayLink = page.getByRole("link", { name: "Lộ trình" });
+  const pathwayLink = page.getByRole("link", { name: "Lộ trình", exact: true });
   await expect(pathwayLink).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/#pathway$/);

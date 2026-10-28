@@ -8,7 +8,7 @@ export default function Home() {
   return <div className="site-shell">
     <a className="skip-link" href="#main-content">Bỏ qua điều hướng</a>
     <header className="site-header">
-      <div className="brand" aria-label="CodeForge AI"><span className="brand-mark" aria-hidden="true">CF</span><span className="brand-copy"><strong>CodeForge AI</strong><small>HỌC BẰNG BẰNG CHỨNG</small></span></div>
+      <div className="brand"><span className="brand-mark" aria-hidden="true">CF</span><span className="brand-copy"><strong>CodeForge AI</strong><small>HỌC BẰNG BẰNG CHỨNG</small></span></div>
       <nav className="primary-nav" aria-label="Điều hướng chính"><a href="#overview">Tổng quan</a><a href="#pathway">Lộ trình</a><a href="#practice">Thực hành</a><a href="#progress">Tiến độ</a></nav>
       <span className="preview-pill">Bản khung</span>
     </header>
