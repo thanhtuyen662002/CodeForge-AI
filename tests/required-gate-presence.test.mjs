@@ -123,3 +123,33 @@ test("a complete content suite is detected and emitted for the required job", ()
     run.cleanup();
   }
 });
+
+
+const webSuiteFiles = {
+  "apps/web/package.json": "{\"name\":\"synthetic\"}\\n",
+  "apps/web/package-lock.json": "{}\\n",
+  "apps/web/.nvmrc": "24\\n",
+  "apps/web/app/page.tsx": "export default function Page() { return null; }\\n",
+};
+
+test("a partial web app fails closed instead of being treated as absent", () => {
+  const run = scenario({
+    "apps/web/app/page.tsx": "export default function Page() { return null; }\\n",
+  });
+  try {
+    assert.equal(run.result.status, 1);
+    assert.match(run.result.stderr, /Web app is present in the PR or base/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("a complete web app is detected and emitted for the required job", () => {
+  const run = scenario(webSuiteFiles);
+  try {
+    assert.equal(run.result.status, 0, run.result.stderr);
+    assert.match(run.output, /web_present=true/);
+  } finally {
+    run.cleanup();
+  }
+});
