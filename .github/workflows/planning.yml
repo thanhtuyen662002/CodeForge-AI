@@ -27,17 +27,67 @@ jobs:
       - run: node scripts/check-planning.mjs
       # The ruleset requires merge-gate; a separate path-filtered safety workflow is not enough.
       # If content-safety assets appear in a PR, keep their regression suite inside this required gate.
+      # Resolve one base tree for fail-closed suite detection and diff validation.
+      - name: Resolve validation base tree
+        id: validation-base
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            if [ -z "$BASE_REF" ]; then
+              echo "Missing pull request base ref; refusing to skip validation." >&2
+              exit 1
+            fi
+            git fetch --no-tags origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
+            echo "BASE_TREE=refs/remotes/origin/${BASE_REF}" >> "$GITHUB_ENV"
+          elif [ "$EVENT_NAME" = "merge_group" ]; then
+            if [ -z "$MERGE_GROUP_BASE_SHA" ]; then
+              echo "Missing merge-group base SHA; refusing to skip validation." >&2
+              exit 1
+            fi
+            git cat-file -e "${MERGE_GROUP_BASE_SHA}^{commit}"
+            echo "BASE_TREE=${MERGE_GROUP_BASE_SHA}" >> "$GITHUB_ENV"
+          elif [ "$EVENT_NAME" = "push" ] && [ -n "$BEFORE_SHA" ] && [[ ! "$BEFORE_SHA" =~ ^0+$ ]]; then
+            git cat-file -e "${BEFORE_SHA}^{commit}"
+            echo "BASE_TREE=${BEFORE_SHA}" >> "$GITHUB_ENV"
+          else
+            echo "BASE_TREE=" >> "$GITHUB_ENV"
+          fi
       - name: Detect content publication safety suite
         id: content-safety
         shell: bash
         run: |
-          if [ -f .github/workflows/content-publication-safety.yml ] || [ -f scripts/check-content-publication-safety.mjs ] || [ -f tests/content-publication-safety.test.mjs ]; then
-            test -f scripts/check-content-publication-safety.mjs || { echo "Content safety checker is required when its workflow or tests exist" >&2; exit 1; }
-            test -f tests/content-publication-safety.test.mjs || { echo "Content safety regression tests are required when its workflow or checker exists" >&2; exit 1; }
+          set -euo pipefail
+          present=false
+          content_paths=(
+            .github/workflows/content-publication-safety.yml
+            scripts/check-content-publication-safety.mjs
+            tests/content-publication-safety.test.mjs
+            tests/fixtures/content-safety/public-item.valid.json
+            tests/fixtures/content-safety/hidden-answer.invalid.json
+            tests/fixtures/content-safety/duplicate-key-hidden-answer.invalid.json
+            tests/fixtures/content-safety/malformed-json.invalid.json
+            tests/fixtures/content-safety/missing-classification.invalid.json
+            tests/fixtures/content-safety/missing-provenance.invalid.json
+          )
+          for path in "${content_paths[@]}"; do
+            if [ -e "$path" ] || { [ -n "$BASE_TREE" ] && git cat-file -e "$BASE_TREE:$path" 2>/dev/null; }; then
+              present=true
+              break
+            fi
+          done
+          if [ "$present" = true ]; then
+            test -f scripts/check-content-publication-safety.mjs || { echo "Content safety checker is required if present in the PR or base" >&2; exit 1; }
+            test -f tests/content-publication-safety.test.mjs || { echo "Content safety regression tests are required if present in the PR or base" >&2; exit 1; }
             test -f tests/fixtures/content-safety/public-item.valid.json || { echo "Valid content safety fixture is required" >&2; exit 1; }
             test -f tests/fixtures/content-safety/hidden-answer.invalid.json || { echo "Hidden-answer negative fixture is required" >&2; exit 1; }
             test -f tests/fixtures/content-safety/duplicate-key-hidden-answer.invalid.json || { echo "Duplicate-key negative fixture is required" >&2; exit 1; }
-            test -f tests/fixtures/content-safety/malformed-json.invalid.json || { echo "Malformed JSON negative fixture is required" >&2; exit 1; }
+            test -f tests/fixtures/content-safety/malformed-json.invalid.json || { echo "Malformed JSON fixture is required" >&2; exit 1; }
             test -f tests/fixtures/content-safety/missing-classification.invalid.json || { echo "Classification negative fixture is required" >&2; exit 1; }
             test -f tests/fixtures/content-safety/missing-provenance.invalid.json || { echo "Provenance negative fixture is required" >&2; exit 1; }
             echo "present=true" >> "$GITHUB_OUTPUT"
@@ -53,10 +103,15 @@ jobs:
         id: web-app
         shell: bash
         run: |
-          if [ -d apps/web ]; then
-            test -f apps/web/package.json || { echo "apps/web/package.json is required when apps/web exists" >&2; exit 1; }
-            test -f apps/web/package-lock.json || { echo "apps/web/package-lock.json is required when apps/web exists" >&2; exit 1; }
-            test -f apps/web/.nvmrc || { echo "apps/web/.nvmrc is required when apps/web exists" >&2; exit 1; }
+          set -euo pipefail
+          base_has_web=false
+          if [ -n "$BASE_TREE" ] && [ -n "$(git ls-tree -r --name-only "$BASE_TREE" -- apps/web/)" ]; then
+            base_has_web=true
+          fi
+          if [ -d apps/web ] || [ "$base_has_web" = true ]; then
+            test -f apps/web/package.json || { echo "apps/web/package.json is required if the app exists in the PR or base" >&2; exit 1; }
+            test -f apps/web/package-lock.json || { echo "apps/web/package-lock.json is required if the app exists in the PR or base" >&2; exit 1; }
+            test -f apps/web/.nvmrc || { echo "apps/web/.nvmrc is required if the app exists in the PR or base" >&2; exit 1; }
             echo "present=true" >> "$GITHUB_OUTPUT"
           else
             echo "present=false" >> "$GITHUB_OUTPUT"
@@ -99,24 +154,27 @@ jobs:
       - name: Check committed diff whitespace
         env:
           EVENT_NAME: ${{ github.event_name }}
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
-          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
         shell: bash
         run: |
+          set -euo pipefail
           if [ "$EVENT_NAME" = "pull_request" ]; then
-            if [ -z "$BASE_REF" ]; then
-              echo "Missing pull request base ref; refusing to skip diff validation." >&2
+            if [ -z "$BASE_TREE" ]; then
+              echo "Missing resolved pull-request base tree; refusing to skip diff validation." >&2
               exit 1
             fi
-            git fetch --no-tags origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
-            CURRENT_BASE_REF="refs/remotes/origin/${BASE_REF}"
-            if ! git merge-base --is-ancestor "$CURRENT_BASE_REF" HEAD; then
-              echo "Pull-request merge context is stale relative to the current base; refusing to pass merge-gate." >&2
+            if ! git merge-base --is-ancestor "$BASE_TREE" HEAD; then
+              echo "Pull-request merge context is stale relative to the resolved current base; refusing to pass merge-gate." >&2
               exit 1
             fi
-            git diff --check "${CURRENT_BASE_REF}...HEAD"
-          elif [ -n "$MERGE_GROUP_BASE_SHA" ]; then
-            git diff --check "$MERGE_GROUP_BASE_SHA...HEAD"
+            git diff --check "${BASE_TREE}...HEAD"
+          elif [ "$EVENT_NAME" = "merge_group" ]; then
+            if [ -z "$BASE_TREE" ]; then
+              echo "Missing resolved merge-group base; refusing to skip diff validation." >&2
+              exit 1
+            fi
+            git diff --check "$BASE_TREE...HEAD"
+          elif [ -n "$BASE_TREE" ]; then
+            git diff --check "${BASE_TREE}...HEAD"
           else
             git show --check --format= HEAD
           fi
