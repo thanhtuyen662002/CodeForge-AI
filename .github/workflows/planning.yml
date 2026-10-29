@@ -25,6 +25,8 @@ jobs:
         with:
           node-version: '24'
       - run: node scripts/check-planning.mjs
+      - name: Test required gate suite detection
+        run: node --test tests/required-gate-presence.test.mjs
       # The ruleset requires merge-gate; a separate path-filtered safety workflow is not enough.
       # If content-safety assets appear in a PR, keep their regression suite inside this required gate.
       # Resolve one base tree for fail-closed suite detection and diff validation.
@@ -58,97 +60,47 @@ jobs:
           else
             echo "BASE_TREE=" >> "$GITHUB_ENV"
           fi
-      - name: Detect content publication safety suite
-        id: content-safety
-        shell: bash
-        run: |
-          set -euo pipefail
-          present=false
-          content_paths=(
-            .github/workflows/content-publication-safety.yml
-            scripts/check-content-publication-safety.mjs
-            tests/content-publication-safety.test.mjs
-            tests/fixtures/content-safety/public-item.valid.json
-            tests/fixtures/content-safety/hidden-answer.invalid.json
-            tests/fixtures/content-safety/duplicate-key-hidden-answer.invalid.json
-            tests/fixtures/content-safety/malformed-json.invalid.json
-            tests/fixtures/content-safety/missing-classification.invalid.json
-            tests/fixtures/content-safety/missing-provenance.invalid.json
-          )
-          for path in "${content_paths[@]}"; do
-            if [ -e "$path" ] || { [ -n "$BASE_TREE" ] && git cat-file -e "$BASE_TREE:$path" 2>/dev/null; }; then
-              present=true
-              break
-            fi
-          done
-          if [ "$present" = true ]; then
-            test -f scripts/check-content-publication-safety.mjs || { echo "Content safety checker is required if present in the PR or base" >&2; exit 1; }
-            test -f tests/content-publication-safety.test.mjs || { echo "Content safety regression tests are required if present in the PR or base" >&2; exit 1; }
-            test -f tests/fixtures/content-safety/public-item.valid.json || { echo "Valid content safety fixture is required" >&2; exit 1; }
-            test -f tests/fixtures/content-safety/hidden-answer.invalid.json || { echo "Hidden-answer negative fixture is required" >&2; exit 1; }
-            test -f tests/fixtures/content-safety/duplicate-key-hidden-answer.invalid.json || { echo "Duplicate-key negative fixture is required" >&2; exit 1; }
-            test -f tests/fixtures/content-safety/malformed-json.invalid.json || { echo "Malformed JSON fixture is required" >&2; exit 1; }
-            test -f tests/fixtures/content-safety/missing-classification.invalid.json || { echo "Classification negative fixture is required" >&2; exit 1; }
-            test -f tests/fixtures/content-safety/missing-provenance.invalid.json || { echo "Provenance negative fixture is required" >&2; exit 1; }
-            echo "present=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "present=false" >> "$GITHUB_OUTPUT"
-          fi
+      - name: Detect required suites fail-closed
+        id: required-suites
+        run: node scripts/detect-required-gate-suites.mjs
       - name: Run required content publication safety regression suite
-        if: steps.content-safety.outputs.present == 'true'
+        if: steps.required-suites.outputs.content_present == 'true'
         run: node --test tests/content-publication-safety.test.mjs
       # The ruleset requires this job, not the separate path-filtered web-app
       # workflow. Keep app-bearing changes inside the required merge gate.
-      - name: Detect web app and require pinned inputs
-        id: web-app
-        shell: bash
-        run: |
-          set -euo pipefail
-          base_has_web=false
-          if [ -n "$BASE_TREE" ] && [ -n "$(git ls-tree -r --name-only "$BASE_TREE" -- apps/web/)" ]; then
-            base_has_web=true
-          fi
-          if [ -d apps/web ] || [ "$base_has_web" = true ]; then
-            test -f apps/web/package.json || { echo "apps/web/package.json is required if the app exists in the PR or base" >&2; exit 1; }
-            test -f apps/web/package-lock.json || { echo "apps/web/package-lock.json is required if the app exists in the PR or base" >&2; exit 1; }
-            test -f apps/web/.nvmrc || { echo "apps/web/.nvmrc is required if the app exists in the PR or base" >&2; exit 1; }
-            echo "present=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "present=false" >> "$GITHUB_OUTPUT"
-          fi
       - name: Set up pinned web Node and npm cache
-        if: steps.web-app.outputs.present == 'true'
+        if: steps.required-suites.outputs.web_present == 'true'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: apps/web/.nvmrc
           cache: npm
           cache-dependency-path: apps/web/package-lock.json
       - name: Install pinned web dependencies
-        if: steps.web-app.outputs.present == 'true'
+        if: steps.required-suites.outputs.web_present == 'true'
         working-directory: apps/web
         run: npm ci
       - name: Audit web dependencies
-        if: steps.web-app.outputs.present == 'true'
+        if: steps.required-suites.outputs.web_present == 'true'
         working-directory: apps/web
         run: npm audit --audit-level=high
       - name: Lint web app
-        if: steps.web-app.outputs.present == 'true'
+        if: steps.required-suites.outputs.web_present == 'true'
         working-directory: apps/web
         run: npm run lint
       - name: Typecheck web app
-        if: steps.web-app.outputs.present == 'true'
+        if: steps.required-suites.outputs.web_present == 'true'
         working-directory: apps/web
         run: npm run typecheck
       - name: Build web app
-        if: steps.web-app.outputs.present == 'true'
+        if: steps.required-suites.outputs.web_present == 'true'
         working-directory: apps/web
         run: npm run build
       - name: Install Chromium for web smoke tests
-        if: steps.web-app.outputs.present == 'true'
+        if: steps.required-suites.outputs.web_present == 'true'
         working-directory: apps/web
         run: npx playwright install --with-deps chromium
       - name: Run web Playwright tests
-        if: steps.web-app.outputs.present == 'true'
+        if: steps.required-suites.outputs.web_present == 'true'
         working-directory: apps/web
         run: npm run test:e2e
       - name: Check committed diff whitespace
