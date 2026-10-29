@@ -23,6 +23,16 @@ for (const file of docs) {
 }
 
 const state = json('docs/PROJECT_STATE.yaml');
+assert.equal(state.decision, 'OWNER_AUTHORIZED_BUILD_WITH_RELEASE_GATES');
+assert.equal(state.owner_scope_override?.production_acceptance, 'NOT_ACCEPTED');
+assert.equal(state.owner_scope_override?.validation_status, 'NOT_STARTED');
+assert.equal(state.product_implemented, false, 'Owner authorization must not imply implementation');
+assert.equal(state.deployed_application_verified, false, 'Owner authorization must not imply deployment');
+assert.equal(state.ruleset_checkpoint?.governance_result, 'BLOCKED_INDEPENDENT_REVIEW_POLICY');
+assert.equal(state.gated_capabilities.find(item => item.gate === 'G0')?.status, 'BLOCKED_INDEPENDENT_REVIEW_POLICY');
+for (const gate of ['G1','G2','G3','G4','G5','G6','G7']) {
+  assert.equal(state.gated_capabilities.find(item => item.gate === gate)?.status, 'OPEN_NOT_VERIFIED', `${gate} must remain open until evidence exists`);
+}
 const model = json('docs/research/economics-model.json');
 json('docs/research/repository-snapshot.json');
 const sum = values => values.reduce((a, b) => a + b, 0);
