@@ -1,0 +1,42 @@
+name: Content publication safety
+on:
+  pull_request:
+    # Revalidate the safety suite when a PR's base changes.
+    types: [opened, synchronize, reopened, edited]
+    paths:
+      - '.github/workflows/content-publication-safety.yml'
+      - 'scripts/check-content-publication-safety.mjs'
+      - 'tests/content-publication-safety.test.mjs'
+      - 'tests/fixtures/content-safety/**'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/content-publication-safety.yml'
+      - 'scripts/check-content-publication-safety.mjs'
+      - 'tests/content-publication-safety.test.mjs'
+      - 'tests/fixtures/content-safety/**'
+permissions:
+  contents: read
+concurrency:
+  group: content-publication-safety-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  safety:
+    name: content-publication-safety
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - run: node --test tests/content-publication-safety.test.mjs
+      - run: node scripts/check-content-publication-safety.mjs tests/fixtures/content-safety/public-item.valid.json
+      - name: Verify forbidden fixture fails closed
+        run: |
+          if node scripts/check-content-publication-safety.mjs tests/fixtures/content-safety/hidden-answer.invalid.json; then
+            echo 'Expected private grading fixture to be rejected.' >&2
+            exit 1
+          fi
