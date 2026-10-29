@@ -1,9 +1,11 @@
 name: Planning integrity
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
   push:
     branches: [main, 'codex/strategy-validation-*']
   merge_group:
+    types: [checks_requested]
 permissions:
   contents: read
 concurrency:
@@ -13,7 +15,7 @@ jobs:
   merge-gate:
     name: merge-gate
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -23,13 +25,68 @@ jobs:
         with:
           node-version: '24'
       - run: node scripts/check-planning.mjs
+      # The ruleset requires this job, not the separate path-filtered web-app
+      # workflow. Keep app-bearing changes inside the required merge gate.
+      - name: Detect web app and require pinned inputs
+        id: web-app
+        shell: bash
+        run: |
+          if [ -f apps/web/package.json ]; then
+            test -f apps/web/package-lock.json || { echo "apps/web/package-lock.json is required when the web app exists" >&2; exit 1; }
+            test -f apps/web/.nvmrc || { echo "apps/web/.nvmrc is required when the web app exists" >&2; exit 1; }
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Set up pinned web Node and npm cache
+        if: steps.web-app.outputs.present == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: apps/web/.nvmrc
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install pinned web dependencies
+        if: steps.web-app.outputs.present == 'true'
+        working-directory: apps/web
+        run: npm ci
+      - name: Audit web dependencies
+        if: steps.web-app.outputs.present == 'true'
+        working-directory: apps/web
+        run: npm audit --audit-level=high
+      - name: Lint web app
+        if: steps.web-app.outputs.present == 'true'
+        working-directory: apps/web
+        run: npm run lint
+      - name: Typecheck web app
+        if: steps.web-app.outputs.present == 'true'
+        working-directory: apps/web
+        run: npm run typecheck
+      - name: Build web app
+        if: steps.web-app.outputs.present == 'true'
+        working-directory: apps/web
+        run: npm run build
+      - name: Install Chromium for web smoke tests
+        if: steps.web-app.outputs.present == 'true'
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+      - name: Run web Playwright tests
+        if: steps.web-app.outputs.present == 'true'
+        working-directory: apps/web
+        run: npm run test:e2e
       - name: Check committed diff whitespace
         env:
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
           MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+        shell: bash
         run: |
-          if [ -n "$PR_BASE_SHA" ]; then
-            git diff --check "$PR_BASE_SHA...HEAD"
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            if [ -z "$BASE_REF" ]; then
+              echo "Missing pull request base ref; refusing to skip diff validation." >&2
+              exit 1
+            fi
+            git fetch --no-tags origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
+            git diff --check "refs/remotes/origin/${BASE_REF}...HEAD"
           elif [ -n "$MERGE_GROUP_BASE_SHA" ]; then
             git diff --check "$MERGE_GROUP_BASE_SHA...HEAD"
           else
