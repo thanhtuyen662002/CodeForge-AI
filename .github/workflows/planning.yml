@@ -25,6 +25,28 @@ jobs:
         with:
           node-version: '24'
       - run: node scripts/check-planning.mjs
+      # The ruleset requires merge-gate; a separate path-filtered safety workflow is not enough.
+      # If content-safety assets appear in a PR, keep their regression suite inside this required gate.
+      - name: Detect content publication safety suite
+        id: content-safety
+        shell: bash
+        run: |
+          if [ -f .github/workflows/content-publication-safety.yml ] || [ -f scripts/check-content-publication-safety.mjs ] || [ -f tests/content-publication-safety.test.mjs ]; then
+            test -f scripts/check-content-publication-safety.mjs || { echo "Content safety checker is required when its workflow or tests exist" >&2; exit 1; }
+            test -f tests/content-publication-safety.test.mjs || { echo "Content safety regression tests are required when its workflow or checker exists" >&2; exit 1; }
+            test -f tests/fixtures/content-safety/public-item.valid.json || { echo "Valid content safety fixture is required" >&2; exit 1; }
+            test -f tests/fixtures/content-safety/hidden-answer.invalid.json || { echo "Hidden-answer negative fixture is required" >&2; exit 1; }
+            test -f tests/fixtures/content-safety/duplicate-key-hidden-answer.invalid.json || { echo "Duplicate-key negative fixture is required" >&2; exit 1; }
+            test -f tests/fixtures/content-safety/malformed-json.invalid.json || { echo "Malformed JSON negative fixture is required" >&2; exit 1; }
+            test -f tests/fixtures/content-safety/missing-classification.invalid.json || { echo "Classification negative fixture is required" >&2; exit 1; }
+            test -f tests/fixtures/content-safety/missing-provenance.invalid.json || { echo "Provenance negative fixture is required" >&2; exit 1; }
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Run required content publication safety regression suite
+        if: steps.content-safety.outputs.present == 'true'
+        run: node --test tests/content-publication-safety.test.mjs
       # The ruleset requires this job, not the separate path-filtered web-app
       # workflow. Keep app-bearing changes inside the required merge gate.
       - name: Detect web app and require pinned inputs
