@@ -1,7 +1,7 @@
 name: Planning integrity
 on:
   pull_request:
-    types: [opened, synchronize, reopened, edited]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
   push:
     branches: [main, 'codex/strategy-validation-*']
   merge_group:
@@ -31,9 +31,10 @@ jobs:
         id: web-app
         shell: bash
         run: |
-          if [ -f apps/web/package.json ]; then
-            test -f apps/web/package-lock.json || { echo "apps/web/package-lock.json is required when the web app exists" >&2; exit 1; }
-            test -f apps/web/.nvmrc || { echo "apps/web/.nvmrc is required when the web app exists" >&2; exit 1; }
+          if [ -d apps/web ]; then
+            test -f apps/web/package.json || { echo "apps/web/package.json is required when apps/web exists" >&2; exit 1; }
+            test -f apps/web/package-lock.json || { echo "apps/web/package-lock.json is required when apps/web exists" >&2; exit 1; }
+            test -f apps/web/.nvmrc || { echo "apps/web/.nvmrc is required when apps/web exists" >&2; exit 1; }
             echo "present=true" >> "$GITHUB_OUTPUT"
           else
             echo "present=false" >> "$GITHUB_OUTPUT"
@@ -86,7 +87,12 @@ jobs:
               exit 1
             fi
             git fetch --no-tags origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
-            git diff --check "refs/remotes/origin/${BASE_REF}...HEAD"
+            CURRENT_BASE_REF="refs/remotes/origin/${BASE_REF}"
+            if ! git merge-base --is-ancestor "$CURRENT_BASE_REF" HEAD; then
+              echo "Pull-request merge context is stale relative to the current base; refusing to pass merge-gate." >&2
+              exit 1
+            fi
+            git diff --check "${CURRENT_BASE_REF}...HEAD"
           elif [ -n "$MERGE_GROUP_BASE_SHA" ]; then
             git diff --check "$MERGE_GROUP_BASE_SHA...HEAD"
           else
