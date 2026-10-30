@@ -111,7 +111,7 @@ jobs:
         run: npm run test:e2e
       - name: Check committed diff whitespace
         env:
-          EVENT_NAME: __EVENT_NAME__
+          EVENT_NAME: ${{ github.event_name }}
         shell: bash
         run: |
           set -euo pipefail
