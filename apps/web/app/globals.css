@@ -50,7 +50,7 @@ a:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 .notice-icon .icon,.practice-icon .icon { width: 1.45rem; height: 1.45rem; }
 .eyebrow { margin: 0 0 .45rem; color: var(--accent); font-size: .72rem; font-weight: 800; letter-spacing: .12em; line-height: 1.4; }
 .service-notice .eyebrow { color: currentColor; }
-.service-notice h2 { margin: 0 0 .25rem; font-size: 1.05rem; line-height: 1.35; }
+.service-notice .notice-title { margin: 0 0 .25rem; font-size: 1.05rem; font-weight: 750; line-height: 1.35; }
 .service-notice p:last-child { margin: 0; max-width: 86ch; font-size: .93rem; line-height: 1.55; }
 .hero { display: grid; grid-template-columns: minmax(0,1.15fr) minmax(300px,.85fr); align-items: center; gap: clamp(2rem,5vw,4.5rem); padding-block: clamp(3rem,7vw,5.6rem); }
 .hero-copy,.loop-panel,.feature-card,.practice-panel,.empty-state { min-width: 0; }

@@ -16,7 +16,7 @@ export default function Home() {
     <main id="main-content">
       <section className="service-notice" id="service-status" aria-labelledby="service-heading" role="status">
         <span className="notice-icon"><Icon><path d="M12 3 20 7v5c0 4.2-3 7.4-8 9-5-1.6-8-4.8-8-9V7l8-4Z"/><path d="M12 8v4"/><path d="M12 16h.01"/></Icon></span>
-        <div><p className="eyebrow">TRẠNG THÁI HỆ THỐNG</p><h2 id="service-heading">Dịch vụ chưa được cấu hình</h2><p>Đây mới là khung giao diện. Tài khoản, lưu tiến độ, chấm Python/SQL và trợ giảng chưa được kết nối. Không có tài khoản, bài nộp hoặc tiến độ nào được tạo hay lưu ở bản khung này.</p></div>
+        <div><p className="eyebrow">TRẠNG THÁI HỆ THỐNG</p><p className="notice-title" id="service-heading"><strong>Dịch vụ chưa được cấu hình</strong></p><p>Đây mới là khung giao diện. Tài khoản, lưu tiến độ, chấm Python/SQL và trợ giảng chưa được kết nối. Không có tài khoản, bài nộp hoặc tiến độ nào được tạo hay lưu ở bản khung này.</p></div>
       </section>
 
       <section className="hero" id="overview" aria-labelledby="hero-heading">
