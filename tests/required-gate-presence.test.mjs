@@ -126,10 +126,10 @@ test("a complete content suite is detected and emitted for the required job", ()
 
 
 const webSuiteFiles = {
-  "apps/web/package.json": "{\"name\":\"synthetic\"}\\n",
-  "apps/web/package-lock.json": "{}\\n",
-  "apps/web/.nvmrc": "24\\n",
-  "apps/web/app/page.tsx": "export default function Page() { return null; }\\n",
+  "apps/web/package.json": "{\"name\":\"synthetic\"}\n",
+  "apps/web/package-lock.json": "{}\n",
+  "apps/web/.nvmrc": "24\n",
+  "apps/web/app/page.tsx": "export default function Page() { return null; }\n",
 };
 
 test("a partial web app fails closed instead of being treated as absent", () => {
