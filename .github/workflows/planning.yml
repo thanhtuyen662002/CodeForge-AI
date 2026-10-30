@@ -45,18 +45,18 @@ jobs:
               echo "Missing pull request base ref; refusing to skip validation." >&2
               exit 1
             fi
-            git fetch --no-tags origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
-            echo "BASE_TREE=refs/remotes/origin/${BASE_REF}" >> "$GITHUB_ENV"
+            git fetch --no-tags origin "+refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
+            echo "BASE_TREE=refs/remotes/origin/$BASE_REF" >> "$GITHUB_ENV"
           elif [ "$EVENT_NAME" = "merge_group" ]; then
             if [ -z "$MERGE_GROUP_BASE_SHA" ]; then
               echo "Missing merge-group base SHA; refusing to skip validation." >&2
               exit 1
             fi
-            git cat-file -e "${MERGE_GROUP_BASE_SHA}^{commit}"
-            echo "BASE_TREE=${MERGE_GROUP_BASE_SHA}" >> "$GITHUB_ENV"
+            git cat-file -e "$MERGE_GROUP_BASE_SHA^{commit}"
+            echo "BASE_TREE=$MERGE_GROUP_BASE_SHA" >> "$GITHUB_ENV"
           elif [ "$EVENT_NAME" = "push" ] && [ -n "$BEFORE_SHA" ] && [[ ! "$BEFORE_SHA" =~ ^0+$ ]]; then
-            git cat-file -e "${BEFORE_SHA}^{commit}"
-            echo "BASE_TREE=${BEFORE_SHA}" >> "$GITHUB_ENV"
+            git cat-file -e "$BEFORE_SHA^{commit}"
+            echo "BASE_TREE=$BEFORE_SHA" >> "$GITHUB_ENV"
           else
             echo "BASE_TREE=" >> "$GITHUB_ENV"
           fi
@@ -66,6 +66,12 @@ jobs:
       - name: Run required content publication safety regression suite
         if: steps.required-suites.outputs.content_present == 'true'
         run: node --test tests/content-publication-safety.test.mjs
+      - name: Run required public content manifest regression suite
+        if: steps.required-suites.outputs.public_content_present == 'true'
+        run: node --test tests/public-content-manifest.test.mjs
+      - name: Validate public content manifest
+        if: steps.required-suites.outputs.public_content_present == 'true'
+        run: node scripts/check-public-content-manifest.mjs content/items/manifest.json
       # The ruleset requires this job, not the separate path-filtered web-app
       # workflow. Keep app-bearing changes inside the required merge gate.
       - name: Set up pinned web Node and npm cache
@@ -105,7 +111,7 @@ jobs:
         run: npm run test:e2e
       - name: Check committed diff whitespace
         env:
-          EVENT_NAME: ${{ github.event_name }}
+          EVENT_NAME: __EVENT_NAME__
         shell: bash
         run: |
           set -euo pipefail
@@ -118,7 +124,7 @@ jobs:
               echo "Pull-request merge context is stale relative to the resolved current base; refusing to pass merge-gate." >&2
               exit 1
             fi
-            git diff --check "${BASE_TREE}...HEAD"
+            git diff --check "$BASE_TREE...HEAD"
           elif [ "$EVENT_NAME" = "merge_group" ]; then
             if [ -z "$BASE_TREE" ]; then
               echo "Missing resolved merge-group base; refusing to skip diff validation." >&2
@@ -126,7 +132,7 @@ jobs:
             fi
             git diff --check "$BASE_TREE...HEAD"
           elif [ -n "$BASE_TREE" ]; then
-            git diff --check "${BASE_TREE}...HEAD"
+            git diff --check "$BASE_TREE...HEAD"
           else
             git show --check --format= HEAD
           fi

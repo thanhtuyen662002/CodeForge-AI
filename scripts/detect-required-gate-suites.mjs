@@ -33,6 +33,14 @@ function baseHasWebFiles() {
   return files.trim().length > 0;
 }
 
+function baseHasContentItemsFiles() {
+  if (!baseTree) return false;
+  const files = execFileSync("git", ["ls-tree", "-r", "--name-only", baseTree, "--", "content/items/"], {
+    encoding: "utf8",
+  });
+  return files.trim().length > 0;
+}
+
 try {
   if (!outputPath) throw new Error("GITHUB_OUTPUT is required; refusing to skip required-suite detection.");
   if (baseTree && !gitExists(["cat-file", "-e", baseTree + "^{tree}"])) {
@@ -59,6 +67,22 @@ try {
     }
   }
 
+  const publicContentPaths = [
+    "content/items/manifest.json",
+    "scripts/check-public-content-manifest.mjs",
+    "tests/public-content-manifest.test.mjs",
+  ];
+  const publicContentPresent =
+    existsSync("content/items") ||
+    baseHasContentItemsFiles() ||
+    publicContentPaths.some((path) => isFile(path) || baseHasFile(path));
+  if (publicContentPresent) {
+    const missing = publicContentPaths.filter((path) => !isFile(path));
+    if (missing.length) {
+      throw new Error("Public content is present in the PR or base, but the manifest, checker, and regression suite must all be present: " + missing.join(", "));
+    }
+  }
+
   const webPresent = existsSync("apps/web") || baseHasWebFiles();
   if (webPresent) {
     const requiredWebPaths = ["apps/web/package.json", "apps/web/package-lock.json", "apps/web/.nvmrc"];
@@ -68,7 +92,9 @@ try {
     }
   }
 
-  appendFileSync(outputPath, "content_present=" + contentPresent + "\nweb_present=" + webPresent + "\n");
+  appendFileSync(outputPath, "content_present=" + contentPresent + "\n");
+  appendFileSync(outputPath, "public_content_present=" + publicContentPresent + "\n");
+  appendFileSync(outputPath, "web_present=" + webPresent + "\n");
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
   process.exitCode = 1;

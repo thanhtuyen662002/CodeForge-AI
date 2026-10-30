@@ -20,6 +20,13 @@ const contentSuiteFiles = {
   "tests/fixtures/content-safety/missing-provenance.invalid.json": "{}\n",
 };
 
+const publicContentSuiteFiles = {
+  "content/items/manifest.json": "{\"schemaVersion\":1,\"items\":[]}\n",
+  "content/items/example.json": "{}\n",
+  "scripts/check-public-content-manifest.mjs": "// synthetic checker\n",
+  "tests/public-content-manifest.test.mjs": "// synthetic test\n",
+};
+
 function writeFiles(root, files) {
   for (const [relativePath, contents] of Object.entries(files)) {
     const target = join(root, relativePath);
@@ -64,6 +71,7 @@ test("no protected suite in current tree or base may be skipped", () => {
   try {
     assert.equal(run.result.status, 0, run.result.stderr);
     assert.match(run.output, /content_present=false/);
+    assert.match(run.output, /public_content_present=false/);
     assert.match(run.output, /web_present=false/);
   } finally {
     run.cleanup();
@@ -118,12 +126,12 @@ test("a complete content suite is detected and emitted for the required job", ()
   try {
     assert.equal(run.result.status, 0, run.result.stderr);
     assert.match(run.output, /content_present=true/);
+    assert.match(run.output, /public_content_present=false/);
     assert.match(run.output, /web_present=false/);
   } finally {
     run.cleanup();
   }
 });
-
 
 const webSuiteFiles = {
   "apps/web/package.json": "{\"name\":\"synthetic\"}\n",
@@ -149,6 +157,56 @@ test("a complete web app is detected and emitted for the required job", () => {
   try {
     assert.equal(run.result.status, 0, run.result.stderr);
     assert.match(run.output, /web_present=true/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("a candidate-only public content file fails closed until the full manifest suite exists", () => {
+  const run = scenario({}, [], {
+    "content/items/example.json": "{}\n",
+  });
+  try {
+    assert.equal(run.result.status, 1);
+    assert.match(run.result.stderr, /Public content is present in the PR or base/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("removing the public manifest/checker/tests cannot make the required gate skip", () => {
+  const run = scenario(publicContentSuiteFiles, [
+    "content/items",
+    "scripts/check-public-content-manifest.mjs",
+    "tests/public-content-manifest.test.mjs",
+  ]);
+  try {
+    assert.equal(run.result.status, 1);
+    assert.match(run.result.stderr, /Public content is present in the PR or base/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("a partial public content suite fails closed", () => {
+  const run = scenario({}, [], {
+    "scripts/check-public-content-manifest.mjs": "// synthetic checker\n",
+  });
+  try {
+    assert.equal(run.result.status, 1);
+    assert.match(run.result.stderr, /Public content is present in the PR or base/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("a complete public content suite is detected and emitted for the required gate", () => {
+  const run = scenario(publicContentSuiteFiles);
+  try {
+    assert.equal(run.result.status, 0, run.result.stderr);
+    assert.match(run.output, /public_content_present=true/);
+    assert.match(run.output, /content_present=false/);
+    assert.match(run.output, /web_present=false/);
   } finally {
     run.cleanup();
   }
