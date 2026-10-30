@@ -211,3 +211,43 @@ test("a complete public content suite is detected and emitted for the required g
     run.cleanup();
   }
 });
+
+
+test("public content cannot be introduced without the publication-safety suite", () => {
+  const run = scenario(publicContentSuiteFiles);
+  try {
+    assert.equal(run.result.status, 1);
+    assert.match(run.result.stderr, /Content safety suite is present in the PR or base/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("a complete public content and publication-safety suite is detected together", () => {
+  const run = scenario({ ...contentSuiteFiles, ...publicContentSuiteFiles });
+  try {
+    assert.equal(run.result.status, 0, run.result.stderr);
+    assert.match(run.output, /content_present=true/);
+    assert.match(run.output, /public_content_present=true/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("removing publication-safety assets cannot leave public content on a manifest-only gate", () => {
+  const run = scenario(
+    { ...contentSuiteFiles, ...publicContentSuiteFiles },
+    [
+      ".github/workflows/content-publication-safety.yml",
+      "scripts/check-content-publication-safety.mjs",
+      "tests/content-publication-safety.test.mjs",
+      "tests/fixtures/content-safety",
+    ],
+  );
+  try {
+    assert.equal(run.result.status, 1);
+    assert.match(run.result.stderr, /Content safety suite is present in the PR or base/);
+  } finally {
+    run.cleanup();
+  }
+});

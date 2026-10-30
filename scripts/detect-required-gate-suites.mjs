@@ -47,6 +47,16 @@ try {
     throw new Error("Resolved base tree is unavailable; refusing to skip required-suite detection.");
   }
 
+  const publicContentPaths = [
+    "content/items/manifest.json",
+    "scripts/check-public-content-manifest.mjs",
+    "tests/public-content-manifest.test.mjs",
+  ];
+  const publicContentPresent =
+    existsSync("content/items") ||
+    baseHasContentItemsFiles() ||
+    publicContentPaths.some((path) => isFile(path) || baseHasFile(path));
+
   const contentPaths = [
     ".github/workflows/content-publication-safety.yml",
     "scripts/check-content-publication-safety.mjs",
@@ -59,23 +69,17 @@ try {
     "tests/fixtures/content-safety/missing-provenance.invalid.json",
   ];
   const requiredContentPaths = contentPaths.slice(1);
-  const contentPresent = contentPaths.some((path) => isFile(path) || baseHasFile(path));
+  // A public content root must run the private-answer/provenance safety suite too.
+  // A manifest-only suite must not become a weaker route around publication checks.
+  const contentPresent =
+    publicContentPresent ||
+    contentPaths.some((path) => isFile(path) || baseHasFile(path));
   if (contentPresent) {
     const missing = requiredContentPaths.filter((path) => !isFile(path));
     if (missing.length) {
       throw new Error("Content safety suite is present in the PR or base, but required files are missing: " + missing.join(", "));
     }
   }
-
-  const publicContentPaths = [
-    "content/items/manifest.json",
-    "scripts/check-public-content-manifest.mjs",
-    "tests/public-content-manifest.test.mjs",
-  ];
-  const publicContentPresent =
-    existsSync("content/items") ||
-    baseHasContentItemsFiles() ||
-    publicContentPaths.some((path) => isFile(path) || baseHasFile(path));
   if (publicContentPresent) {
     const missing = publicContentPaths.filter((path) => !isFile(path));
     if (missing.length) {
