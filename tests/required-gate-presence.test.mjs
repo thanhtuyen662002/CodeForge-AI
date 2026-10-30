@@ -200,12 +200,12 @@ test("a partial public content suite fails closed", () => {
   }
 });
 
-test("a complete public content suite is detected and emitted for the required gate", () => {
-  const run = scenario(publicContentSuiteFiles);
+test("complete public content and publication-safety suites are detected together", () => {
+  const run = scenario({ ...contentSuiteFiles, ...publicContentSuiteFiles });
   try {
     assert.equal(run.result.status, 0, run.result.stderr);
     assert.match(run.output, /public_content_present=true/);
-    assert.match(run.output, /content_present=false/);
+    assert.match(run.output, /content_present=true/);
     assert.match(run.output, /web_present=false/);
   } finally {
     run.cleanup();
@@ -223,16 +223,6 @@ test("public content cannot be introduced without the publication-safety suite",
   }
 });
 
-test("a complete public content and publication-safety suite is detected together", () => {
-  const run = scenario({ ...contentSuiteFiles, ...publicContentSuiteFiles });
-  try {
-    assert.equal(run.result.status, 0, run.result.stderr);
-    assert.match(run.output, /content_present=true/);
-    assert.match(run.output, /public_content_present=true/);
-  } finally {
-    run.cleanup();
-  }
-});
 
 test("removing publication-safety assets cannot leave public content on a manifest-only gate", () => {
   const run = scenario(
