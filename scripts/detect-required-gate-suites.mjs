@@ -74,16 +74,16 @@ try {
   const contentPresent =
     publicContentPresent ||
     contentPaths.some((path) => isFile(path) || baseHasFile(path));
-  if (contentPresent) {
-    const missing = requiredContentPaths.filter((path) => !isFile(path));
-    if (missing.length) {
-      throw new Error("Content safety suite is present in the PR or base, but required files are missing: " + missing.join(", "));
-    }
-  }
   if (publicContentPresent) {
     const missing = publicContentPaths.filter((path) => !isFile(path));
     if (missing.length) {
       throw new Error("Public content is present in the PR or base, but the manifest, checker, and regression suite must all be present: " + missing.join(", "));
+    }
+  }
+  if (contentPresent) {
+    const missing = requiredContentPaths.filter((path) => !isFile(path));
+    if (missing.length) {
+      throw new Error("Content safety suite is present in the PR or base, but required files are missing: " + missing.join(", "));
     }
   }
 
