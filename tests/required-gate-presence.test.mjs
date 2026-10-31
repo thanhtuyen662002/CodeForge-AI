@@ -322,10 +322,10 @@ test("a symlinked required content checker fails closed", () => {
 
 test("a symlinked required-suite parent directory fails closed", () => {
   const run = scenario({}, [], {
-    "alternate-tests/content-publication-safety.test.mjs": "// benign no-op\\n",
+    "alternate-github/workflows/content-publication-safety.yml": "name: benign workflow\\n",
   }, {
     currentSymlinks: {
-      "tests": "alternate-tests",
+      ".github": "alternate-github",
     },
   });
   try {

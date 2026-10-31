@@ -90,7 +90,7 @@ try {
   const publicContentPresent =
     pathExists("content/items") ||
     baseHasContentItemsFiles() ||
-    publicContentPaths.some((path) => isFile(path) || baseHasPath(path));
+    publicContentPaths.some((path) => pathExists(path) || baseHasPath(path));
 
   const contentPaths = [
     ".github/workflows/content-publication-safety.yml",
@@ -108,7 +108,7 @@ try {
   // A manifest-only suite must not become a weaker route around publication checks.
   const contentPresent =
     publicContentPresent ||
-    contentPaths.some((path) => isFile(path) || baseHasPath(path));
+    contentPaths.some((path) => pathExists(path) || baseHasPath(path));
   if (publicContentPresent) {
     const missing = publicContentPaths.filter((path) => !isFile(path));
     if (missing.length) {
