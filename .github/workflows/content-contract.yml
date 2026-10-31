@@ -27,5 +27,7 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
+      - name: Typecheck content contract
+        run: npm exec --yes --ignore-scripts --package=typescript@6.0.3 -- tsc --noEmit -p packages/content-contract/tsconfig.json
       - name: Validate content graph contract
         run: node --experimental-strip-types --test tests/content-contract/*.test.mjs
