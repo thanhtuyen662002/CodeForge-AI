@@ -208,11 +208,12 @@ test("a partial public content suite fails closed", () => {
 });
 
 test("complete public content and publication-safety suites are detected together", () => {
-  const run = scenario({ ...contentSuiteFiles, ...publicContentSuiteFiles });
+  const run = scenario({ ...contentSuiteFiles, ...publicContentSuiteFiles, ...contentGraphSuiteFiles });
   try {
     assert.equal(run.result.status, 0, run.result.stderr);
     assert.match(run.output, /public_content_present=true/);
     assert.match(run.output, /content_present=true/);
+    assert.match(run.output, /content_graph_present=true/);
     assert.match(run.output, /web_present=false/);
   } finally {
     run.cleanup();
