@@ -26,6 +26,15 @@ function requiredString(value: unknown, out: ValidationIssue[], code: string, pa
   return value;
 }
 
+function requiredIdentifier(value: unknown, out: ValidationIssue[], code: string, path: string): string | undefined {
+  const identifier = requiredString(value, out, code, path);
+  if (identifier !== undefined && identifier.includes(String.fromCharCode(0))) {
+    add(out, "IDENTIFIER_NUL_FORBIDDEN", path, "Identifiers must not contain U+0000.");
+    return undefined;
+  }
+  return identifier;
+}
+
 /** Structural validation only; it does not certify quality, provenance, licensing, human review, or learning efficacy. */
 export function validateContentGraph(input: unknown): ValidationIssue[] {
   const out: ValidationIssue[] = [];
@@ -47,11 +56,11 @@ export function validateContentGraph(input: unknown): ValidationIssue[] {
     const path = `skills[${i}]`;
     if (!isObject(raw)) { add(out, "SKILL_OBJECT_REQUIRED", path, "Skill must be an object."); continue; }
     rejectUnknownFields(raw, ["id", "slug", "domain", "name", "description", "version", "status"], out, path);
-    const id = requiredString(raw.id, out, "SKILL_ID_REQUIRED", `${path}.id`);
+    const id = requiredIdentifier(raw.id, out, "SKILL_ID_REQUIRED", `${path}.id`);
     if (id && skillIds.has(id)) add(out, "DUPLICATE_SKILL_ID", `${path}.id`, `Duplicate skill id: ${id}.`);
     else if (id) skillIds.add(id);
-    requiredString(raw.slug, out, "SKILL_SLUG_REQUIRED", `${path}.slug`);
-    requiredString(raw.domain, out, "SKILL_DOMAIN_REQUIRED", `${path}.domain`);
+    requiredIdentifier(raw.slug, out, "SKILL_SLUG_REQUIRED", `${path}.slug`);
+    requiredIdentifier(raw.domain, out, "SKILL_DOMAIN_REQUIRED", `${path}.domain`);
     const name = raw.name;
     if (!isObject(name) || !nonBlank(name.vi) || !nonBlank(name.en)) add(out, "SKILL_NAME_INVALID", `${path}.name`, "Both vi and en names are required.");
     else rejectUnknownFields(name, ["vi", "en"], out, `${path}.name`);
@@ -66,15 +75,15 @@ export function validateContentGraph(input: unknown): ValidationIssue[] {
     const path = `dependencies[${i}]`;
     if (!isObject(raw)) { add(out, "DEPENDENCY_OBJECT_REQUIRED", path, "Dependency must be an object."); continue; }
     rejectUnknownFields(raw, ["prerequisiteId", "skillId", "kind", "reason"], out, path);
-    const from = requiredString(raw.prerequisiteId, out, "PREREQUISITE_ID_REQUIRED", `${path}.prerequisiteId`);
-    const to = requiredString(raw.skillId, out, "DEPENDENT_SKILL_ID_REQUIRED", `${path}.skillId`);
+    const from = requiredIdentifier(raw.prerequisiteId, out, "PREREQUISITE_ID_REQUIRED", `${path}.prerequisiteId`);
+    const to = requiredIdentifier(raw.skillId, out, "DEPENDENT_SKILL_ID_REQUIRED", `${path}.skillId`);
     if (typeof raw.kind !== "string" || !kinds.has(raw.kind as DependencyKind)) add(out, "DEPENDENCY_KIND_INVALID", `${path}.kind`, "Kind must be hard or soft.");
     requiredString(raw.reason, out, "DEPENDENCY_REASON_REQUIRED", `${path}.reason`);
     if (!from || !to) continue;
     if (from === to) { add(out, "SELF_DEPENDENCY", path, "A skill cannot depend on itself."); continue; }
     if (!skillIds.has(from)) add(out, "DANGLING_PREREQUISITE", `${path}.prerequisiteId`, `Unknown prerequisite: ${from}.`);
     if (!skillIds.has(to)) add(out, "DANGLING_DEPENDENT_SKILL", `${path}.skillId`, `Unknown dependent skill: ${to}.`);
-    const pair = `${from}\u0000${to}`;
+    const pair = JSON.stringify([from, to]);
     if (pairs.has(pair)) add(out, "DUPLICATE_DEPENDENCY", path, `Duplicate dependency ${from} -> ${to}.`);
     else pairs.add(pair);
     if (skillIds.has(from) && skillIds.has(to)) edges.get(from)?.add(to);
@@ -103,12 +112,12 @@ export function validateContentGraph(input: unknown): ValidationIssue[] {
     const path = `contentItems[${i}]`;
     if (!isObject(raw)) { add(out, "CONTENT_ITEM_OBJECT_REQUIRED", path, "Content item must be an object."); continue; }
     rejectUnknownFields(raw, ["id", "version", "difficulty", "primarySkillId", "secondarySkillIds"], out, path);
-    const id = requiredString(raw.id, out, "CONTENT_ITEM_ID_REQUIRED", `${path}.id`);
+    const id = requiredIdentifier(raw.id, out, "CONTENT_ITEM_ID_REQUIRED", `${path}.id`);
     if (id && itemIds.has(id)) add(out, "DUPLICATE_CONTENT_ITEM_ID", `${path}.id`, `Duplicate content item id: ${id}.`);
     else if (id) itemIds.add(id);
     if (!positiveInt(raw.version)) add(out, "CONTENT_ITEM_VERSION_INVALID", `${path}.version`, "Content item version must be a positive integer.");
     if (typeof raw.difficulty !== "number" || !Number.isInteger(raw.difficulty) || raw.difficulty < 1 || raw.difficulty > 10) add(out, "CONTENT_ITEM_DIFFICULTY_INVALID", `${path}.difficulty`, "Difficulty must be an integer from 1 through 10.");
-    const primary = requiredString(raw.primarySkillId, out, "PRIMARY_SKILL_ID_REQUIRED", `${path}.primarySkillId`);
+    const primary = requiredIdentifier(raw.primarySkillId, out, "PRIMARY_SKILL_ID_REQUIRED", `${path}.primarySkillId`);
     if (primary && !skillIds.has(primary)) add(out, "UNKNOWN_PRIMARY_SKILL", `${path}.primarySkillId`, `Unknown primary skill: ${primary}.`);
     if (raw.secondarySkillIds !== undefined) {
       if (!Array.isArray(raw.secondarySkillIds)) add(out, "SECONDARY_SKILL_IDS_INVALID", `${path}.secondarySkillIds`, "secondarySkillIds must be an array.");
@@ -116,10 +125,11 @@ export function validateContentGraph(input: unknown): ValidationIssue[] {
         const seen = new Set<string>();
         for (const [j, secondary] of raw.secondarySkillIds.entries()) {
           const secondaryPath = `${path}.secondarySkillIds[${j}]`;
-          if (!nonBlank(secondary)) { add(out, "SECONDARY_SKILL_ID_INVALID", secondaryPath, "Secondary skill id must be a non-empty string."); continue; }
-          if (secondary === primary || seen.has(secondary)) add(out, "DUPLICATE_ITEM_SKILL_REFERENCE", secondaryPath, `Duplicate skill reference: ${secondary}.`);
-          else seen.add(secondary);
-          if (!skillIds.has(secondary)) add(out, "UNKNOWN_SECONDARY_SKILL", secondaryPath, `Unknown secondary skill: ${secondary}.`);
+          const secondaryId = requiredIdentifier(secondary, out, "SECONDARY_SKILL_ID_INVALID", secondaryPath);
+          if (!secondaryId) continue;
+          if (secondaryId === primary || seen.has(secondaryId)) add(out, "DUPLICATE_ITEM_SKILL_REFERENCE", secondaryPath, `Duplicate skill reference: ${secondaryId}.`);
+          else seen.add(secondaryId);
+          if (!skillIds.has(secondaryId)) add(out, "UNKNOWN_SECONDARY_SKILL", secondaryPath, `Unknown secondary skill: ${secondaryId}.`);
         }
       }
     }

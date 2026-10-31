@@ -148,3 +148,24 @@ test("rejects non-object roots and missing graph collections", () => {
   assert.ok(result.includes("DEPENDENCIES_REQUIRED"));
   assert.ok(result.includes("CONTENT_ITEMS_REQUIRED"));
 });
+
+test("rejects NUL identifiers and does not conflate distinct dependency pairs", () => {
+  const graph = validGraph();
+  graph.skills = [
+    { ...graph.skills[0], id: "a\u0000b" },
+    { ...graph.skills[1], id: "c" },
+    { ...graph.skills[2], id: "a" },
+    { ...graph.skills[2], id: "b\u0000c" },
+  ];
+  graph.dependencies = [
+    { prerequisiteId: "a\u0000b", skillId: "c", kind: "hard", reason: "First distinct edge." },
+    { prerequisiteId: "a", skillId: "b\u0000c", kind: "soft", reason: "Second distinct edge." },
+  ];
+  graph.contentItems = [
+    { id: "practice.item.001", version: 1, difficulty: 2, primarySkillId: "c" },
+  ];
+
+  const issues = validateContentGraph(graph);
+  assert.ok(issues.filter((issue) => issue.code === "IDENTIFIER_NUL_FORBIDDEN").length >= 4);
+  assert.equal(issues.some((issue) => issue.code === "DUPLICATE_DEPENDENCY"), false);
+});
