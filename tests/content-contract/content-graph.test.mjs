@@ -113,6 +113,24 @@ test("rejects duplicate content item ids and invalid item versions", () => {
   assert.ok(result.includes("CONTENT_ITEM_VERSION_INVALID"));
 });
 
+test("rejects unknown fields at graph and nested levels, including hidden-answer-like fields", () => {
+  const graph = validGraph();
+  graph.privateAnswerKey = "synthetic-secret";
+  graph.skills[0].internalNote = "not part of the public graph";
+  graph.skills[0].name.hiddenAnswer = "synthetic-secret";
+  graph.dependencies[0].weight = 999;
+  graph.contentItems[0].expectedOutput = "synthetic-secret";
+
+  const issues = validateContentGraph(graph).filter((issue) => issue.code === "UNKNOWN_FIELD");
+  const paths = issues.map((issue) => issue.path);
+  assert.equal(issues.length, 5);
+  assert.ok(paths.includes("$.privateAnswerKey"));
+  assert.ok(paths.includes("skills[0].internalNote"));
+  assert.ok(paths.includes("skills[0].name.hiddenAnswer"));
+  assert.ok(paths.includes("dependencies[0].weight"));
+  assert.ok(paths.includes("contentItems[0].expectedOutput"));
+});
+
 test("returns deterministic issues without mutating the supplied graph", () => {
   const graph = validGraph();
   graph.dependencies.push({ prerequisiteId: "missing", skillId: "programming.conditions", kind: "hard", reason: "Bad edge." });
