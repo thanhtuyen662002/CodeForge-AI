@@ -95,6 +95,7 @@ try {
   }
 
   const contentGraphPresent =
+    publicContentPresent ||
     existsSync("packages/content-contract") ||
     existsSync("tests/content-contract") ||
     baseHasContentGraphFiles();

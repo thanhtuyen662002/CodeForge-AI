@@ -280,3 +280,13 @@ test("a partial content graph contract fails closed", () => {
     run.cleanup();
   }
 });
+
+test("public content requires the versioned content graph contract", () => {
+  const run = scenario({ ...contentSuiteFiles, ...publicContentSuiteFiles });
+  try {
+    assert.equal(run.result.status, 1);
+    assert.match(run.result.stderr, /Content graph contract is present in the PR or base/);
+  } finally {
+    run.cleanup();
+  }
+});
