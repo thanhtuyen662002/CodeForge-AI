@@ -27,6 +27,13 @@ const publicContentSuiteFiles = {
   "tests/public-content-manifest.test.mjs": "// synthetic test\n",
 };
 
+const contentGraphSuiteFiles = {
+  "packages/content-contract/package.json": "{\"name\":\"@codeforge/content-contract\",\"private\":true}\n",
+  "packages/content-contract/tsconfig.json": "{\"compilerOptions\":{\"strict\":true}}\n",
+  "packages/content-contract/src/index.ts": "export {};\n",
+  "tests/content-contract/content-graph.test.mjs": "import test from 'node:test'; test('synthetic', () => {});\n",
+};
+
 function writeFiles(root, files) {
   for (const [relativePath, contents] of Object.entries(files)) {
     const target = join(root, relativePath);
@@ -237,6 +244,38 @@ test("removing publication-safety assets cannot leave public content on a manife
   try {
     assert.equal(run.result.status, 1);
     assert.match(run.result.stderr, /Content safety suite is present in the PR or base/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("a complete content graph contract is detected for the required gate", () => {
+  const run = scenario(contentGraphSuiteFiles);
+  try {
+    assert.equal(run.result.status, 0, run.result.stderr);
+    assert.match(run.output, /content_graph_present=true/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("removing the content graph contract cannot make the required gate skip it", () => {
+  const run = scenario(contentGraphSuiteFiles, ["packages/content-contract", "tests/content-contract"]);
+  try {
+    assert.equal(run.result.status, 1);
+    assert.match(run.result.stderr, /Content graph contract is present in the PR or base/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("a partial content graph contract fails closed", () => {
+  const run = scenario({}, [], {
+    "packages/content-contract/src/index.ts": "export {};\\n",
+  });
+  try {
+    assert.equal(run.result.status, 1);
+    assert.match(run.result.stderr, /Content graph contract is present in the PR or base/);
   } finally {
     run.cleanup();
   }

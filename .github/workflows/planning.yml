@@ -72,6 +72,12 @@ jobs:
       - name: Validate public content manifest
         if: steps.required-suites.outputs.public_content_present == 'true'
         run: node scripts/check-public-content-manifest.mjs content/items/manifest.json
+      - name: Typecheck content graph contract
+        if: steps.required-suites.outputs.content_graph_present == 'true'
+        run: npm exec --yes --ignore-scripts --package=typescript@6.0.3 -- tsc --noEmit -p packages/content-contract/tsconfig.json
+      - name: Run required content graph regression suite
+        if: steps.required-suites.outputs.content_graph_present == 'true'
+        run: node --experimental-strip-types --test tests/content-contract/*.test.mjs
       # The ruleset requires this job, not the separate path-filtered web-app
       # workflow. Keep app-bearing changes inside the required merge gate.
       - name: Set up pinned web Node and npm cache

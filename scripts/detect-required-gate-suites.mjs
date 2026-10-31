@@ -40,6 +40,13 @@ function baseHasContentItemsFiles() {
   });
   return files.trim().length > 0;
 }
+function baseHasContentGraphFiles() {
+  if (!baseTree) return false;
+  const files = execFileSync("git", ["ls-tree", "-r", "--name-only", baseTree, "--", "packages/content-contract/", "tests/content-contract/"], {
+    encoding: "utf8",
+  });
+  return files.trim().length > 0;
+}
 
 try {
   if (!outputPath) throw new Error("GITHUB_OUTPUT is required; refusing to skip required-suite detection.");
@@ -87,6 +94,23 @@ try {
     }
   }
 
+  const contentGraphPresent =
+    existsSync("packages/content-contract") ||
+    existsSync("tests/content-contract") ||
+    baseHasContentGraphFiles();
+  if (contentGraphPresent) {
+    const requiredContentGraphPaths = [
+      "packages/content-contract/package.json",
+      "packages/content-contract/tsconfig.json",
+      "packages/content-contract/src/index.ts",
+      "tests/content-contract/content-graph.test.mjs",
+    ];
+    const missing = requiredContentGraphPaths.filter((path) => !isFile(path));
+    if (missing.length) {
+      throw new Error("Content graph contract is present in the PR or base, but required typecheck/test inputs are missing: " + missing.join(", "));
+    }
+  }
+
   const webPresent = existsSync("apps/web") || baseHasWebFiles();
   if (webPresent) {
     const requiredWebPaths = ["apps/web/package.json", "apps/web/package-lock.json", "apps/web/.nvmrc"];
@@ -98,6 +122,7 @@ try {
 
   appendFileSync(outputPath, "content_present=" + contentPresent + "\n");
   appendFileSync(outputPath, "public_content_present=" + publicContentPresent + "\n");
+  appendFileSync(outputPath, "content_graph_present=" + contentGraphPresent + "\n");
   appendFileSync(outputPath, "web_present=" + webPresent + "\n");
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
