@@ -172,7 +172,7 @@ test("rejects NUL identifiers and does not conflate distinct dependency pairs", 
 
 
 test("rejects C0/C1 controls across skill and content identifiers", () => {
-  for (const control of ["\\u0001", "\\u001F", "\\u007F", "\\u0085", "\\u009F"]) {
+  for (const control of ["\u0001", "\u001F", "\u007F", "\u0085", "\u009F"]) {
     const graph = validGraph();
     graph.skills[0].id = `logic.${control}sequence`;
     graph.skills[1].slug = `var${control}iables`;
