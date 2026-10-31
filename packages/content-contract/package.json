@@ -1,0 +1,5 @@
+{
+  "name": "@codeforge/content-contract",
+  "private": true,
+  "type": "module"
+}
