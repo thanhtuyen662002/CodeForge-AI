@@ -169,3 +169,35 @@ test("rejects NUL identifiers and does not conflate distinct dependency pairs", 
   assert.ok(issues.filter((issue) => issue.code === "IDENTIFIER_NUL_FORBIDDEN").length >= 4);
   assert.equal(issues.some((issue) => issue.code === "DUPLICATE_DEPENDENCY"), false);
 });
+
+
+test("rejects C0/C1 controls across skill and content identifiers", () => {
+  for (const control of ["\\u0001", "\\u001F", "\\u007F", "\\u0085", "\\u009F"]) {
+    const graph = validGraph();
+    graph.skills[0].id = `logic.${control}sequence`;
+    graph.skills[1].slug = `var${control}iables`;
+    graph.skills[2].domain = `programming${control}domain`;
+    graph.contentItems[0].id = `python.conditions${control}001`;
+    const issues = validateContentGraph(graph);
+    assert.equal(
+      issues.filter((issue) => issue.code === "IDENTIFIER_CONTROL_CHARACTER_FORBIDDEN").length,
+      4,
+      `expected all four identifiers to reject control U+${control.charCodeAt(0).toString(16).padStart(4, "0")}`,
+    );
+  }
+});
+
+test("requires canonical lowercase dotted or kebab identifier segments", () => {
+  const invalidIds = ["Logic.Sequence", "logic..sequence", "logic_sequence", "-logic", "logic-", "logic.-sequence"];
+  for (const id of invalidIds) {
+    const graph = validGraph();
+    graph.skills[0].id = id;
+    assert.ok(codes(graph).includes("IDENTIFIER_FORMAT_INVALID"), `expected rejection for ${JSON.stringify(id)}`);
+  }
+
+  const graph = validGraph();
+  graph.skills[0].slug = "Bad_slug";
+  graph.skills[1].domain = "programming..core";
+  const result = codes(graph);
+  assert.ok(result.includes("IDENTIFIER_FORMAT_INVALID"));
+});

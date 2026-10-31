@@ -28,8 +28,17 @@ function requiredString(value: unknown, out: ValidationIssue[], code: string, pa
 
 function requiredIdentifier(value: unknown, out: ValidationIssue[], code: string, path: string): string | undefined {
   const identifier = requiredString(value, out, code, path);
-  if (identifier !== undefined && identifier.includes(String.fromCharCode(0))) {
+  if (identifier === undefined) return undefined;
+  if (identifier.includes(String.fromCharCode(0))) {
     add(out, "IDENTIFIER_NUL_FORBIDDEN", path, "Identifiers must not contain U+0000.");
+    return undefined;
+  }
+  if (/[\u0001-\u001F\u007F-\u009F]/u.test(identifier)) {
+    add(out, "IDENTIFIER_CONTROL_CHARACTER_FORBIDDEN", path, "Identifiers must not contain C0/C1 control characters.");
+    return undefined;
+  }
+  if (!/^[a-z0-9]+(?:[.-][a-z0-9]+)*$/u.test(identifier)) {
+    add(out, "IDENTIFIER_FORMAT_INVALID", path, "Identifiers must use lowercase ASCII letters and digits separated by single dots or hyphens.");
     return undefined;
   }
   return identifier;
