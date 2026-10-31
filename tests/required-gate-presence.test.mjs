@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -42,11 +42,21 @@ function writeFiles(root, files) {
   }
 }
 
-function scenario(baseFiles, removePaths = [], currentFiles = {}) {
+function writeSymlinks(root, links) {
+  for (const [relativePath, target] of Object.entries(links)) {
+    const linkPath = join(root, relativePath);
+    mkdirSync(dirname(linkPath), { recursive: true });
+    symlinkSync(target, linkPath);
+  }
+}
+
+function scenario(baseFiles, removePaths = [], currentFiles = {}, options = {}) {
+  const { baseSymlinks = {}, currentSymlinks = {} } = options;
   const root = mkdtempSync(join(tmpdir(), "codeforge-required-gate-"));
   mkdirSync(join(root, "scripts"), { recursive: true });
   copyFileSync(helperSource, join(root, "scripts/detect-required-gate-suites.mjs"));
   writeFiles(root, baseFiles);
+  writeSymlinks(root, baseSymlinks);
   execFileSync("git", ["init", "-q"], { cwd: root });
   execFileSync("git", ["config", "user.name", "Gate Regression Test"], { cwd: root });
   execFileSync("git", ["config", "user.email", "gate-test@example.invalid"], { cwd: root });
@@ -58,6 +68,7 @@ function scenario(baseFiles, removePaths = [], currentFiles = {}) {
     rmSync(join(root, relativePath), { recursive: true, force: true });
   }
   writeFiles(root, currentFiles);
+  writeSymlinks(root, currentSymlinks);
   const outputPath = join(root, "github-output.txt");
   const result = spawnSync(process.execPath, [join(root, "scripts/detect-required-gate-suites.mjs")], {
     cwd: root,
@@ -287,6 +298,55 @@ test("public content requires the versioned content graph contract", () => {
   try {
     assert.equal(run.result.status, 1);
     assert.match(run.result.stderr, /Content graph contract is present in the PR or base/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+
+test("a symlinked required content checker fails closed", () => {
+  const run = scenario({}, [], {
+    "scripts/benign-checker.mjs": "// benign no-op\\n",
+  }, {
+    currentSymlinks: {
+      "scripts/check-content-publication-safety.mjs": "benign-checker.mjs",
+    },
+  });
+  try {
+    assert.equal(run.result.status, 1);
+    assert.match(run.result.stderr, /Content safety suite is present in the PR or base/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("a symlinked required-suite parent directory fails closed", () => {
+  const run = scenario({}, [], {
+    "alternate-tests/content-publication-safety.test.mjs": "// benign no-op\\n",
+  }, {
+    currentSymlinks: {
+      "tests": "alternate-tests",
+    },
+  });
+  try {
+    assert.equal(run.result.status, 1);
+    assert.match(run.result.stderr, /Content safety suite is present in the PR or base/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("deleting a base-tree symlink cannot make the required suite disappear", () => {
+  const run = scenario({
+    "scripts/benign-checker.mjs": "// benign no-op\\n",
+  }, ["scripts/check-content-publication-safety.mjs"], {}, {
+    baseSymlinks: {
+      "scripts/check-content-publication-safety.mjs": "benign-checker.mjs",
+    },
+  });
+  try {
+    assert.equal(run.result.status, 1);
+    assert.match(run.result.stderr, /Content safety suite is present in the PR or base/);
   } finally {
     run.cleanup();
   }
