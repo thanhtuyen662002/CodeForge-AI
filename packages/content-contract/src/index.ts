@@ -14,6 +14,13 @@ const nonBlank = (value: unknown): value is string => typeof value === "string" 
 const positiveInt = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value > 0;
 const add = (out: ValidationIssue[], code: string, path: string, message: string) => out.push({ code, path, message });
 
+function rejectUnknownFields(value: Record<string, unknown>, allowed: string[], out: ValidationIssue[], path: string): void {
+  const allowedFields = new Set(allowed);
+  for (const key of Object.keys(value)) {
+    if (!allowedFields.has(key)) add(out, "UNKNOWN_FIELD", `${path}.${key}`, `Unexpected field: ${key}.`);
+  }
+}
+
 function requiredString(value: unknown, out: ValidationIssue[], code: string, path: string): string | undefined {
   if (!nonBlank(value)) { add(out, code, path, "A non-empty string is required."); return undefined; }
   return value;
@@ -23,6 +30,7 @@ function requiredString(value: unknown, out: ValidationIssue[], code: string, pa
 export function validateContentGraph(input: unknown): ValidationIssue[] {
   const out: ValidationIssue[] = [];
   if (!isObject(input)) return [{ code: "GRAPH_OBJECT_REQUIRED", path: "$", message: "Content graph must be an object." }];
+  rejectUnknownFields(input, ["schemaVersion", "version", "skills", "dependencies", "contentItems"], out, "$");
   if (input.schemaVersion !== 1) add(out, "GRAPH_SCHEMA_VERSION_INVALID", "schemaVersion", "schemaVersion must be 1.");
   requiredString(input.version, out, "GRAPH_VERSION_REQUIRED", "version");
 
@@ -38,6 +46,7 @@ export function validateContentGraph(input: unknown): ValidationIssue[] {
   for (const [i, raw] of (skills ?? []).entries()) {
     const path = `skills[${i}]`;
     if (!isObject(raw)) { add(out, "SKILL_OBJECT_REQUIRED", path, "Skill must be an object."); continue; }
+    rejectUnknownFields(raw, ["id", "slug", "domain", "name", "description", "version", "status"], out, path);
     const id = requiredString(raw.id, out, "SKILL_ID_REQUIRED", `${path}.id`);
     if (id && skillIds.has(id)) add(out, "DUPLICATE_SKILL_ID", `${path}.id`, `Duplicate skill id: ${id}.`);
     else if (id) skillIds.add(id);
@@ -45,6 +54,7 @@ export function validateContentGraph(input: unknown): ValidationIssue[] {
     requiredString(raw.domain, out, "SKILL_DOMAIN_REQUIRED", `${path}.domain`);
     const name = raw.name;
     if (!isObject(name) || !nonBlank(name.vi) || !nonBlank(name.en)) add(out, "SKILL_NAME_INVALID", `${path}.name`, "Both vi and en names are required.");
+    else rejectUnknownFields(name, ["vi", "en"], out, `${path}.name`);
     requiredString(raw.description, out, "SKILL_DESCRIPTION_REQUIRED", `${path}.description`);
     if (!positiveInt(raw.version)) add(out, "SKILL_VERSION_INVALID", `${path}.version`, "Skill version must be a positive integer.");
     if (typeof raw.status !== "string" || !statuses.has(raw.status as SkillStatus)) add(out, "SKILL_STATUS_INVALID", `${path}.status`, "Status must be draft, published, or retired.");
@@ -55,6 +65,7 @@ export function validateContentGraph(input: unknown): ValidationIssue[] {
   for (const [i, raw] of (dependencies ?? []).entries()) {
     const path = `dependencies[${i}]`;
     if (!isObject(raw)) { add(out, "DEPENDENCY_OBJECT_REQUIRED", path, "Dependency must be an object."); continue; }
+    rejectUnknownFields(raw, ["prerequisiteId", "skillId", "kind", "reason"], out, path);
     const from = requiredString(raw.prerequisiteId, out, "PREREQUISITE_ID_REQUIRED", `${path}.prerequisiteId`);
     const to = requiredString(raw.skillId, out, "DEPENDENT_SKILL_ID_REQUIRED", `${path}.skillId`);
     if (typeof raw.kind !== "string" || !kinds.has(raw.kind as DependencyKind)) add(out, "DEPENDENCY_KIND_INVALID", `${path}.kind`, "Kind must be hard or soft.");
@@ -91,6 +102,7 @@ export function validateContentGraph(input: unknown): ValidationIssue[] {
   for (const [i, raw] of (items ?? []).entries()) {
     const path = `contentItems[${i}]`;
     if (!isObject(raw)) { add(out, "CONTENT_ITEM_OBJECT_REQUIRED", path, "Content item must be an object."); continue; }
+    rejectUnknownFields(raw, ["id", "version", "difficulty", "primarySkillId", "secondarySkillIds"], out, path);
     const id = requiredString(raw.id, out, "CONTENT_ITEM_ID_REQUIRED", `${path}.id`);
     if (id && itemIds.has(id)) add(out, "DUPLICATE_CONTENT_ITEM_ID", `${path}.id`, `Duplicate content item id: ${id}.`);
     else if (id) itemIds.add(id);
