@@ -304,14 +304,30 @@ test("public content requires the versioned content graph contract", () => {
 });
 
 
-test("a symlinked required content checker fails closed", () => {
-  const run = scenario({}, [], {
-    "scripts/benign-checker.mjs": "// benign no-op\\n",
-  }, {
-    currentSymlinks: {
-      "scripts/check-content-publication-safety.mjs": "benign-checker.mjs",
-    },
-  });
+test("a fully symlinked content-safety suite cannot satisfy required inputs", () => {
+  const currentFiles = {
+    "safe/content-publication-safety.yml": "name: benign workflow\\n",
+    "safe/checker.mjs": "// benign no-op\\n",
+    "safe/tests.mjs": "import test from 'node:test'; test('benign no-op', () => {});\\n",
+    "safe/public-item.valid.json": "{}\\n",
+    "safe/hidden-answer.invalid.json": "{}\\n",
+    "safe/duplicate-key-hidden-answer.invalid.json": "{}\\n",
+    "safe/malformed-json.invalid.json": "{}\\n",
+    "safe/missing-classification.invalid.json": "{}\\n",
+    "safe/missing-provenance.invalid.json": "{}\\n",
+  };
+  const currentSymlinks = {
+    ".github/workflows/content-publication-safety.yml": "../../safe/content-publication-safety.yml",
+    "scripts/check-content-publication-safety.mjs": "../safe/checker.mjs",
+    "tests/content-publication-safety.test.mjs": "../safe/tests.mjs",
+    "tests/fixtures/content-safety/public-item.valid.json": "../../../safe/public-item.valid.json",
+    "tests/fixtures/content-safety/hidden-answer.invalid.json": "../../../safe/hidden-answer.invalid.json",
+    "tests/fixtures/content-safety/duplicate-key-hidden-answer.invalid.json": "../../../safe/duplicate-key-hidden-answer.invalid.json",
+    "tests/fixtures/content-safety/malformed-json.invalid.json": "../../../safe/malformed-json.invalid.json",
+    "tests/fixtures/content-safety/missing-classification.invalid.json": "../../../safe/missing-classification.invalid.json",
+    "tests/fixtures/content-safety/missing-provenance.invalid.json": "../../../safe/missing-provenance.invalid.json",
+  };
+  const run = scenario({}, [], currentFiles, { currentSymlinks });
   try {
     assert.equal(run.result.status, 1);
     assert.match(run.result.stderr, /Content safety suite is present in the PR or base/);
