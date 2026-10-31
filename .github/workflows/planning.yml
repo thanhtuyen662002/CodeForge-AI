@@ -1,9 +1,11 @@
 name: Planning integrity
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
   push:
     branches: [main, 'codex/strategy-validation-*']
   merge_group:
+    types: [checks_requested]
 permissions:
   contents: read
 concurrency:
@@ -13,7 +15,7 @@ jobs:
   merge-gate:
     name: merge-gate
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -23,15 +25,120 @@ jobs:
         with:
           node-version: '24'
       - run: node scripts/check-planning.mjs
+      - name: Test required gate suite detection
+        run: node --test tests/required-gate-presence.test.mjs
+      # The ruleset requires merge-gate; a separate path-filtered safety workflow is not enough.
+      # If content-safety assets appear in a PR, keep their regression suite inside this required gate.
+      # Resolve one base tree for fail-closed suite detection and diff validation.
+      - name: Resolve validation base tree
+        id: validation-base
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            if [ -z "$BASE_REF" ]; then
+              echo "Missing pull request base ref; refusing to skip validation." >&2
+              exit 1
+            fi
+            git fetch --no-tags origin "+refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
+            echo "BASE_TREE=refs/remotes/origin/$BASE_REF" >> "$GITHUB_ENV"
+          elif [ "$EVENT_NAME" = "merge_group" ]; then
+            if [ -z "$MERGE_GROUP_BASE_SHA" ]; then
+              echo "Missing merge-group base SHA; refusing to skip validation." >&2
+              exit 1
+            fi
+            git cat-file -e "$MERGE_GROUP_BASE_SHA^{commit}"
+            echo "BASE_TREE=$MERGE_GROUP_BASE_SHA" >> "$GITHUB_ENV"
+          elif [ "$EVENT_NAME" = "push" ] && [ -n "$BEFORE_SHA" ] && [[ ! "$BEFORE_SHA" =~ ^0+$ ]]; then
+            git cat-file -e "$BEFORE_SHA^{commit}"
+            echo "BASE_TREE=$BEFORE_SHA" >> "$GITHUB_ENV"
+          else
+            echo "BASE_TREE=" >> "$GITHUB_ENV"
+          fi
+      - name: Detect required suites fail-closed
+        id: required-suites
+        run: node scripts/detect-required-gate-suites.mjs
+      - name: Run required content publication safety regression suite
+        if: steps.required-suites.outputs.content_present == 'true'
+        run: node --test tests/content-publication-safety.test.mjs
+      - name: Run required public content manifest regression suite
+        if: steps.required-suites.outputs.public_content_present == 'true'
+        run: node --test tests/public-content-manifest.test.mjs
+      - name: Validate public content manifest
+        if: steps.required-suites.outputs.public_content_present == 'true'
+        run: node scripts/check-public-content-manifest.mjs content/items/manifest.json
+      - name: Typecheck content graph contract
+        if: steps.required-suites.outputs.content_graph_present == 'true'
+        run: npm exec --yes --ignore-scripts --package=typescript@6.0.3 -- tsc --noEmit -p packages/content-contract/tsconfig.json
+      - name: Run required content graph regression suite
+        if: steps.required-suites.outputs.content_graph_present == 'true'
+        run: node --experimental-strip-types --test tests/content-contract/*.test.mjs
+      # The ruleset requires this job, not the separate path-filtered web-app
+      # workflow. Keep app-bearing changes inside the required merge gate.
+      - name: Set up pinned web Node and npm cache
+        if: steps.required-suites.outputs.web_present == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: apps/web/.nvmrc
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install pinned web dependencies
+        if: steps.required-suites.outputs.web_present == 'true'
+        working-directory: apps/web
+        run: npm ci
+      - name: Audit web dependencies
+        if: steps.required-suites.outputs.web_present == 'true'
+        working-directory: apps/web
+        run: npm audit --audit-level=high
+      - name: Lint web app
+        if: steps.required-suites.outputs.web_present == 'true'
+        working-directory: apps/web
+        run: npm run lint
+      - name: Typecheck web app
+        if: steps.required-suites.outputs.web_present == 'true'
+        working-directory: apps/web
+        run: npm run typecheck
+      - name: Build web app
+        if: steps.required-suites.outputs.web_present == 'true'
+        working-directory: apps/web
+        run: npm run build
+      - name: Install Chromium for web smoke tests
+        if: steps.required-suites.outputs.web_present == 'true'
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+      - name: Run web Playwright tests
+        if: steps.required-suites.outputs.web_present == 'true'
+        working-directory: apps/web
+        run: npm run test:e2e
       - name: Check committed diff whitespace
         env:
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
+          EVENT_NAME: ${{ github.event_name }}
+        shell: bash
         run: |
-          if [ -n "$PR_BASE_SHA" ]; then
-            git diff --check "$PR_BASE_SHA...HEAD"
-          elif [ -n "$MERGE_GROUP_BASE_SHA" ]; then
-            git diff --check "$MERGE_GROUP_BASE_SHA...HEAD"
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            if [ -z "$BASE_TREE" ]; then
+              echo "Missing resolved pull-request base tree; refusing to skip diff validation." >&2
+              exit 1
+            fi
+            if ! git merge-base --is-ancestor "$BASE_TREE" HEAD; then
+              echo "Pull-request merge context is stale relative to the resolved current base; refusing to pass merge-gate." >&2
+              exit 1
+            fi
+            git diff --check "$BASE_TREE...HEAD"
+          elif [ "$EVENT_NAME" = "merge_group" ]; then
+            if [ -z "$BASE_TREE" ]; then
+              echo "Missing resolved merge-group base; refusing to skip diff validation." >&2
+              exit 1
+            fi
+            git diff --check "$BASE_TREE...HEAD"
+          elif [ -n "$BASE_TREE" ]; then
+            git diff --check "$BASE_TREE...HEAD"
           else
             git show --check --format= HEAD
           fi
