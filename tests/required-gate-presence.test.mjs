@@ -28,10 +28,11 @@ const publicContentSuiteFiles = {
 };
 
 const contentGraphSuiteFiles = {
-  "packages/content-contract/package.json": "{\"name\":\"@codeforge/content-contract\",\"private\":true}\n",
-  "packages/content-contract/tsconfig.json": "{\"compilerOptions\":{\"strict\":true}}\n",
-  "packages/content-contract/src/index.ts": "export {};\n",
-  "tests/content-contract/content-graph.test.mjs": "import test from 'node:test'; test('synthetic', () => {});\n",
+  "packages/content-contract/package.json": "{\"name\":\"@codeforge/content-contract\",\"private\":true,\"devDependencies\":{\"typescript\":\"6.0.3\"}}\\n",
+  "packages/content-contract/package-lock.json": "{\"name\":\"@codeforge/content-contract\",\"lockfileVersion\":3,\"requires\":true,\"packages\":{\"\":{\"name\":\"@codeforge/content-contract\",\"devDependencies\":{\"typescript\":\"6.0.3\"}},\"node_modules/typescript\":{\"version\":\"6.0.3\",\"resolved\":\"https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz\",\"integrity\":\"sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==\",\"dev\":true}}}\\n",
+  "packages/content-contract/tsconfig.json": "{\"compilerOptions\":{\"strict\":true}}\\n",
+  "packages/content-contract/src/index.ts": "export {};\\n",
+  "tests/content-contract/content-graph.test.mjs": "import test from 'node:test'; test('synthetic', () => {});\\n",
 };
 
 function writeFiles(root, files) {
@@ -266,6 +267,18 @@ test("a complete content graph contract is detected for the required gate", () =
   try {
     assert.equal(run.result.status, 0, run.result.stderr);
     assert.match(run.output, /content_graph_present=true/);
+  } finally {
+    run.cleanup();
+  }
+});
+
+test("a content graph contract without its package lock fails closed", () => {
+  const incomplete = { ...contentGraphSuiteFiles };
+  delete incomplete["packages/content-contract/package-lock.json"];
+  const run = scenario(incomplete);
+  try {
+    assert.equal(run.result.status, 1);
+    assert.match(run.result.stderr, /packages\\/content-contract\\/package-lock.json/);
   } finally {
     run.cleanup();
   }
