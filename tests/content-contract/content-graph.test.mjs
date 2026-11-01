@@ -25,6 +25,22 @@ function codes(graph) {
   return validateContentGraph(graph).map((issue) => issue.code);
 }
 
+test("accepts a large disconnected graph without false cycle diagnostics", () => {
+  const graph = validGraph();
+  graph.skills = Array.from({ length: 10000 }, (_, index) => ({
+    id: `scale.skill-${index}`,
+    slug: `skill-${index}`,
+    domain: "scale",
+    name: { vi: `Kỹ năng ${index}`, en: `Skill ${index}` },
+    description: "Synthetic disconnected skill for traversal scale.",
+    version: 1,
+    status: "draft",
+  }));
+  graph.dependencies = [];
+  graph.contentItems = [];
+  assert.deepEqual(validateContentGraph(graph), []);
+});
+
 test("accepts a versioned acyclic graph with valid content skill references", () => {
   assert.deepEqual(validateContentGraph(validGraph()), []);
 });

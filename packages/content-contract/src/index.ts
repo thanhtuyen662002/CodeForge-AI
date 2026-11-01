@@ -102,16 +102,17 @@ export function validateContentGraph(input: unknown): ValidationIssue[] {
   if (edges.size) {
     const indegree = new Map([...edges.keys()].map((id) => [id, 0]));
     for (const targets of edges.values()) for (const target of targets) indegree.set(target, (indegree.get(target) ?? 0) + 1);
-    const ready = [...indegree].filter(([, degree]) => degree === 0).map(([id]) => id).sort();
+    // Traversal order is not observable; diagnostics are sorted below. A stack avoids repeated shifts and re-sorts.
+    const ready = [...indegree].filter(([, degree]) => degree === 0).map(([id]) => id);
     let visited = 0;
     while (ready.length) {
-      const current = ready.shift();
-      if (!current) break;
+      const current = ready.pop();
+      if (current === undefined) break;
       visited++;
-      for (const target of [...(edges.get(current) ?? [])].sort()) {
+      for (const target of edges.get(current) ?? []) {
         const degree = (indegree.get(target) ?? 0) - 1;
         indegree.set(target, degree);
-        if (degree === 0) { ready.push(target); ready.sort(); }
+        if (degree === 0) ready.push(target);
       }
     }
     if (visited !== edges.size) add(out, "DEPENDENCY_CYCLE", "dependencies", "Prerequisite relationships must form a directed acyclic graph.");
