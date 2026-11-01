@@ -79,13 +79,16 @@ test('existing target refuses to broaden a narrower merge-method set', () => {
   const actual = live(); actual.rules.find((r) => r.type === 'pull_request').parameters.allowed_merge_methods = ['squash'];
   assert.throws(() => validateExistingTarget(expected, actual), /merge methods differ/);
 });
-test('existing target accepts the live weaker approval and latest-push settings for safe strengthening', () => {
+test('existing target accepts weaker approval and latest-push settings for safe strengthening', () => {
   const actual = live();
+  const params = actual.rules.find((r) => r.type === 'pull_request').parameters;
+  params.required_approving_review_count = 0;
+  params.require_last_push_approval = false;
   assert.equal(validateExistingTarget(expected, actual), true);
 });
 
-test('existing target accepts the same safe repository/branch even when its rules need reconciliation', () => {
-  const actual = live(); actual.rules = [];
+test('existing target permits adding merge-gate when no status checks exist', () => {
+  const actual = live(); actual.rules.find((r) => r.type === 'required_status_checks').parameters.required_status_checks = [];
   assert.equal(validateExistingTarget(expected, actual), true);
 });
 test('existing target rejects a different repository source', () => {
@@ -125,7 +128,7 @@ test('live ruleset rejects unknown pull-request server parameter', () => {
 });
 test('live ruleset rejects disabled extra approval for unattributed changes', () => {
   const actual = live(); actual.rules.find((r) => r.type === 'pull_request').parameters.require_extra_approval_for_unattributed_changes = false;
-  assert.throws(() => validateLiveRuleset(expected, actual), /extra approval for unattributed changes/);
+  assert.throws(() => validateLiveRuleset(expected, actual), /require_extra_approval_for_unattributed_changes/);
 });
 test('live ruleset accepts a nonempty known merge-method subset', () => {
   const actual = live(); actual.rules.find((r) => r.type === 'pull_request').parameters.allowed_merge_methods = ['squash'];
