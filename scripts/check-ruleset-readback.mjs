@@ -66,6 +66,9 @@ export function validateCreationSpec(spec) {
         'require_code_owner_review',
         'require_last_push_approval',
         'required_review_thread_resolution',
+        'required_reviewers',
+        'require_extra_approval_for_unattributed_changes',
+        'allowed_merge_methods',
       ], 'pull_request parameters');
       const p = rule.parameters;
       if (p.required_approving_review_count !== 1) fail('pull_request must require exactly one approval');
@@ -73,6 +76,13 @@ export function validateCreationSpec(spec) {
       if (p.require_code_owner_review !== false) fail('code-owner review must remain false during sole-owner bootstrap');
       if (p.require_last_push_approval !== true) fail('pull_request must require latest-push approval');
       if (p.required_review_thread_resolution !== true) fail('pull_request must require resolved review threads');
+      if (!Array.isArray(p.required_reviewers) || p.required_reviewers.length !== 0) fail('pull_request must not pin a named reviewer during bootstrap');
+      if (p.require_extra_approval_for_unattributed_changes !== true) fail('pull_request must require extra approval for unattributed changes');
+      if (!Array.isArray(p.allowed_merge_methods) || p.allowed_merge_methods.length !== 3 ||
+          new Set(p.allowed_merge_methods).size !== 3 ||
+          p.allowed_merge_methods.some((method) => !['merge', 'squash', 'rebase'].includes(method))) {
+        fail('pull_request allowed merge methods must be the reviewed known set');
+      }
       continue;
     }
     if (rule.type === 'required_status_checks') {
@@ -103,24 +113,57 @@ function getRule(rules, type) {
 export function validateExistingTarget(expected, actual) {
   validateCreationSpec(expected);
   if (!isObject(actual)) fail('existing ruleset must be an object');
-  if (actual.name !== expected.name || actual.target !== expected.target || actual.enforcement !== expected.enforcement) {
-    fail('existing ruleset identity/enforcement mismatch');
-  }
-  if (actual.source_type !== 'Repository' || actual.source !== 'thanhtuyen662002/CodeForge-AI') {
-    fail('existing ruleset source mismatch');
-  }
-  if (!Array.isArray(actual.bypass_actors) || actual.bypass_actors.length !== 0) {
-    fail('existing ruleset has bypass actors; refusing in-place update');
-  }
-  if (actual.current_user_can_bypass !== 'never') {
-    fail('current user must not be able to bypass existing ruleset');
-  }
+  if (actual.name !== expected.name || actual.target !== expected.target || actual.enforcement !== expected.enforcement) fail('existing ruleset identity/enforcement mismatch');
+  if (actual.source_type !== 'Repository' || actual.source !== 'thanhtuyen662002/CodeForge-AI') fail('existing ruleset source mismatch');
+  if (!Array.isArray(actual.bypass_actors) || actual.bypass_actors.length !== 0) fail('existing ruleset has bypass actors; refusing in-place update');
+  if (actual.current_user_can_bypass !== 'never') fail('current user must not be able to bypass existing ruleset');
   assertExactKeys(actual.conditions, ['ref_name'], 'existing ruleset conditions');
   const ref = actual.conditions.ref_name;
   assertExactKeys(ref, ['include', 'exclude'], 'existing ruleset ref_name condition');
   if (!Array.isArray(ref.include) || ref.include.length !== 1 || ref.include[0] !== '~DEFAULT_BRANCH' ||
-      !Array.isArray(ref.exclude) || ref.exclude.length !== 0) {
-    fail('existing ruleset is not scoped only to the default branch');
+      !Array.isArray(ref.exclude) || ref.exclude.length !== 0) fail('existing ruleset is not scoped only to the default branch');
+
+  // Refuse an update that would remove an extra rule or weaken an existing stronger setting.
+  assertRuleSetShape(actual.rules, 'existing ruleset');
+  for (const type of ['deletion', 'non_fast_forward', 'required_linear_history']) {
+    assertExactKeys(getRule(actual.rules, type), ['type'], `existing rule ${type}`);
+  }
+  const expectedPr = getRule(expected.rules, 'pull_request').parameters;
+  const actualPr = getRule(actual.rules, 'pull_request').parameters;
+  assertExactKeys(actualPr, Object.keys(expectedPr), 'existing pull_request parameters');
+  if (!Number.isInteger(actualPr.required_approving_review_count) || actualPr.required_approving_review_count < 0 ||
+      actualPr.required_approving_review_count > expectedPr.required_approving_review_count) {
+    fail('existing approval count is stronger than target; refusing to lower it');
+  }
+  for (const key of ['dismiss_stale_reviews_on_push', 'require_code_owner_review', 'require_last_push_approval',
+    'required_review_thread_resolution', 'require_extra_approval_for_unattributed_changes']) {
+    if (typeof actualPr[key] !== 'boolean') fail(`existing pull_request parameter is missing/invalid: ${key}`);
+    if (actualPr[key] === true && expectedPr[key] === false) fail(`existing pull_request parameter is stronger than target: ${key}`);
+  }
+  if (!Array.isArray(actualPr.required_reviewers) ||
+      (expectedPr.required_reviewers.length === 0 && actualPr.required_reviewers.length !== 0) ||
+      (expectedPr.required_reviewers.length > 0 && JSON.stringify(actualPr.required_reviewers) !== JSON.stringify(expectedPr.required_reviewers))) {
+    fail('existing named reviewers would be removed or changed');
+  }
+  if (!Array.isArray(actualPr.allowed_merge_methods) || actualPr.allowed_merge_methods.length === 0 ||
+      actualPr.allowed_merge_methods.some((method) => !expectedPr.allowed_merge_methods.includes(method)) ||
+      expectedPr.allowed_merge_methods.some((method) => !actualPr.allowed_merge_methods.includes(method))) {
+    fail('existing merge methods differ from target; refusing to broaden or silently change them');
+  }
+
+  const expectedStatus = getRule(expected.rules, 'required_status_checks').parameters;
+  const actualStatus = getRule(actual.rules, 'required_status_checks').parameters;
+  assertExactKeys(actualStatus, Object.keys(expectedStatus), 'existing required_status_checks parameters');
+  if (actualStatus.strict_required_status_checks_policy === true && expectedStatus.strict_required_status_checks_policy === false) {
+    fail('existing strict status-check policy is stronger than target');
+  }
+  if (actualStatus.do_not_enforce_on_create === false && expectedStatus.do_not_enforce_on_create === true) {
+    fail('existing create enforcement is stronger than target');
+  }
+  if (!Array.isArray(actualStatus.required_status_checks)) fail('existing required status checks are malformed');
+  if (actualStatus.required_status_checks.length !== 0 &&
+      JSON.stringify(actualStatus.required_status_checks) !== JSON.stringify(expectedStatus.required_status_checks)) {
+    fail('existing required status checks would be removed or changed');
   }
   return true;
 }
@@ -151,25 +194,16 @@ export function validateLiveRuleset(expected, actual) {
   assertExactKeys(livePrRule, ['type', 'parameters'], 'live pull_request rule');
   const expPr = expPrRule.parameters;
   const livePr = livePrRule.parameters;
-  assertExactKeys(livePr, [
-    ...Object.keys(expPr),
-    'required_reviewers',
-    'require_extra_approval_for_unattributed_changes',
-    'allowed_merge_methods',
-  ], 'live pull_request parameters');
-  for (const key of Object.keys(expPr)) {
-    if (livePr?.[key] !== expPr[key]) fail(`live pull_request parameter mismatch: ${key}`);
-  }
-  if (!Array.isArray(livePr.required_reviewers) || livePr.required_reviewers.length !== 0) {
-    fail('live ruleset unexpectedly requires named reviewers');
-  }
-  if (livePr.require_extra_approval_for_unattributed_changes !== true) {
-    fail('live ruleset must require extra approval for unattributed changes');
+  assertExactKeys(livePr, Object.keys(expPr), 'live pull_request parameters');
+  for (const key of Object.keys(expPr).filter((key) => key !== 'allowed_merge_methods')) {
+    if (Array.isArray(expPr[key]) ? JSON.stringify(livePr?.[key]) !== JSON.stringify(expPr[key]) : livePr?.[key] !== expPr[key]) {
+      fail(`live pull_request parameter mismatch: ${key}`);
+    }
   }
   if (!Array.isArray(livePr.allowed_merge_methods) || livePr.allowed_merge_methods.length < 1 ||
       new Set(livePr.allowed_merge_methods).size !== livePr.allowed_merge_methods.length ||
-      livePr.allowed_merge_methods.some((method) => !['merge', 'squash', 'rebase'].includes(method))) {
-    fail('live ruleset allowed merge methods are malformed');
+      livePr.allowed_merge_methods.some((method) => !expPr.allowed_merge_methods.includes(method))) {
+    fail('live ruleset allowed merge methods are malformed or broader than the reviewed set');
   }
 
   const expStatusRule = getRule(expected.rules, 'required_status_checks');

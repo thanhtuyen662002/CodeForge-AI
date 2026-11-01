@@ -15,20 +15,23 @@ command -v gh >/dev/null
 command -v jq >/dev/null
 command -v node >/dev/null
 root="$(cd "$(dirname "$0")/.." && pwd)"
+result="$(mktemp)"
+trap 'rm -f "$result"' EXIT
 
-# Verify a completed merge-gate for the live foundation branch HEAD, not a stale commit.
+# Verify every merge-gate run belongs to the live foundation branch HEAD and succeeded.
 foundation_head="$(gh api "repos/$repo/branches/foundation%2Flearner-first-design" --jq '.commit.sha')"
-verified="$(gh api "repos/$repo/commits/$foundation_head/check-runs" --jq --arg sha "$foundation_head" '[.check_runs[] | select(.name == "merge-gate" and .app.id == 15368 and .head_sha == $sha and .status == "completed" and .conclusion == "success")] | length > 0')"
-if [[ "$verified" != true ]]; then
-  echo "A successful GitHub Actions merge-gate on live foundation HEAD $foundation_head is not verified." >&2
-  exit 4
-fi
+gh api "repos/$repo/commits/$foundation_head/check-runs?per_page=100" --jq --arg sha "$foundation_head" '{
+  total_count: ([.check_runs[] | select(.name == "merge-gate" and .app.id == 15368 and .head_sha == $sha)] | length),
+  check_runs: [.check_runs[] | select(.name == "merge-gate" and .app.id == 15368 and .head_sha == $sha)]
+}' > "$result"
+node "$root/scripts/check-ruleset-readback.mjs" --validate-merge-gate "$result" "$foundation_head"
 
-# Do not activate a rule that would deadlock the owner: require a real non-owner collaborator with write-capable review permission first.
+# Do not activate a rule that would deadlock the owner: require a real non-owner reviewer with write-capable permission.
 owner="$(gh api "repos/$repo" --jq '.owner.login')"
-reviewers="$(gh api "repos/$repo/collaborators?per_page=100" --paginate --jq --arg owner "$owner" '.[] | select(.login != $owner and (.permissions.push == true or .permissions.maintain == true or .permissions.admin == true)) | .login')"
+actor="$(gh api user --jq '.login')"
+reviewers="$(gh api "repos/$repo/collaborators?per_page=100" --paginate --jq --arg owner "$owner" --arg actor "$actor" '.[] | select(.login != $owner and .login != $actor and (.permissions.push == true or .permissions.maintain == true or .permissions.admin == true)) | .login')"
 if [[ -z "$reviewers" ]]; then
-  echo 'No independent non-owner collaborator with push/maintain/admin permission is available; refusing to change the live ruleset.' >&2
+  echo 'No independent collaborator other than the repository owner/current actor has push/maintain/admin permission; refusing to change the live ruleset.' >&2
   exit 5
 fi
 
@@ -39,8 +42,6 @@ if [[ "$existing_count" -gt 1 ]]; then
   exit 3
 fi
 
-result="$(mktemp)"
-trap 'rm -f "$result"' EXIT
 if [[ -n "$existing" ]]; then
   id="$existing"
   gh api "repos/$repo/rulesets/$id" > "$result"

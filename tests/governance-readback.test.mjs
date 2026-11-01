@@ -19,6 +19,9 @@ const expected = {
       require_code_owner_review: false,
       require_last_push_approval: true,
       required_review_thread_resolution: true,
+      required_reviewers: [],
+      require_extra_approval_for_unattributed_changes: true,
+      allowed_merge_methods: ['merge', 'squash', 'rebase'],
     } },
     { type: 'required_status_checks', parameters: {
       strict_required_status_checks_policy: true,
@@ -58,6 +61,27 @@ test('creation spec rejects extra condition block', () => {
 test('creation spec rejects extra ref condition key', () => {
   const spec = structuredClone(expected); spec.conditions.ref_name.extra = true;
   assert.throws(() => validateCreationSpec(spec), /ref_name condition contains unsupported keys/);
+});
+
+test('existing target refuses a stronger approval count instead of lowering it', () => {
+  const actual = live(); actual.rules.find((r) => r.type === 'pull_request').parameters.required_approving_review_count = 2;
+  assert.throws(() => validateExistingTarget(expected, actual), /stronger than target/);
+});
+test('existing target refuses named reviewers that the target would remove', () => {
+  const actual = live(); actual.rules.find((r) => r.type === 'pull_request').parameters.required_reviewers = ['reviewer'];
+  assert.throws(() => validateExistingTarget(expected, actual), /named reviewers/);
+});
+test('existing target refuses an extra required status check', () => {
+  const actual = live(); actual.rules.find((r) => r.type === 'required_status_checks').parameters.required_status_checks.push({ context: 'security', integration_id: 15368 });
+  assert.throws(() => validateExistingTarget(expected, actual), /required status checks would be removed/);
+});
+test('existing target refuses to broaden a narrower merge-method set', () => {
+  const actual = live(); actual.rules.find((r) => r.type === 'pull_request').parameters.allowed_merge_methods = ['squash'];
+  assert.throws(() => validateExistingTarget(expected, actual), /merge methods differ/);
+});
+test('existing target accepts the live weaker approval and latest-push settings for safe strengthening', () => {
+  const actual = live();
+  assert.equal(validateExistingTarget(expected, actual), true);
 });
 
 test('existing target accepts the same safe repository/branch even when its rules need reconciliation', () => {
