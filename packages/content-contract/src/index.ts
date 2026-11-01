@@ -13,6 +13,7 @@ const isObject = (value: unknown): value is Record<string, unknown> => typeof va
 const nonBlank = (value: unknown): value is string => typeof value === "string" && value.length > 0 && value.trim() === value;
 const positiveInt = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value > 0;
 const add = (out: ValidationIssue[], code: string, path: string, message: string) => out.push({ code, path, message });
+const compareText = (left: string, right: string): number => left < right ? -1 : left > right ? 1 : 0;
 
 function rejectUnknownFields(value: Record<string, unknown>, allowed: string[], out: ValidationIssue[], path: string): void {
   const allowedFields = new Set(allowed);
@@ -143,5 +144,5 @@ export function validateContentGraph(input: unknown): ValidationIssue[] {
       }
     }
   }
-  return out.sort((a, b) => a.path.localeCompare(b.path) || a.code.localeCompare(b.code));
+  return out.sort((a, b) => compareText(a.path, b.path) || compareText(a.code, b.code));
 }

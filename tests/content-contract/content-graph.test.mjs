@@ -212,3 +212,14 @@ test("requires canonical lowercase dotted or kebab identifier segments", () => {
   const result = codes(graph);
   assert.ok(result.includes("IDENTIFIER_FORMAT_INVALID"));
 });
+
+test("sorts diagnostics by stable code-unit order rather than host locale", () => {
+  const graph = validGraph();
+  graph["é"] = true;
+  graph.z = true;
+  graph.a = true;
+  const paths = validateContentGraph(graph)
+    .filter((issue) => issue.code === "UNKNOWN_FIELD")
+    .map((issue) => issue.path);
+  assert.deepEqual(paths, ["$.a", "$.z", "$.é"]);
+});
