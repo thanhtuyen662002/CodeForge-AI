@@ -113,6 +113,17 @@ test("rejects duplicate content item ids and invalid item versions", () => {
   assert.ok(result.includes("CONTENT_ITEM_VERSION_INVALID"));
 });
 
+test("rejects unsafe integer versions rather than accepting imprecise JavaScript numbers", () => {
+  for (const version of [Number.MAX_SAFE_INTEGER + 1, 1e100]) {
+    const graph = validGraph();
+    graph.skills[0].version = version;
+    graph.contentItems[0].version = version;
+    const result = codes(graph);
+    assert.ok(result.includes("SKILL_VERSION_INVALID"), `expected unsafe skill version rejection for ${String(version)}`);
+    assert.ok(result.includes("CONTENT_ITEM_VERSION_INVALID"), `expected unsafe item version rejection for ${String(version)}`);
+  }
+});
+
 test("rejects unknown fields at graph and nested levels, including hidden-answer-like fields", () => {
   const graph = validGraph();
   graph.privateAnswerKey = "synthetic-secret";

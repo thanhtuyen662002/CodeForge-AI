@@ -11,7 +11,7 @@ const statuses = new Set<SkillStatus>(["draft", "published", "retired"]);
 const kinds = new Set<DependencyKind>(["hard", "soft"]);
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 const nonBlank = (value: unknown): value is string => typeof value === "string" && value.length > 0 && value.trim() === value;
-const positiveInt = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value > 0;
+const positiveInt = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value > 0;
 const add = (out: ValidationIssue[], code: string, path: string, message: string) => out.push({ code, path, message });
 
 function rejectUnknownFields(value: Record<string, unknown>, allowed: string[], out: ValidationIssue[], path: string): void {
