@@ -1,15 +1,36 @@
-import { appendFileSync, existsSync, statSync } from "node:fs";
+import { appendFileSync, lstatSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
 const baseTree = process.env.BASE_TREE ?? "";
 const outputPath = process.env.GITHUB_OUTPUT;
 
-function isFile(path) {
-  try {
-    return statSync(path).isFile();
-  } catch {
-    return false;
+function inspectPath(path) {
+  const parts = path.split("/");
+  let current = "";
+  for (const [index, part] of parts.entries()) {
+    current = current ? current + "/" + part : part;
+    let info;
+    try {
+      info = lstatSync(current);
+    } catch {
+      return { exists: false, safe: false };
+    }
+    if (info.isSymbolicLink()) return { exists: true, safe: false };
+    if (index < parts.length - 1 && !info.isDirectory()) return { exists: true, safe: false };
+    if (index === parts.length - 1) {
+      return { exists: true, safe: true, isFile: info.isFile(), isDirectory: info.isDirectory() };
+    }
   }
+  return { exists: false, safe: false };
+}
+
+function pathExists(path) {
+  return inspectPath(path).exists;
+}
+
+function isFile(path) {
+  const info = inspectPath(path);
+  return info.exists && info.safe && info.isFile;
 }
 
 function gitExists(args) {
@@ -21,24 +42,38 @@ function gitExists(args) {
   }
 }
 
-function baseHasFile(path) {
-  return baseTree.length > 0 && gitExists(["cat-file", "-e", baseTree + ":" + path]);
+function baseHasPath(path) {
+  if (!baseTree) return false;
+  const parts = path.split("/");
+  let prefix = "";
+  for (const [index, part] of parts.entries()) {
+    prefix = prefix ? prefix + "/" + part : part;
+    let output;
+    try {
+      output = execFileSync("git", ["ls-tree", "-z", baseTree, "--", prefix], { encoding: "utf8" });
+    } catch {
+      return false;
+    }
+    const entry = output.split("\0").find(Boolean);
+    if (!entry) return false;
+    const tabIndex = entry.indexOf("\t");
+    if (tabIndex < 0) return false;
+    const mode = entry.slice(0, tabIndex).split(" ")[0];
+    if (mode === "120000" || (index < parts.length - 1 && mode !== "040000")) return true;
+    if (index === parts.length - 1) return true;
+  }
+  return false;
 }
 
 function baseHasWebFiles() {
-  if (!baseTree) return false;
-  const files = execFileSync("git", ["ls-tree", "-r", "--name-only", baseTree, "--", "apps/web/"], {
-    encoding: "utf8",
-  });
-  return files.trim().length > 0;
+  return baseHasPath("apps/web");
 }
 
 function baseHasContentItemsFiles() {
-  if (!baseTree) return false;
-  const files = execFileSync("git", ["ls-tree", "-r", "--name-only", baseTree, "--", "content/items/"], {
-    encoding: "utf8",
-  });
-  return files.trim().length > 0;
+  return baseHasPath("content/items");
+}
+function baseHasContentGraphFiles() {
+  return baseHasPath("packages/content-contract") || baseHasPath("tests/content-contract");
 }
 
 try {
@@ -53,9 +88,9 @@ try {
     "tests/public-content-manifest.test.mjs",
   ];
   const publicContentPresent =
-    existsSync("content/items") ||
+    pathExists("content/items") ||
     baseHasContentItemsFiles() ||
-    publicContentPaths.some((path) => isFile(path) || baseHasFile(path));
+    publicContentPaths.some((path) => pathExists(path) || baseHasPath(path));
 
   const contentPaths = [
     ".github/workflows/content-publication-safety.yml",
@@ -73,7 +108,7 @@ try {
   // A manifest-only suite must not become a weaker route around publication checks.
   const contentPresent =
     publicContentPresent ||
-    contentPaths.some((path) => isFile(path) || baseHasFile(path));
+    contentPaths.some((path) => pathExists(path) || baseHasPath(path));
   if (publicContentPresent) {
     const missing = publicContentPaths.filter((path) => !isFile(path));
     if (missing.length) {
@@ -87,7 +122,25 @@ try {
     }
   }
 
-  const webPresent = existsSync("apps/web") || baseHasWebFiles();
+  const contentGraphPresent =
+    publicContentPresent ||
+    pathExists("packages/content-contract") ||
+    pathExists("tests/content-contract") ||
+    baseHasContentGraphFiles();
+  if (contentGraphPresent) {
+    const requiredContentGraphPaths = [
+      "packages/content-contract/package.json",
+      "packages/content-contract/tsconfig.json",
+      "packages/content-contract/src/index.ts",
+      "tests/content-contract/content-graph.test.mjs",
+    ];
+    const missing = requiredContentGraphPaths.filter((path) => !isFile(path));
+    if (missing.length) {
+      throw new Error("Content graph contract is present in the PR or base, but required typecheck/test inputs are missing: " + missing.join(", "));
+    }
+  }
+
+  const webPresent = pathExists("apps/web") || baseHasWebFiles();
   if (webPresent) {
     const requiredWebPaths = ["apps/web/package.json", "apps/web/package-lock.json", "apps/web/.nvmrc"];
     const missing = requiredWebPaths.filter((path) => !isFile(path));
@@ -98,6 +151,7 @@ try {
 
   appendFileSync(outputPath, "content_present=" + contentPresent + "\n");
   appendFileSync(outputPath, "public_content_present=" + publicContentPresent + "\n");
+  appendFileSync(outputPath, "content_graph_present=" + contentGraphPresent + "\n");
   appendFileSync(outputPath, "web_present=" + webPresent + "\n");
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
