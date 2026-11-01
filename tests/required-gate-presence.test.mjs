@@ -278,7 +278,7 @@ test("a content graph contract without its package lock fails closed", () => {
   const run = scenario(incomplete);
   try {
     assert.equal(run.result.status, 1);
-    assert.match(run.result.stderr, /packages\\/content-contract\\/package-lock.json/);
+    assert.ok(run.result.stderr.includes("packages/content-contract/package-lock.json"));
   } finally {
     run.cleanup();
   }
