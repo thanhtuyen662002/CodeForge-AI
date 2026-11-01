@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "itemId": "practice.missing-classification",
+  "version": 1,
+  "provenance": {
+    "kind": "original",
+    "source": "Synthetic test fixture",
+    "license": "CC0-1.0",
+    "author": "CodeForge maintainers",
+    "checkedAt": "2026-10-26"
+  },
+  "title": "Synthetic prompt",
+  "prompt": "Explain the invariant.",
+  "skills": ["invariant-reasoning"],
+  "difficulty": 2,
+  "visibility": "public"
+}

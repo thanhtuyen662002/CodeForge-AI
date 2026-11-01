@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "itemId": "practice.retry-invariant-01",
+  "version": 1,
+  "classification": "PRACTICE_CONTENT",
+  "provenance": {
+    "kind": "original",
+    "source": "Created for CodeForge synthetic fixture tests",
+    "license": "CC0-1.0",
+    "author": "CodeForge maintainers",
+    "checkedAt": "2026-10-26"
+  },
+  "title": "Retry-safe event handling",
+  "prompt": "Using synthetic input, explain why duplicate events must not apply a state change twice.",
+  "skills": ["invariant-reasoning", "retry-safety"],
+  "difficulty": 3,
+  "visibility": "public"
+}

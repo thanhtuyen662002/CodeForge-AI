@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "itemId": "practice.duplicate-key-hidden-answer",
+  "version": 1,
+  "classification": "PRACTICE_CONTENT",
+  "provenance": {
+    "kind": "original",
+    "source": "Synthetic duplicate-key regression fixture",
+    "license": "CC0-1.0",
+    "author": "CodeForge maintainers",
+    "checkedAt": "2026-10-26"
+  },
+  "title": {
+    "grading": {
+      "expectedOutput": "synthetic private grading marker"
+    }
+  },
+  "title": "Safe-looking replacement title",
+  "prompt": "Explain the retry invariant.",
+  "skills": ["retry-safety"],
+  "difficulty": 2,
+  "visibility": "public"
+}
