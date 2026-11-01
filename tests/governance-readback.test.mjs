@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   validateCreationSpec,
+  validateExistingTarget,
   validateLiveRuleset,
   assertMergeGateEvidence,
   assertNegativeControlEvidence,
@@ -57,6 +58,27 @@ test('creation spec rejects extra condition block', () => {
 test('creation spec rejects extra ref condition key', () => {
   const spec = structuredClone(expected); spec.conditions.ref_name.extra = true;
   assert.throws(() => validateCreationSpec(spec), /ref_name condition contains unsupported keys/);
+});
+
+test('existing target accepts the same safe repository/branch even when its rules need reconciliation', () => {
+  const actual = live(); actual.rules = [];
+  assert.equal(validateExistingTarget(expected, actual), true);
+});
+test('existing target rejects a different repository source', () => {
+  const actual = live(); actual.source = 'another-owner/another-repo';
+  assert.throws(() => validateExistingTarget(expected, actual), /source mismatch/);
+});
+test('existing target rejects a different branch scope', () => {
+  const actual = live(); actual.conditions.ref_name.include = ['refs/heads/release'];
+  assert.throws(() => validateExistingTarget(expected, actual), /default branch/);
+});
+test('existing target rejects bypass actors before in-place update', () => {
+  const actual = live(); actual.bypass_actors = [{ actor_id: 1 }];
+  assert.throws(() => validateExistingTarget(expected, actual), /bypass actors/);
+});
+test('existing target rejects current-user bypass before in-place update', () => {
+  const actual = live({ current_user_can_bypass: 'always' });
+  assert.throws(() => validateExistingTarget(expected, actual), /must not be able to bypass/);
 });
 
 test('live ruleset accepts safe server read-back extras', () => assert.equal(validateLiveRuleset(expected, live()), true));

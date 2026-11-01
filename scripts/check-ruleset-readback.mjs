@@ -100,6 +100,31 @@ function getRule(rules, type) {
   return found[0];
 }
 
+export function validateExistingTarget(expected, actual) {
+  validateCreationSpec(expected);
+  if (!isObject(actual)) fail('existing ruleset must be an object');
+  if (actual.name !== expected.name || actual.target !== expected.target || actual.enforcement !== expected.enforcement) {
+    fail('existing ruleset identity/enforcement mismatch');
+  }
+  if (actual.source_type !== 'Repository' || actual.source !== 'thanhtuyen662002/CodeForge-AI') {
+    fail('existing ruleset source mismatch');
+  }
+  if (!Array.isArray(actual.bypass_actors) || actual.bypass_actors.length !== 0) {
+    fail('existing ruleset has bypass actors; refusing in-place update');
+  }
+  if (actual.current_user_can_bypass !== 'never') {
+    fail('current user must not be able to bypass existing ruleset');
+  }
+  assertExactKeys(actual.conditions, ['ref_name'], 'existing ruleset conditions');
+  const ref = actual.conditions.ref_name;
+  assertExactKeys(ref, ['include', 'exclude'], 'existing ruleset ref_name condition');
+  if (!Array.isArray(ref.include) || ref.include.length !== 1 || ref.include[0] !== '~DEFAULT_BRANCH' ||
+      !Array.isArray(ref.exclude) || ref.exclude.length !== 0) {
+    fail('existing ruleset is not scoped only to the default branch');
+  }
+  return true;
+}
+
 export function validateLiveRuleset(expected, actual) {
   validateCreationSpec(expected);
   if (!isObject(actual)) fail('live ruleset must be an object');
@@ -189,7 +214,7 @@ function readJson(path) {
 }
 
 function usage() {
-  console.error('Usage: check-ruleset-readback.mjs --validate-spec SPEC | --compare SPEC LIVE | --validate-merge-gate EVIDENCE HEAD_SHA | --validate-negative-control EVIDENCE HEAD_SHA');
+  console.error('Usage: check-ruleset-readback.mjs --validate-spec SPEC | --validate-existing-target SPEC LIVE | --compare SPEC LIVE | --validate-merge-gate EVIDENCE HEAD_SHA | --validate-negative-control EVIDENCE HEAD_SHA');
   process.exit(2);
 }
 
@@ -197,6 +222,7 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
   try {
     const [mode, ...args] = process.argv.slice(2);
     if (mode === '--validate-spec' && args.length === 1) validateCreationSpec(readJson(args[0]));
+    else if (mode === '--validate-existing-target' && args.length === 2) validateExistingTarget(readJson(args[0]), readJson(args[1]));
     else if (mode === '--compare' && args.length === 2) validateLiveRuleset(readJson(args[0]), readJson(args[1]));
     else if (mode === '--validate-merge-gate' && args.length === 2) assertMergeGateEvidence(readJson(args[0]), args[1]);
     else if (mode === '--validate-negative-control' && args.length === 2) assertNegativeControlEvidence(readJson(args[0]), args[1]);
