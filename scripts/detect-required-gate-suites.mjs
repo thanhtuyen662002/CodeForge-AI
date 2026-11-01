@@ -130,13 +130,14 @@ try {
   if (contentGraphPresent) {
     const requiredContentGraphPaths = [
       "packages/content-contract/package.json",
+      "packages/content-contract/package-lock.json",
       "packages/content-contract/tsconfig.json",
       "packages/content-contract/src/index.ts",
       "tests/content-contract/content-graph.test.mjs",
     ];
     const missing = requiredContentGraphPaths.filter((path) => !isFile(path));
     if (missing.length) {
-      throw new Error("Content graph contract is present in the PR or base, but required typecheck/test inputs are missing: " + missing.join(", "));
+      throw new Error("Content graph contract is present in the PR or base, but required package/lockfile/typecheck/test inputs are missing: " + missing.join(", "));
     }
   }
 
