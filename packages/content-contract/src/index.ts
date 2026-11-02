@@ -7,12 +7,35 @@ export interface ContentItemReference { id: string; version: number; difficulty:
 export interface ContentGraph { schemaVersion: 1; version: string; skills: SkillNode[]; dependencies: SkillDependency[]; contentItems: ContentItemReference[] }
 export interface ValidationIssue { code: string; path: string; message: string }
 
+/**
+ * The request boundary must enforce maxJsonBytes before JSON.parse. This pure
+ * validator also bounds decoded collections, strings, and diagnostic output.
+ */
+export const CONTENT_GRAPH_LIMITS = Object.freeze({
+  maxJsonBytes: 1_048_576,
+  maxSkills: 10_000,
+  maxDependencies: 20_000,
+  maxContentItems: 20_000,
+  maxSecondarySkillIdsPerItem: 32,
+  maxIdentifierLength: 128,
+  maxTextLength: 4_096,
+  maxLocalizedNameLength: 256,
+  maxValidationIssues: 1_000,
+});
+
 const statuses = new Set<SkillStatus>(["draft", "published", "retired"]);
 const kinds = new Set<DependencyKind>(["hard", "soft"]);
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
-const nonBlank = (value: unknown): value is string => typeof value === "string" && value.length > 0 && value.trim() === value;
+const nonBlank = (value: unknown, maxLength = CONTENT_GRAPH_LIMITS.maxTextLength): value is string =>
+  typeof value === "string" && value.length > 0 && value.length <= maxLength && value.trim() === value;
 const positiveInt = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value > 0;
-const add = (out: ValidationIssue[], code: string, path: string, message: string) => out.push({ code, path, message });
+const add = (out: ValidationIssue[], code: string, path: string, message: string): void => {
+  if (out.length < CONTENT_GRAPH_LIMITS.maxValidationIssues) {
+    out.push({ code, path, message });
+  } else if (out.length === CONTENT_GRAPH_LIMITS.maxValidationIssues) {
+    out.push({ code: "VALIDATION_ISSUES_TRUNCATED", path: "$", message: "Additional validation issues were omitted after the configured diagnostic limit." });
+  }
+};
 const compareText = (left: string, right: string): number => left < right ? -1 : left > right ? 1 : 0;
 
 function rejectUnknownFields(value: Record<string, unknown>, allowed: string[], out: ValidationIssue[], path: string): void {
@@ -22,13 +45,46 @@ function rejectUnknownFields(value: Record<string, unknown>, allowed: string[], 
   }
 }
 
-function requiredString(value: unknown, out: ValidationIssue[], code: string, path: string): string | undefined {
-  if (!nonBlank(value)) { add(out, code, path, "A non-empty string is required."); return undefined; }
+function requiredString(
+  value: unknown,
+  out: ValidationIssue[],
+  code: string,
+  path: string,
+  maxLength = CONTENT_GRAPH_LIMITS.maxTextLength,
+  tooLongCode = "STRING_TOO_LONG",
+): string | undefined {
+  if (typeof value !== "string" || value.length === 0 || value.trim() !== value) {
+    add(out, code, path, "A non-empty string is required.");
+    return undefined;
+  }
+  if (value.length > maxLength) {
+    add(out, tooLongCode, path, `String must not exceed ${maxLength} characters.`);
+    return undefined;
+  }
+  return value;
+}
+
+function readBoundedArray(
+  value: unknown,
+  out: ValidationIssue[],
+  requiredCode: string,
+  limitCode: string,
+  path: string,
+  maxLength: number,
+): unknown[] | null {
+  if (!Array.isArray(value)) {
+    add(out, requiredCode, path, `${path} must be an array.`);
+    return null;
+  }
+  if (value.length > maxLength) {
+    add(out, limitCode, path, `${path} must contain at most ${maxLength} entries.`);
+    return null;
+  }
   return value;
 }
 
 function requiredIdentifier(value: unknown, out: ValidationIssue[], code: string, path: string): string | undefined {
-  const identifier = requiredString(value, out, code, path);
+  const identifier = requiredString(value, out, code, path, CONTENT_GRAPH_LIMITS.maxIdentifierLength, "IDENTIFIER_TOO_LONG");
   if (identifier === undefined) return undefined;
   if (identifier.includes(String.fromCharCode(0))) {
     add(out, "IDENTIFIER_NUL_FORBIDDEN", path, "Identifiers must not contain U+0000.");
@@ -45,21 +101,21 @@ function requiredIdentifier(value: unknown, out: ValidationIssue[], code: string
   return identifier;
 }
 
-/** Structural validation only; it does not certify quality, provenance, licensing, human review, or learning efficacy. */
+/**
+ * Structural validation only; it does not certify quality, provenance,
+ * licensing, human review, or learning efficacy.
+ */
 export function validateContentGraph(input: unknown): ValidationIssue[] {
   const out: ValidationIssue[] = [];
   if (!isObject(input)) return [{ code: "GRAPH_OBJECT_REQUIRED", path: "$", message: "Content graph must be an object." }];
   rejectUnknownFields(input, ["schemaVersion", "version", "skills", "dependencies", "contentItems"], out, "$");
   if (input.schemaVersion !== 1) add(out, "GRAPH_SCHEMA_VERSION_INVALID", "schemaVersion", "schemaVersion must be 1.");
-  requiredString(input.version, out, "GRAPH_VERSION_REQUIRED", "version");
+  requiredString(input.version, out, "GRAPH_VERSION_REQUIRED", "version", CONTENT_GRAPH_LIMITS.maxIdentifierLength);
 
-  const skills = Array.isArray(input.skills) ? input.skills : null;
-  const dependencies = Array.isArray(input.dependencies) ? input.dependencies : null;
-  const items = Array.isArray(input.contentItems) ? input.contentItems : null;
-  if (!skills) add(out, "SKILLS_REQUIRED", "skills", "skills must be an array.");
-  else if (!skills.length) add(out, "SKILLS_EMPTY", "skills", "At least one skill is required.");
-  if (!dependencies) add(out, "DEPENDENCIES_REQUIRED", "dependencies", "dependencies must be an array.");
-  if (!items) add(out, "CONTENT_ITEMS_REQUIRED", "contentItems", "contentItems must be an array.");
+  const skills = readBoundedArray(input.skills, out, "SKILLS_REQUIRED", "SKILLS_LIMIT_EXCEEDED", "skills", CONTENT_GRAPH_LIMITS.maxSkills);
+  const dependencies = readBoundedArray(input.dependencies, out, "DEPENDENCIES_REQUIRED", "DEPENDENCIES_LIMIT_EXCEEDED", "dependencies", CONTENT_GRAPH_LIMITS.maxDependencies);
+  const items = readBoundedArray(input.contentItems, out, "CONTENT_ITEMS_REQUIRED", "CONTENT_ITEMS_LIMIT_EXCEEDED", "contentItems", CONTENT_GRAPH_LIMITS.maxContentItems);
+  if (skills && !skills.length) add(out, "SKILLS_EMPTY", "skills", "At least one skill is required.");
 
   const skillIds = new Set<string>();
   for (const [i, raw] of (skills ?? []).entries()) {
@@ -72,9 +128,9 @@ export function validateContentGraph(input: unknown): ValidationIssue[] {
     requiredIdentifier(raw.slug, out, "SKILL_SLUG_REQUIRED", `${path}.slug`);
     requiredIdentifier(raw.domain, out, "SKILL_DOMAIN_REQUIRED", `${path}.domain`);
     const name = raw.name;
-    if (!isObject(name) || !nonBlank(name.vi) || !nonBlank(name.en)) add(out, "SKILL_NAME_INVALID", `${path}.name`, "Both vi and en names are required.");
+    if (!isObject(name) || !nonBlank(name.vi, CONTENT_GRAPH_LIMITS.maxLocalizedNameLength) || !nonBlank(name.en, CONTENT_GRAPH_LIMITS.maxLocalizedNameLength)) add(out, "SKILL_NAME_INVALID", `${path}.name`, "Both vi and en names are required and must fit the configured length limit.");
     else rejectUnknownFields(name, ["vi", "en"], out, `${path}.name`);
-    requiredString(raw.description, out, "SKILL_DESCRIPTION_REQUIRED", `${path}.description`);
+    requiredString(raw.description, out, "SKILL_DESCRIPTION_REQUIRED", `${path}.description`, CONTENT_GRAPH_LIMITS.maxTextLength);
     if (!positiveInt(raw.version)) add(out, "SKILL_VERSION_INVALID", `${path}.version`, "Skill version must be a positive integer.");
     if (typeof raw.status !== "string" || !statuses.has(raw.status as SkillStatus)) add(out, "SKILL_STATUS_INVALID", `${path}.status`, "Status must be draft, published, or retired.");
   }
@@ -88,7 +144,7 @@ export function validateContentGraph(input: unknown): ValidationIssue[] {
     const from = requiredIdentifier(raw.prerequisiteId, out, "PREREQUISITE_ID_REQUIRED", `${path}.prerequisiteId`);
     const to = requiredIdentifier(raw.skillId, out, "DEPENDENT_SKILL_ID_REQUIRED", `${path}.skillId`);
     if (typeof raw.kind !== "string" || !kinds.has(raw.kind as DependencyKind)) add(out, "DEPENDENCY_KIND_INVALID", `${path}.kind`, "Kind must be hard or soft.");
-    requiredString(raw.reason, out, "DEPENDENCY_REASON_REQUIRED", `${path}.reason`);
+    requiredString(raw.reason, out, "DEPENDENCY_REASON_REQUIRED", `${path}.reason`, CONTENT_GRAPH_LIMITS.maxTextLength);
     if (!from || !to) continue;
     if (from === to) { add(out, "SELF_DEPENDENCY", path, "A skill cannot depend on itself."); continue; }
     if (!skillIds.has(from)) add(out, "DANGLING_PREREQUISITE", `${path}.prerequisiteId`, `Unknown prerequisite: ${from}.`);
@@ -132,6 +188,7 @@ export function validateContentGraph(input: unknown): ValidationIssue[] {
     if (primary && !skillIds.has(primary)) add(out, "UNKNOWN_PRIMARY_SKILL", `${path}.primarySkillId`, `Unknown primary skill: ${primary}.`);
     if (raw.secondarySkillIds !== undefined) {
       if (!Array.isArray(raw.secondarySkillIds)) add(out, "SECONDARY_SKILL_IDS_INVALID", `${path}.secondarySkillIds`, "secondarySkillIds must be an array.");
+      else if (raw.secondarySkillIds.length > CONTENT_GRAPH_LIMITS.maxSecondarySkillIdsPerItem) add(out, "SECONDARY_SKILL_IDS_LIMIT_EXCEEDED", `${path}.secondarySkillIds`, `secondarySkillIds must contain at most ${CONTENT_GRAPH_LIMITS.maxSecondarySkillIdsPerItem} entries.`);
       else {
         const seen = new Set<string>();
         for (const [j, secondary] of raw.secondarySkillIds.entries()) {

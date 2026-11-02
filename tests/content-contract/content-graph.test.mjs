@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { validateContentGraph } from "../../packages/content-contract/src/index.ts";
+import { CONTENT_GRAPH_LIMITS, validateContentGraph } from "../../packages/content-contract/src/index.ts";
 
 function validGraph() {
   return {
@@ -39,6 +39,81 @@ test("accepts a large disconnected graph without false cycle diagnostics", () =>
   graph.dependencies = [];
   graph.contentItems = [];
   assert.deepEqual(validateContentGraph(graph), []);
+});
+
+
+test("accepts collection and string values exactly at configured limits", () => {
+  const graph = validGraph();
+  graph.version = "v".repeat(CONTENT_GRAPH_LIMITS.maxIdentifierLength);
+  graph.skills = Array.from({ length: CONTENT_GRAPH_LIMITS.maxSkills }, (_, index) => ({
+    id: `scale.skill-${index}`,
+    slug: `skill-${index}`,
+    domain: "scale",
+    name: { vi: "v".repeat(CONTENT_GRAPH_LIMITS.maxLocalizedNameLength), en: "e".repeat(CONTENT_GRAPH_LIMITS.maxLocalizedNameLength) },
+    description: "d".repeat(CONTENT_GRAPH_LIMITS.maxTextLength),
+    version: 1,
+    status: "draft",
+  }));
+  const dependencies = [];
+  for (let index = 0; index < CONTENT_GRAPH_LIMITS.maxSkills - 1; index++) {
+    dependencies.push({ prerequisiteId: `scale.skill-${index}`, skillId: `scale.skill-${index + 1}`, kind: "hard", reason: "r".repeat(CONTENT_GRAPH_LIMITS.maxTextLength) });
+  }
+  for (let index = 0; index < CONTENT_GRAPH_LIMITS.maxSkills - 2; index++) {
+    dependencies.push({ prerequisiteId: `scale.skill-${index}`, skillId: `scale.skill-${index + 2}`, kind: "soft", reason: "A valid shortcut edge." });
+  }
+  dependencies.push(
+    { prerequisiteId: "scale.skill-0", skillId: "scale.skill-3", kind: "soft", reason: "Third-hop edge A." },
+    { prerequisiteId: "scale.skill-1", skillId: "scale.skill-4", kind: "soft", reason: "Third-hop edge B." },
+    { prerequisiteId: "scale.skill-2", skillId: "scale.skill-5", kind: "soft", reason: "Third-hop edge C." },
+  );
+  assert.equal(dependencies.length, CONTENT_GRAPH_LIMITS.maxDependencies);
+  graph.dependencies = dependencies;
+  graph.contentItems = Array.from({ length: CONTENT_GRAPH_LIMITS.maxContentItems }, (_, index) => ({
+    id: `content.item-${index}`,
+    version: 1,
+    difficulty: 3,
+    primarySkillId: "scale.skill-0",
+  }));
+  assert.deepEqual(validateContentGraph(graph), []);
+});
+
+test("rejects collections above configured limits before traversal", () => {
+  const skills = validGraph();
+  skills.skills = Array.from({ length: CONTENT_GRAPH_LIMITS.maxSkills + 1 }, () => ({}));
+  assert.ok(codes(skills).includes("SKILLS_LIMIT_EXCEEDED"));
+
+  const dependencies = validGraph();
+  dependencies.dependencies = Array.from({ length: CONTENT_GRAPH_LIMITS.maxDependencies + 1 }, () => ({}));
+  assert.ok(codes(dependencies).includes("DEPENDENCIES_LIMIT_EXCEEDED"));
+
+  const items = validGraph();
+  items.contentItems = Array.from({ length: CONTENT_GRAPH_LIMITS.maxContentItems + 1 }, () => ({}));
+  assert.ok(codes(items).includes("CONTENT_ITEMS_LIMIT_EXCEEDED"));
+});
+
+test("rejects overlong strings and excessive secondary skill references", () => {
+  const graph = validGraph();
+  graph.skills[0].id = "a".repeat(CONTENT_GRAPH_LIMITS.maxIdentifierLength + 1);
+  graph.skills[0].description = "d".repeat(CONTENT_GRAPH_LIMITS.maxTextLength + 1);
+  graph.skills[0].name.en = "e".repeat(CONTENT_GRAPH_LIMITS.maxLocalizedNameLength + 1);
+  graph.dependencies[0].reason = "r".repeat(CONTENT_GRAPH_LIMITS.maxTextLength + 1);
+  graph.contentItems[0].secondarySkillIds = Array.from(
+    { length: CONTENT_GRAPH_LIMITS.maxSecondarySkillIdsPerItem + 1 },
+    (_, index) => `extra.skill-${index}`,
+  );
+  const result = codes(graph);
+  assert.ok(result.includes("IDENTIFIER_TOO_LONG"));
+  assert.ok(result.includes("STRING_TOO_LONG"));
+  assert.ok(result.includes("SKILL_NAME_INVALID"));
+  assert.ok(result.includes("SECONDARY_SKILL_IDS_LIMIT_EXCEEDED"));
+});
+
+test("caps diagnostic output for malformed objects with many unknown fields", () => {
+  const graph = validGraph();
+  for (let index = 0; index < CONTENT_GRAPH_LIMITS.maxValidationIssues + 20; index++) graph[`unknown_${index}`] = true;
+  const issues = validateContentGraph(graph);
+  assert.ok(issues.some((issue) => issue.code === "VALIDATION_ISSUES_TRUNCATED"));
+  assert.ok(issues.length <= CONTENT_GRAPH_LIMITS.maxValidationIssues + 1);
 });
 
 test("accepts a versioned acyclic graph with valid content skill references", () => {
