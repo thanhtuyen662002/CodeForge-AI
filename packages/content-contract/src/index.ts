@@ -26,7 +26,7 @@ export const CONTENT_GRAPH_LIMITS = Object.freeze({
 const statuses = new Set<SkillStatus>(["draft", "published", "retired"]);
 const kinds = new Set<DependencyKind>(["hard", "soft"]);
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
-const nonBlank = (value: unknown, maxLength = CONTENT_GRAPH_LIMITS.maxTextLength): value is string =>
+const nonBlank = (value: unknown, maxLength: number = CONTENT_GRAPH_LIMITS.maxTextLength): value is string =>
   typeof value === "string" && value.length > 0 && value.length <= maxLength && value.trim() === value;
 const positiveInt = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value > 0;
 const add = (out: ValidationIssue[], code: string, path: string, message: string): void => {
@@ -50,7 +50,7 @@ function requiredString(
   out: ValidationIssue[],
   code: string,
   path: string,
-  maxLength = CONTENT_GRAPH_LIMITS.maxTextLength,
+  maxLength: number = CONTENT_GRAPH_LIMITS.maxTextLength,
   tooLongCode = "STRING_TOO_LONG",
 ): string | undefined {
   if (typeof value !== "string" || value.length === 0 || value.trim() !== value) {
