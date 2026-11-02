@@ -363,7 +363,7 @@ test("rejects and cancels an oversized body before JSON parsing", async () => {
 });
 
 test("rejects excessive stream fragmentation", async () => {
-  const chunks = Array.from({ length: 16_385 }, () => new Uint8Array());
+  const chunks = Array.from({ length: CONTENT_GRAPH_LIMITS.maxBodyChunks + 1 }, () => new Uint8Array());
   const result = await parseContentGraphBody(bodyStream(chunks));
   assert.equal(result.ok, false);
   if (!result.ok) assert.equal(result.issues[0].code, "CONTENT_GRAPH_BODY_CHUNK_LIMIT_EXCEEDED");

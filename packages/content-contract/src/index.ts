@@ -13,6 +13,7 @@ export interface ValidationIssue { code: string; path: string; message: string }
  */
 export const CONTENT_GRAPH_LIMITS = Object.freeze({
   maxJsonBytes: 1_048_576,
+  maxBodyChunks: 16_384,
   maxSkills: 10_000,
   maxDependencies: 20_000,
   maxContentItems: 20_000,
@@ -235,7 +236,7 @@ export async function parseContentGraphBody(
       const { done, value } = await reader.read();
       if (done) break;
       chunkCount++;
-      if (chunkCount > 16_384) {
+      if (chunkCount > CONTENT_GRAPH_LIMITS.maxBodyChunks) {
         try { await reader.cancel(); } catch { /* best-effort cancellation */ }
         return issue("CONTENT_GRAPH_BODY_CHUNK_LIMIT_EXCEEDED", "The request body contains too many chunks.");
       }
