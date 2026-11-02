@@ -384,9 +384,10 @@ test("rejects invalid UTF-8, malformed JSON and absent bodies", async () => {
 });
 
 test("rejects duplicate root keys including escaped-equivalent spellings before object parsing", async () => {
+  const escapedSchemaKey = "\\" + "u0073chemaVersion";
   const json = JSON.stringify(validGraph()).replace(
     '"schemaVersion":1',
-    String.raw`"schemaVersion":0,"\\u0073chemaVersion":1`,
+    '"schemaVersion":0,"' + escapedSchemaKey + '":1',
   );
   const result = await parseContentGraphBody(bodyStream([encoder.encode(json)]));
   assert.equal(result.ok, false);
@@ -397,9 +398,11 @@ test("rejects duplicate root keys including escaped-equivalent spellings before 
 });
 
 test("rejects nested escaped-equivalent keys when the invalid first value is overwritten", async () => {
+  const escapedNul = "\\" + "u0000";
+  const escapedId = "\\" + "u0069d";
   const json = JSON.stringify(validGraph()).replace(
     '"id":"logic.sequence"',
-    String.raw`"id":"invalid\\u0000","\\u0069d":"logic.sequence"`,
+    '"id":"invalid' + escapedNul + '","' + escapedId + '":"logic.sequence"',
   );
   const result = await parseContentGraphBody(bodyStream([encoder.encode(json)]));
   assert.equal(result.ok, false);

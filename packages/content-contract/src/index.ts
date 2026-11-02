@@ -229,7 +229,7 @@ function scanJsonForDuplicateKeys(source: string): JsonScanResult {
   let index = 0;
   let depthExceeded = false;
   const whitespace = (): void => {
-    while (source[index] === " " || source[index] === "\\t" || source[index] === "\\n" || source[index] === "\\r") index++;
+    while (source[index] === " " || source[index] === "\t" || source[index] === "\n" || source[index] === "\r") index++;
   };
   const readString = (): string => {
     const start = index;
@@ -238,14 +238,14 @@ function scanJsonForDuplicateKeys(source: string): JsonScanResult {
     while (index < source.length) {
       const character = source[index++];
       if (character === '"') return JSON.parse(source.slice(start, index)) as string;
-      if (character === "\\\\") {
+      if (character === "\\") {
         if (index >= source.length) throw new Error("Incomplete JSON escape.");
         const escaped = source[index++];
         if (escaped === "u") {
           const hex = source.slice(index, index + 4);
           if (!/^[0-9a-fA-F]{4}$/u.test(hex)) throw new Error("Invalid JSON Unicode escape.");
           index += 4;
-        } else if (!'"\\\\/bfnrt'.includes(escaped)) {
+        } else if (!'"\\/bfnrt'.includes(escaped)) {
           throw new Error("Invalid JSON escape.");
         }
       } else if (character.charCodeAt(0) < 0x20) {
@@ -255,7 +255,7 @@ function scanJsonForDuplicateKeys(source: string): JsonScanResult {
     throw new Error("Unterminated JSON string.");
   };
   const isDelimiter = (character: string | undefined): boolean =>
-    character === " " || character === "\\t" || character === "\\n" || character === "\\r" ||
+    character === " " || character === "\t" || character === "\n" || character === "\r" ||
     character === "," || character === "]" || character === "}";
   const parseValue = (path: string, depth: number): string | null => {
     whitespace();
@@ -272,7 +272,7 @@ function scanJsonForDuplicateKeys(source: string): JsonScanResult {
       while (true) {
         whitespace();
         const key = readString();
-        const keyPath = `${path}[${JSON.stringify(key)}]`;
+        const keyPath = path + "[" + JSON.stringify(key) + "]";
         if (seen.has(key)) return keyPath;
         seen.add(key);
         whitespace();
@@ -290,7 +290,7 @@ function scanJsonForDuplicateKeys(source: string): JsonScanResult {
       if (source[index] === "]") { index++; return null; }
       let itemIndex = 0;
       while (true) {
-        const nestedDuplicate = parseValue(`${path}[${itemIndex}]`, depth + 1);
+        const nestedDuplicate = parseValue(path + "[" + itemIndex + "]", depth + 1);
         if (nestedDuplicate !== null) return nestedDuplicate;
         itemIndex++;
         whitespace();
