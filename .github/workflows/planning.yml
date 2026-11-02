@@ -72,9 +72,14 @@ jobs:
       - name: Validate public content manifest
         if: steps.required-suites.outputs.public_content_present == 'true'
         run: node scripts/check-public-content-manifest.mjs content/items/manifest.json
+      - name: Install locked content graph dependencies
+        if: steps.required-suites.outputs.content_graph_present == 'true'
+        working-directory: packages/content-contract
+        run: npm ci --ignore-scripts
       - name: Typecheck content graph contract
         if: steps.required-suites.outputs.content_graph_present == 'true'
-        run: npm exec --yes --ignore-scripts --package=typescript@6.0.3 -- tsc --noEmit -p packages/content-contract/tsconfig.json
+        working-directory: packages/content-contract
+        run: npm run typecheck
       - name: Run required content graph regression suite
         if: steps.required-suites.outputs.content_graph_present == 'true'
         run: node --experimental-strip-types --test tests/content-contract/*.test.mjs
