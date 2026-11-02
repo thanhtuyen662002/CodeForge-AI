@@ -49,8 +49,8 @@ test("accepts collection and string values exactly at configured limits", () => 
     id: `scale.skill-${index}`,
     slug: `skill-${index}`,
     domain: "scale",
-    name: { vi: "v".repeat(CONTENT_GRAPH_LIMITS.maxLocalizedNameLength), en: "e".repeat(CONTENT_GRAPH_LIMITS.maxLocalizedNameLength) },
-    description: "d".repeat(CONTENT_GRAPH_LIMITS.maxTextLength),
+    name: { vi: `Kỹ năng ${index}`, en: `Skill ${index}` },
+    description: "A bounded synthetic skill.",
     version: 1,
     status: "draft",
   }));
@@ -67,6 +67,10 @@ test("accepts collection and string values exactly at configured limits", () => 
     { prerequisiteId: "scale.skill-2", skillId: "scale.skill-5", kind: "soft", reason: "Third-hop edge C." },
   );
   assert.equal(dependencies.length, CONTENT_GRAPH_LIMITS.maxDependencies);
+  graph.skills[0].name.vi = "v".repeat(CONTENT_GRAPH_LIMITS.maxLocalizedNameLength);
+  graph.skills[0].name.en = "e".repeat(CONTENT_GRAPH_LIMITS.maxLocalizedNameLength);
+  graph.skills[0].description = "d".repeat(CONTENT_GRAPH_LIMITS.maxTextLength);
+  dependencies[0].reason = "r".repeat(CONTENT_GRAPH_LIMITS.maxTextLength);
   graph.dependencies = dependencies;
   graph.contentItems = Array.from({ length: CONTENT_GRAPH_LIMITS.maxContentItems }, (_, index) => ({
     id: `content.item-${index}`,
