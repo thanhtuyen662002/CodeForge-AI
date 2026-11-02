@@ -225,7 +225,12 @@ export async function parseContentGraphBody(
   });
   if (!body) return issue("CONTENT_GRAPH_BODY_REQUIRED", "A request body is required.");
 
-  const reader = body.getReader();
+  let reader: ReadableStreamDefaultReader<Uint8Array>;
+  try {
+    reader = body.getReader();
+  } catch {
+    return issue("CONTENT_GRAPH_BODY_READ_FAILED", "The request body stream is not available for reading.");
+  }
   const decoder = new TextDecoder("utf-8", { fatal: true });
   let json = "";
   let byteLength = 0;

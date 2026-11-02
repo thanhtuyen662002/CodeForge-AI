@@ -391,6 +391,15 @@ test("rejects a valid JSON body whose graph violates the content contract", asyn
   if (!result.ok) assert.ok(result.issues.some((issue) => issue.code === "SKILL_VERSION_INVALID"));
 });
 
+test("reports locked request bodies without throwing", async () => {
+  const body = bodyStream([encoder.encode(JSON.stringify(validGraph()))]);
+  const reader = body.getReader();
+  const result = await parseContentGraphBody(body);
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.issues[0].code, "CONTENT_GRAPH_BODY_READ_FAILED");
+  reader.releaseLock();
+});
+
 test("reports request stream failures without returning partial JSON", async () => {
   const body = new ReadableStream({
     start(controller) { controller.error(new Error("synthetic stream failure")); },
