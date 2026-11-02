@@ -383,6 +383,59 @@ test("rejects invalid UTF-8, malformed JSON and absent bodies", async () => {
   if (!missing.ok) assert.equal(missing.issues[0].code, "CONTENT_GRAPH_BODY_REQUIRED");
 });
 
+test("rejects duplicate root keys including escaped-equivalent spellings before object parsing", async () => {
+  const json = JSON.stringify(validGraph()).replace(
+    '"schemaVersion":1',
+    String.raw`"schemaVersion":0,"\\u0073chemaVersion":1`,
+  );
+  const result = await parseContentGraphBody(bodyStream([encoder.encode(json)]));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.issues[0].code, "CONTENT_GRAPH_DUPLICATE_JSON_KEY");
+    assert.equal(result.issues[0].path, '$["schemaVersion"]');
+  }
+});
+
+test("rejects nested escaped-equivalent keys when the invalid first value is overwritten", async () => {
+  const json = JSON.stringify(validGraph()).replace(
+    '"id":"logic.sequence"',
+    String.raw`"id":"invalid\\u0000","\\u0069d":"logic.sequence"`,
+  );
+  const result = await parseContentGraphBody(bodyStream([encoder.encode(json)]));
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.issues[0].code, "CONTENT_GRAPH_DUPLICATE_JSON_KEY");
+    assert.equal(result.issues[0].path, '$["skills"][0]["id"]');
+  }
+});
+
+test("does not confuse repeated keys in sibling objects or key-like text inside string values", async () => {
+  const graph = validGraph();
+  graph.skills[0].description = 'This text contains "id":"invalid" but no duplicate object member.';
+  const result = await parseContentGraphBody(bodyStream([encoder.encode(JSON.stringify(graph))]));
+  assert.equal(result.ok, true);
+});
+
+test("rejects duplicate keys when the raw JSON is fragmented across stream chunks", async () => {
+  const json = JSON.stringify(validGraph()).replace(
+    '"schemaVersion":1',
+    '"schemaVersion":0,"schemaVersion":1',
+  );
+  const bytes = encoder.encode(json);
+  const chunks = Array.from(bytes, (byte) => Uint8Array.of(byte));
+  const result = await parseContentGraphBody(bodyStream(chunks));
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.issues[0].code, "CONTENT_GRAPH_DUPLICATE_JSON_KEY");
+});
+
+test("rejects JSON nesting beyond the configured depth before object parsing", async () => {
+  const depth = CONTENT_GRAPH_LIMITS.maxJsonDepth + 2;
+  const json = "[".repeat(depth) + "0" + "]".repeat(depth);
+  const result = await parseContentGraphBody(bodyStream([encoder.encode(json)]));
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.issues[0].code, "CONTENT_GRAPH_JSON_DEPTH_LIMIT_EXCEEDED");
+});
+
 test("rejects a valid JSON body whose graph violates the content contract", async () => {
   const graph = validGraph();
   graph.skills[0].version = 0;

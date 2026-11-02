@@ -13,6 +13,7 @@ export interface ValidationIssue { code: string; path: string; message: string }
  */
 export const CONTENT_GRAPH_LIMITS = Object.freeze({
   maxJsonBytes: 1_048_576,
+  maxJsonDepth: 128,
   maxBodyChunks: 16_384,
   maxSkills: 10_000,
   maxDependencies: 20_000,
@@ -216,12 +217,111 @@ export type ContentGraphBodyResult =
  * JSON.parse, then run the structural validator. Route Handlers should pass
  * request.body directly; do not call request.json() or request.text() first.
  */
+type JsonScanResult = { duplicatePath: string } | { depthExceeded: true } | null;
+
+/**
+ * Scan bounded raw JSON before object materialization. JSON.parse uses
+ * last-key-wins semantics, so a post-parse object walk cannot detect duplicate
+ * or escaped-equivalent member names. Malformed syntax is left to JSON.parse;
+ * this scanner only reports duplicates and an explicit nesting limit.
+ */
+function scanJsonForDuplicateKeys(source: string): JsonScanResult {
+  let index = 0;
+  let depthExceeded = false;
+  const whitespace = (): void => {
+    while (source[index] === " " || source[index] === "\\t" || source[index] === "\\n" || source[index] === "\\r") index++;
+  };
+  const readString = (): string => {
+    const start = index;
+    if (source[index] !== '"') throw new Error("Expected a JSON string.");
+    index++;
+    while (index < source.length) {
+      const character = source[index++];
+      if (character === '"') return JSON.parse(source.slice(start, index)) as string;
+      if (character === "\\\\") {
+        if (index >= source.length) throw new Error("Incomplete JSON escape.");
+        const escaped = source[index++];
+        if (escaped === "u") {
+          const hex = source.slice(index, index + 4);
+          if (!/^[0-9a-fA-F]{4}$/u.test(hex)) throw new Error("Invalid JSON Unicode escape.");
+          index += 4;
+        } else if (!'"\\\\/bfnrt'.includes(escaped)) {
+          throw new Error("Invalid JSON escape.");
+        }
+      } else if (character.charCodeAt(0) < 0x20) {
+        throw new Error("Unescaped control character in JSON string.");
+      }
+    }
+    throw new Error("Unterminated JSON string.");
+  };
+  const isDelimiter = (character: string | undefined): boolean =>
+    character === " " || character === "\\t" || character === "\\n" || character === "\\r" ||
+    character === "," || character === "]" || character === "}";
+  const parseValue = (path: string, depth: number): string | null => {
+    whitespace();
+    if (depth > CONTENT_GRAPH_LIMITS.maxJsonDepth) {
+      depthExceeded = true;
+      throw new Error("JSON nesting limit exceeded.");
+    }
+    const character = source[index];
+    if (character === "{") {
+      index++;
+      whitespace();
+      const seen = new Set<string>();
+      if (source[index] === "}") { index++; return null; }
+      while (true) {
+        whitespace();
+        const key = readString();
+        const keyPath = `${path}[${JSON.stringify(key)}]`;
+        if (seen.has(key)) return keyPath;
+        seen.add(key);
+        whitespace();
+        if (source[index++] !== ":") throw new Error("Expected a JSON object colon.");
+        const nestedDuplicate = parseValue(keyPath, depth + 1);
+        if (nestedDuplicate !== null) return nestedDuplicate;
+        whitespace();
+        if (source[index] === "}") { index++; return null; }
+        if (source[index++] !== ",") throw new Error("Expected a JSON object comma.");
+      }
+    }
+    if (character === "[") {
+      index++;
+      whitespace();
+      if (source[index] === "]") { index++; return null; }
+      let itemIndex = 0;
+      while (true) {
+        const nestedDuplicate = parseValue(`${path}[${itemIndex}]`, depth + 1);
+        if (nestedDuplicate !== null) return nestedDuplicate;
+        itemIndex++;
+        whitespace();
+        if (source[index] === "]") { index++; return null; }
+        if (source[index++] !== ",") throw new Error("Expected a JSON array comma.");
+      }
+    }
+    if (character === '"') { readString(); return null; }
+    const start = index;
+    while (index < source.length && !isDelimiter(source[index])) index++;
+    if (index === start) throw new Error("Expected a JSON value.");
+    return null;
+  };
+  try {
+    whitespace();
+    const duplicatePath = parseValue("$", 0);
+    if (duplicatePath !== null) return { duplicatePath };
+    whitespace();
+    if (index !== source.length) throw new Error("Trailing JSON data.");
+    return null;
+  } catch {
+    return depthExceeded ? { depthExceeded: true } : null;
+  }
+}
+
 export async function parseContentGraphBody(
   body: ReadableStream<Uint8Array> | null,
 ): Promise<ContentGraphBodyResult> {
-  const issue = (code: string, message: string): ContentGraphBodyResult => ({
+  const issue = (code: string, message: string, path = "$"): ContentGraphBodyResult => ({
     ok: false,
-    issues: [{ code, path: "$", message }],
+    issues: [{ code, path, message }],
   });
   if (!body) return issue("CONTENT_GRAPH_BODY_REQUIRED", "A request body is required.");
 
@@ -267,6 +367,14 @@ export async function parseContentGraphBody(
     json += decoder.decode();
   } catch {
     return issue("CONTENT_GRAPH_BODY_INVALID_UTF8", "The request body must be valid UTF-8.");
+  }
+
+  const scan = scanJsonForDuplicateKeys(json);
+  if (scan && "depthExceeded" in scan) {
+    return issue("CONTENT_GRAPH_JSON_DEPTH_LIMIT_EXCEEDED", `JSON nesting must not exceed ${CONTENT_GRAPH_LIMITS.maxJsonDepth} levels.`);
+  }
+  if (scan && "duplicatePath" in scan) {
+    return issue("CONTENT_GRAPH_DUPLICATE_JSON_KEY", "JSON object member names must be unique.", scan.duplicatePath);
   }
 
   let input: unknown;
