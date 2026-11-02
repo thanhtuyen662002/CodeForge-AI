@@ -204,3 +204,73 @@ export function validateContentGraph(input: unknown): ValidationIssue[] {
   }
   return out.sort((a, b) => compareText(a.path, b.path) || compareText(a.code, b.code));
 }
+
+
+export type ContentGraphBodyResult =
+  | { ok: true; graph: ContentGraph }
+  | { ok: false; issues: ValidationIssue[] };
+
+/**
+ * Read an HTTP request body incrementally, enforce the UTF-8 byte limit before
+ * JSON.parse, then run the structural validator. Route Handlers should pass
+ * request.body directly; do not call request.json() or request.text() first.
+ */
+export async function parseContentGraphBody(
+  body: ReadableStream<Uint8Array> | null,
+): Promise<ContentGraphBodyResult> {
+  const issue = (code: string, message: string): ContentGraphBodyResult => ({
+    ok: false,
+    issues: [{ code, path: "$", message }],
+  });
+  if (!body) return issue("CONTENT_GRAPH_BODY_REQUIRED", "A request body is required.");
+
+  const reader = body.getReader();
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  let json = "";
+  let byteLength = 0;
+  let chunkCount = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunkCount++;
+      if (chunkCount > 16_384) {
+        try { await reader.cancel(); } catch { /* best-effort cancellation */ }
+        return issue("CONTENT_GRAPH_BODY_CHUNK_LIMIT_EXCEEDED", "The request body contains too many chunks.");
+      }
+      byteLength += value.byteLength;
+      if (byteLength > CONTENT_GRAPH_LIMITS.maxJsonBytes) {
+        try { await reader.cancel(); } catch { /* best-effort cancellation */ }
+        return issue("CONTENT_GRAPH_BODY_TOO_LARGE", `The request body must not exceed ${CONTENT_GRAPH_LIMITS.maxJsonBytes} bytes.`);
+      }
+      try {
+        json += decoder.decode(value, { stream: true });
+      } catch {
+        try { await reader.cancel(); } catch { /* best-effort cancellation */ }
+        return issue("CONTENT_GRAPH_BODY_INVALID_UTF8", "The request body must be valid UTF-8.");
+      }
+    }
+  } catch {
+    return issue("CONTENT_GRAPH_BODY_READ_FAILED", "The request body could not be read completely.");
+  } finally {
+    reader.releaseLock();
+  }
+
+  try {
+    json += decoder.decode();
+  } catch {
+    return issue("CONTENT_GRAPH_BODY_INVALID_UTF8", "The request body must be valid UTF-8.");
+  }
+
+  let input: unknown;
+  try {
+    input = JSON.parse(json) as unknown;
+  } catch {
+    return issue("CONTENT_GRAPH_BODY_INVALID_JSON", "The request body must contain valid JSON.");
+  }
+
+  const issues = validateContentGraph(input);
+  if (issues.length) return { ok: false, issues };
+  return { ok: true, graph: input as ContentGraph };
+}

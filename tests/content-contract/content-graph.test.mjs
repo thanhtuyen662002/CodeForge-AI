@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { CONTENT_GRAPH_LIMITS, validateContentGraph } from "../../packages/content-contract/src/index.ts";
+import { CONTENT_GRAPH_LIMITS, parseContentGraphBody, validateContentGraph } from "../../packages/content-contract/src/index.ts";
 
 function validGraph() {
   return {
@@ -317,4 +317,85 @@ test("sorts diagnostics by stable code-unit order rather than host locale", () =
     .filter((issue) => issue.code === "UNKNOWN_FIELD")
     .map((issue) => issue.path);
   assert.deepEqual(paths, ["$.a", "$.z", "$.é"]);
+});
+
+
+function bodyStream(chunks) {
+  return new ReadableStream({
+    start(controller) {
+      for (const chunk of chunks) controller.enqueue(chunk);
+      controller.close();
+    },
+  });
+}
+
+const encoder = new TextEncoder();
+
+test("parses a valid content graph across split UTF-8 code points", async () => {
+  const bytes = encoder.encode(JSON.stringify(validGraph()));
+  const chunks = Array.from(bytes, (byte) => Uint8Array.of(byte));
+  const result = await parseContentGraphBody(bodyStream(chunks));
+  assert.equal(result.ok, true);
+  if (result.ok) assert.deepEqual(result.graph, validGraph());
+});
+
+test("accepts a body exactly at the UTF-8 byte limit", async () => {
+  const json = JSON.stringify(validGraph());
+  const bytes = encoder.encode(json);
+  assert.ok(bytes.byteLength < CONTENT_GRAPH_LIMITS.maxJsonBytes);
+  const padded = json + " ".repeat(CONTENT_GRAPH_LIMITS.maxJsonBytes - bytes.byteLength);
+  const result = await parseContentGraphBody(bodyStream([encoder.encode(padded)]));
+  assert.equal(result.ok, true);
+});
+
+test("rejects and cancels an oversized body before JSON parsing", async () => {
+  const json = JSON.stringify(validGraph());
+  const bytes = encoder.encode(json + " ".repeat(CONTENT_GRAPH_LIMITS.maxJsonBytes - encoder.encode(json).byteLength + 1));
+  let cancelled = false;
+  const body = new ReadableStream({
+    start(controller) { controller.enqueue(bytes); },
+    cancel() { cancelled = true; },
+  });
+  const result = await parseContentGraphBody(body);
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.issues[0].code, "CONTENT_GRAPH_BODY_TOO_LARGE");
+  assert.equal(cancelled, true);
+});
+
+test("rejects excessive stream fragmentation", async () => {
+  const chunks = Array.from({ length: 16_385 }, () => new Uint8Array());
+  const result = await parseContentGraphBody(bodyStream(chunks));
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.issues[0].code, "CONTENT_GRAPH_BODY_CHUNK_LIMIT_EXCEEDED");
+});
+
+test("rejects invalid UTF-8, malformed JSON and absent bodies", async () => {
+  const invalidUtf8 = await parseContentGraphBody(bodyStream([Uint8Array.of(0x7b, 0x22, 0x78, 0x22, 0x3a, 0x22, 0xc3, 0x28, 0x22, 0x7d)]));
+  assert.equal(invalidUtf8.ok, false);
+  if (!invalidUtf8.ok) assert.equal(invalidUtf8.issues[0].code, "CONTENT_GRAPH_BODY_INVALID_UTF8");
+
+  const invalidJson = await parseContentGraphBody(bodyStream([encoder.encode("{")]));
+  assert.equal(invalidJson.ok, false);
+  if (!invalidJson.ok) assert.equal(invalidJson.issues[0].code, "CONTENT_GRAPH_BODY_INVALID_JSON");
+
+  const missing = await parseContentGraphBody(null);
+  assert.equal(missing.ok, false);
+  if (!missing.ok) assert.equal(missing.issues[0].code, "CONTENT_GRAPH_BODY_REQUIRED");
+});
+
+test("rejects a valid JSON body whose graph violates the content contract", async () => {
+  const graph = validGraph();
+  graph.skills[0].version = 0;
+  const result = await parseContentGraphBody(bodyStream([encoder.encode(JSON.stringify(graph))]));
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.ok(result.issues.some((issue) => issue.code === "SKILL_VERSION_INVALID"));
+});
+
+test("reports request stream failures without returning partial JSON", async () => {
+  const body = new ReadableStream({
+    start(controller) { controller.error(new Error("synthetic stream failure")); },
+  });
+  const result = await parseContentGraphBody(body);
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.issues[0].code, "CONTENT_GRAPH_BODY_READ_FAILED");
 });
