@@ -240,6 +240,8 @@ function selectLatestWorkflowRun(payload, headSha) {
     if (typeof run.path !== 'string') fail('workflow run is missing its workflow path');
     const path = run.path.split('@')[0];
     if (path !== FOUNDATION_WORKFLOW_PATH || run.head_branch !== FOUNDATION_BRANCH) continue;
+    if (typeof run.event !== 'string') fail('workflow run event is invalid');
+    if (run.event !== 'pull_request') continue;
     if (!Number.isSafeInteger(run.id) || run.id < 1 || seenIds.has(run.id)) fail('workflow-run ID is invalid or duplicated');
     if (!Number.isSafeInteger(run.run_number) || run.run_number < 1) fail('workflow run number is invalid');
     if (!Number.isSafeInteger(run.run_attempt) || run.run_attempt < 1) fail('workflow run attempt is invalid');
