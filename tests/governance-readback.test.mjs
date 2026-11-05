@@ -238,3 +238,16 @@ test('CLI output is parsed by the same Bash tab-delimited handoff', () => {
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+
+test('equal workflow-run timestamps use run_number, not CheckRun ID, as the deterministic tie-breaker', () => {
+  const lowerRunNumber = workflowRun(200, 7, '2026-10-02T17:00:00Z');
+  const higherRunNumber = workflowRun(100, 8, '2026-10-02T17:00:00Z');
+  const payload = checkRunsPayload([
+    checkRun(900, lowerRunNumber.id, 'completed', 'failure'),
+    checkRun(3, higherRunNumber.id, 'completed', 'success'),
+  ]);
+  assert.equal(assertMergeGateEvidence(payload, workflowRunsPayload([lowerRunNumber, higherRunNumber]), jobsPayload([
+    workflowJob(3, higherRunNumber.id, 'completed', 'success'),
+  ]), 'abc'), true);
+});
