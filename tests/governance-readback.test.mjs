@@ -56,6 +56,7 @@ function workflowRun(id, run_number, created_at, options = {}) {
     head_branch: options.head_branch ?? 'foundation/learner-first-design',
     run_number,
     run_attempt: options.run_attempt ?? 1,
+    event: options.event ?? 'pull_request',
     created_at,
   };
 }
@@ -169,6 +170,26 @@ test('latest workflow selection ignores a newer run from a different workflow pa
   assert.equal(assertMergeGateEvidence(payload, workflowRunsPayload([latestCi, newerOtherWorkflow]), jobsPayload([
     workflowJob(5, latestCi.id, 'completed', 'success'),
   ]), 'abc'), true);
+});
+
+test('latest workflow selection ignores a newer non-PR event on the same path, branch and SHA', () => {
+  const latestPullRequest = workflowRun(150, 6, '2026-10-02T17:01:00Z', { event: 'pull_request' });
+  const newerDispatch = workflowRun(200, 7, '2026-10-02T18:00:00Z', { event: 'workflow_dispatch' });
+  const payload = checkRunsPayload([
+    checkRun(5, latestPullRequest.id, 'completed', 'success'),
+    checkRun(6, newerDispatch.id, 'completed', 'failure'),
+  ]);
+  assert.equal(assertMergeGateEvidence(payload, workflowRunsPayload([latestPullRequest, newerDispatch]), jobsPayload([
+    workflowJob(5, latestPullRequest.id, 'completed', 'success'),
+  ]), 'abc'), true);
+});
+
+test('latest workflow selection rejects evidence when only a non-PR event exists', () => {
+  const dispatch = workflowRun(200, 7, '2026-10-02T18:00:00Z', { event: 'workflow_dispatch' });
+  const payload = checkRunsPayload([checkRun(6, dispatch.id, 'completed', 'success')]);
+  assert.throws(() => assertMergeGateEvidence(payload, workflowRunsPayload([dispatch]), jobsPayload([
+    workflowJob(6, dispatch.id, 'completed', 'success'),
+  ]), 'abc'), /no Foundation CI run found/);
 });
 
 test('workflow-run evidence rejects a different head, invalid timestamp, or incomplete page', () => {
