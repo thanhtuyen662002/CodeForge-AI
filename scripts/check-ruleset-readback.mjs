@@ -339,7 +339,7 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
     else if (mode === '--compare' && args.length === 2) validateLiveRuleset(readJson(args[0]), readJson(args[1]));
     else if (mode === '--select-latest-workflow-run' && args.length === 2) {
       const run = selectLatestWorkflowRun(readJson(args[0]), args[1]);
-      process.stdout.write(String(run.id) + '\\t' + String(run.run_attempt) + '\\n');
+      process.stdout.write(String(run.id) + '\t' + String(run.run_attempt) + '\n');
     }
     else if (mode === '--validate-merge-gate' && args.length === 4) assertMergeGateEvidence(readJson(args[0]), readJson(args[1]), readJson(args[2]), args[3]);
     else if (mode === '--validate-negative-control' && args.length === 4) assertNegativeControlEvidence(readJson(args[0]), readJson(args[1]), readJson(args[2]), args[3]);
