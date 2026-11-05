@@ -16,16 +16,34 @@ command -v jq >/dev/null
 command -v node >/dev/null
 root="$(cd "$(dirname "$0")/.." && pwd)"
 result="$(mktemp)"
-trap 'rm -f "$result"' EXIT
+workflow_runs_result="$(mktemp)"
+jobs_result="$(mktemp)"
+trap 'rm -f "$result" "$workflow_runs_result" "$jobs_result"' EXIT
 
-# Verify every merge-gate run belongs to the live foundation branch HEAD and succeeded.
+# CheckRun has no created_at. Bind evidence to the latest Foundation CI workflow run
+# on the exact foundation branch, then to the jobs returned for that run's latest attempt.
 foundation_head="$(gh api "repos/$repo/branches/foundation%2Flearner-first-design" --jq '.commit.sha')"
-# Include queued/in-progress attempts as well as completed runs; latest-only filtering can hide a pending rerun.
+gh api --paginate --slurp "repos/$repo/actions/runs?head_sha=$foundation_head&per_page=100" --jq '{
+  total_count: (.[0].total_count // 0),
+  workflow_runs: [.[].workflow_runs[]]
+}' > "$workflow_runs_result"
+latest_run="$(node "$root/scripts/check-ruleset-readback.mjs" --select-latest-workflow-run "$workflow_runs_result" "$foundation_head")"
+IFS=$'\t' read -r latest_run_id latest_run_attempt <<< "$latest_run"
+if [[ -z "$latest_run_id" || -z "$latest_run_attempt" ]]; then
+  echo 'Could not resolve the latest Foundation CI workflow attempt; refusing ruleset mutation.' >&2
+  exit 4
+fi
+gh api --paginate --slurp "repos/$repo/actions/runs/$latest_run_id/attempts/$latest_run_attempt/jobs?per_page=100" --jq '{
+  total_count: (.[0].total_count // 0),
+  jobs: [.[].jobs[]]
+}' > "$jobs_result"
 gh api --paginate --slurp "repos/$repo/commits/$foundation_head/check-runs?filter=all&per_page=100" --jq --arg sha "$foundation_head" '{
+  source_total_count: (.[0].total_count // 0),
+  source_check_runs: [.[].check_runs[]],
   total_count: ([.[].check_runs[] | select(.name == "merge-gate" and .app.id == 15368 and .head_sha == $sha)] | length),
   check_runs: [.[].check_runs[] | select(.name == "merge-gate" and .app.id == 15368 and .head_sha == $sha)]
 }' > "$result"
-node "$root/scripts/check-ruleset-readback.mjs" --validate-merge-gate "$result" "$foundation_head"
+node "$root/scripts/check-ruleset-readback.mjs" --validate-merge-gate "$result" "$workflow_runs_result" "$jobs_result" "$foundation_head"
 
 # Do not activate a rule that would deadlock the owner: require a real non-owner reviewer with write-capable permission.
 owner="$(gh api "repos/$repo" --jq '.owner.login')"

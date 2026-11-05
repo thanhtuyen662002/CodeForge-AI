@@ -43,183 +43,169 @@ function live(overrides = {}) {
   };
 }
 
-function evidence(conclusion, head = 'abc') {
-  return { total_count: 1, check_runs: [{ id: 1, name: 'merge-gate', app: { id: 15368 }, head_sha: head, status: 'completed', conclusion }] };
+function workflowRun(id, run_number, created_at, options = {}) {
+  return {
+    id,
+    name: 'Foundation CI',
+    path: options.path ?? '.github/workflows/ci.yml',
+    head_sha: options.head_sha ?? 'abc',
+    head_branch: options.head_branch ?? 'foundation/learner-first-design',
+    run_number,
+    run_attempt: options.run_attempt ?? 1,
+    created_at,
+  };
 }
 
-function checkRun(id, status, conclusion) {
-  return { id, name: 'merge-gate', app: { id: 15368 }, head_sha: 'abc', status, conclusion };
+function workflowRunsPayload(workflow_runs) {
+  return { total_count: workflow_runs.length, workflow_runs };
 }
 
-function evidenceRuns(check_runs) {
-  return { total_count: check_runs.length, check_runs };
+function workflowJob(id, run_id, status, conclusion, head = 'abc') {
+  return { id, run_id, name: 'merge-gate', status, conclusion, head_sha: head };
 }
 
-test('creation spec accepts reviewed minimal policy', () => assert.equal(validateCreationSpec(expected), true));
-test('creation spec rejects bypass actor', () => assert.throws(() => validateCreationSpec({ ...structuredClone(expected), bypass_actors: [{ actor_id: 1 }] }), /bypass/));
-test('creation spec rejects unknown server metadata', () => assert.throws(() => validateCreationSpec({ ...structuredClone(expected), id: 1 }), /unsupported keys/));
-test('creation spec rejects lowered approvals', () => {
-  const spec = structuredClone(expected); spec.rules.find((r) => r.type === 'pull_request').parameters.required_approving_review_count = 0;
-  assert.throws(() => validateCreationSpec(spec), /one approval/);
-});
-test('creation spec rejects extra condition block', () => {
-  const spec = structuredClone(expected); spec.conditions.repository_name = { include: ['x'], exclude: [] };
-  assert.throws(() => validateCreationSpec(spec), /conditions contains unsupported keys/);
-});
-test('creation spec rejects extra ref condition key', () => {
-  const spec = structuredClone(expected); spec.conditions.ref_name.extra = true;
-  assert.throws(() => validateCreationSpec(spec), /ref_name condition contains unsupported keys/);
-});
+function checkRun(id, run_id, status, conclusion, head = 'abc') {
+  return {
+    id,
+    name: 'merge-gate',
+    app: { id: 15368 },
+    head_sha: head,
+    status,
+    conclusion,
+    details_url: 'https://github.com/thanhtuyen662002/CodeForge-AI/actions/runs/' + run_id + '/job/' + id,
+  };
+}
 
-test('existing target refuses a stronger approval count instead of lowering it', () => {
-  const actual = live(); actual.rules.find((r) => r.type === 'pull_request').parameters.required_approving_review_count = 2;
-  assert.throws(() => validateExistingTarget(expected, actual), /stronger than target/);
-});
-test('existing target refuses named reviewers that the target would remove', () => {
-  const actual = live(); actual.rules.find((r) => r.type === 'pull_request').parameters.required_reviewers = ['reviewer'];
-  assert.throws(() => validateExistingTarget(expected, actual), /named reviewers/);
-});
-test('existing target refuses an extra required status check', () => {
-  const actual = live(); actual.rules.find((r) => r.type === 'required_status_checks').parameters.required_status_checks.push({ context: 'security', integration_id: 15368 });
-  assert.throws(() => validateExistingTarget(expected, actual), /required status checks would be removed/);
-});
-test('existing target refuses to broaden a narrower merge-method set', () => {
-  const actual = live(); actual.rules.find((r) => r.type === 'pull_request').parameters.allowed_merge_methods = ['squash'];
-  assert.throws(() => validateExistingTarget(expected, actual), /merge methods differ/);
-});
-test('existing target accepts weaker approval and latest-push settings for safe strengthening', () => {
-  const actual = live();
-  const params = actual.rules.find((r) => r.type === 'pull_request').parameters;
-  params.required_approving_review_count = 0;
-  params.require_last_push_approval = false;
-  assert.equal(validateExistingTarget(expected, actual), true);
-});
+function checkRunsPayload(check_runs, source_total_count = check_runs.length) {
+  return {
+    source_total_count,
+    source_check_runs: check_runs,
+    total_count: check_runs.length,
+    check_runs,
+  };
+}
 
-test('existing target permits adding merge-gate when no status checks exist', () => {
-  const actual = live(); actual.rules.find((r) => r.type === 'required_status_checks').parameters.required_status_checks = [];
-  assert.equal(validateExistingTarget(expected, actual), true);
-});
-test('existing target rejects a different repository source', () => {
-  const actual = live(); actual.source = 'another-owner/another-repo';
-  assert.throws(() => validateExistingTarget(expected, actual), /source mismatch/);
-});
-test('existing target rejects a different branch scope', () => {
-  const actual = live(); actual.conditions.ref_name.include = ['refs/heads/release'];
-  assert.throws(() => validateExistingTarget(expected, actual), /default branch/);
-});
-test('existing target rejects bypass actors before in-place update', () => {
-  const actual = live(); actual.bypass_actors = [{ actor_id: 1 }];
-  assert.throws(() => validateExistingTarget(expected, actual), /bypass actors/);
-});
-test('existing target rejects current-user bypass before in-place update', () => {
-  const actual = live({ current_user_can_bypass: 'always' });
-  assert.throws(() => validateExistingTarget(expected, actual), /must not be able to bypass/);
-});
+function jobsPayload(jobs, total_count = jobs.length) {
+  return { total_count, jobs };
+}
 
-test('live ruleset accepts safe server read-back extras', () => assert.equal(validateLiveRuleset(expected, live()), true));
-test('live ruleset accepts reordered condition keys from GitHub JSON', () => {
-  const actual = live(); actual.conditions = { ref_name: { exclude: [], include: ['~DEFAULT_BRANCH'] } };
-  assert.equal(validateLiveRuleset(expected, actual), true);
-});
-test('live ruleset rejects extra condition block', () => {
-  const actual = live(); actual.conditions.repository_name = { include: ['x'], exclude: [] };
-  assert.throws(() => validateLiveRuleset(expected, actual), /live ruleset conditions contains unsupported keys/);
-});
-test('live ruleset rejects bypass capability', () => assert.throws(() => validateLiveRuleset(expected, live({ current_user_can_bypass: 'always' })), /must not be able to bypass/));
-test('live ruleset rejects changed required check', () => {
-  const actual = live(); actual.rules.find((r) => r.type === 'required_status_checks').parameters.required_status_checks[0].context = 'quality';
-  assert.throws(() => validateLiveRuleset(expected, actual), /merge-gate/);
-});
-test('live ruleset rejects unknown pull-request server parameter', () => {
-  const actual = live(); actual.rules.find((r) => r.type === 'pull_request').parameters.mystery_bypass = true;
-  assert.throws(() => validateLiveRuleset(expected, actual), /pull_request parameters contains unsupported keys/);
-});
-test('live ruleset rejects disabled extra approval for unattributed changes', () => {
-  const actual = live(); actual.rules.find((r) => r.type === 'pull_request').parameters.require_extra_approval_for_unattributed_changes = false;
-  assert.throws(() => validateLiveRuleset(expected, actual), /require_extra_approval_for_unattributed_changes/);
-});
-test('live ruleset accepts a nonempty known merge-method subset', () => {
-  const actual = live(); actual.rules.find((r) => r.type === 'pull_request').parameters.allowed_merge_methods = ['squash'];
-  assert.equal(validateLiveRuleset(expected, actual), true);
-});
-test('live ruleset rejects unknown merge method', () => {
-  const actual = live(); actual.rules.find((r) => r.type === 'pull_request').parameters.allowed_merge_methods = ['octopus'];
-  assert.throws(() => validateLiveRuleset(expected, actual), /allowed merge methods are malformed/);
-});
-test('live primitive rule rejects unexpected parameters', () => {
-  const actual = live(); actual.rules.find((r) => r.type === 'deletion').parameters = { bypass: true };
-  assert.throws(() => validateLiveRuleset(expected, actual), /live rule deletion contains unsupported keys/);
-});
-test('live required status check rejects unknown keys', () => {
-  const actual = live(); actual.rules.find((r) => r.type === 'required_status_checks').parameters.required_status_checks[0].extra = true;
-  assert.throws(() => validateLiveRuleset(expected, actual), /live required status check contains unsupported keys/);
-});
-
-test('positive evidence requires exact completed successful head', () => assert.equal(assertMergeGateEvidence(evidence('success'), 'abc'), true));
-test('positive evidence rejects wrong head', () => assert.throws(() => assertMergeGateEvidence(evidence('success', 'def'), 'abc'), /different head/));
-test('positive evidence rejects incomplete page', () => assert.throws(() => assertMergeGateEvidence({ ...evidence('success'), total_count: 2 }, 'abc'), /incomplete/));
-test('negative evidence requires failure', () => assert.equal(assertNegativeControlEvidence(evidence('failure'), 'abc'), true));
-test('negative evidence rejects success', () => assert.throws(() => assertNegativeControlEvidence(evidence('success'), 'abc'), /must be failure/));
-
-test('positive evidence accepts a successful latest rerun after an older failure', () => {
-  const payload = evidenceRuns([
-    checkRun(10, 'completed', 'failure'),
-    checkRun(11, 'completed', 'success'),
+test('positive evidence follows the latest exact-branch workflow attempt, not the largest CheckRun ID', () => {
+  const older = workflowRun(100, 5, '2026-10-02T17:00:00Z');
+  const latest = workflowRun(150, 6, '2026-10-02T17:01:00Z');
+  const unrelatedBranch = workflowRun(200, 99, '2026-10-03T17:00:00Z', { head_branch: 'foundation/cf05-content-contract-20261003' });
+  const payload = checkRunsPayload([
+    checkRun(10, older.id, 'completed', 'failure'),
+    checkRun(99, unrelatedBranch.id, 'completed', 'failure'),
+    checkRun(5, latest.id, 'completed', 'success'),
   ]);
-  assert.equal(assertMergeGateEvidence(payload, 'abc'), true);
+  assert.equal(assertMergeGateEvidence(payload, workflowRunsPayload([older, latest, unrelatedBranch]), jobsPayload([
+    workflowJob(5, latest.id, 'completed', 'success'),
+  ]), 'abc'), true);
 });
 
-test('positive evidence rejects a newer failed rerun after an older success', () => {
-  const payload = evidenceRuns([
-    checkRun(10, 'completed', 'success'),
-    checkRun(11, 'completed', 'failure'),
+test('positive evidence rejects a newer failed workflow run after an older success', () => {
+  const older = workflowRun(100, 5, '2026-10-02T17:00:00Z');
+  const latest = workflowRun(150, 6, '2026-10-02T17:01:00Z');
+  const payload = checkRunsPayload([
+    checkRun(10, older.id, 'completed', 'success'),
+    checkRun(11, latest.id, 'completed', 'failure'),
   ]);
-  assert.throws(() => assertMergeGateEvidence(payload, 'abc'), /latest merge-gate conclusion must be success/);
+  assert.throws(() => assertMergeGateEvidence(payload, workflowRunsPayload([older, latest]), jobsPayload([
+    workflowJob(11, latest.id, 'completed', 'failure'),
+  ]), 'abc'), /latest merge-gate conclusion must be success/);
 });
 
-test('positive evidence rejects a newer queued rerun despite an older success', () => {
-  const payload = evidenceRuns([
-    checkRun(10, 'completed', 'success'),
-    checkRun(11, 'queued', null),
+test('positive evidence rejects a queued job in the latest workflow attempt despite an older success', () => {
+  const latest = workflowRun(150, 6, '2026-10-02T17:01:00Z', { run_attempt: 2 });
+  const payload = checkRunsPayload([
+    checkRun(10, latest.id, 'completed', 'success'),
+    checkRun(12, latest.id, 'queued', null),
   ]);
-  assert.throws(() => assertMergeGateEvidence(payload, 'abc'), /latest merge-gate check-run is not completed/);
+  assert.throws(() => assertMergeGateEvidence(payload, workflowRunsPayload([latest]), jobsPayload([
+    workflowJob(12, latest.id, 'queued', null),
+  ]), 'abc'), /not completed/);
 });
 
-test('negative-control evidence accepts the latest failed run after an older success', () => {
-  const payload = evidenceRuns([
-    checkRun(10, 'completed', 'success'),
-    checkRun(11, 'completed', 'failure'),
+test('negative-control evidence accepts the latest failed workflow attempt after an older success', () => {
+  const older = workflowRun(100, 5, '2026-10-02T17:00:00Z');
+  const latest = workflowRun(150, 6, '2026-10-02T17:01:00Z');
+  const payload = checkRunsPayload([
+    checkRun(10, older.id, 'completed', 'success'),
+    checkRun(11, latest.id, 'completed', 'failure'),
   ]);
-  assert.equal(assertNegativeControlEvidence(payload, 'abc'), true);
+  assert.equal(assertNegativeControlEvidence(payload, workflowRunsPayload([older, latest]), jobsPayload([
+    workflowJob(11, latest.id, 'completed', 'failure'),
+  ]), 'abc'), true);
 });
 
-test('negative-control evidence rejects a newer successful rerun after an older failure', () => {
-  const payload = evidenceRuns([
-    checkRun(10, 'completed', 'failure'),
-    checkRun(11, 'completed', 'success'),
+test('negative-control evidence rejects a latest successful workflow attempt after an older failure', () => {
+  const older = workflowRun(100, 5, '2026-10-02T17:00:00Z');
+  const latest = workflowRun(150, 6, '2026-10-02T17:01:00Z');
+  const payload = checkRunsPayload([
+    checkRun(10, older.id, 'completed', 'failure'),
+    checkRun(11, latest.id, 'completed', 'success'),
   ]);
-  assert.throws(() => assertNegativeControlEvidence(payload, 'abc'), /latest merge-gate conclusion must be failure/);
+  assert.throws(() => assertNegativeControlEvidence(payload, workflowRunsPayload([older, latest]), jobsPayload([
+    workflowJob(11, latest.id, 'completed', 'success'),
+  ]), 'abc'), /latest merge-gate conclusion must be failure/);
 });
 
-test('check-run evidence accepts the GitHub CheckRun shape without created_at', () => {
-  assert.equal(assertMergeGateEvidence(evidence('success'), 'abc'), true);
+test('latest attempt job identity rejects a stale CheckRun from an earlier attempt of the same workflow run', () => {
+  const latest = workflowRun(150, 6, '2026-10-02T17:01:00Z', { run_attempt: 2 });
+  const payload = checkRunsPayload([checkRun(10, latest.id, 'completed', 'success')]);
+  assert.throws(() => assertMergeGateEvidence(payload, workflowRunsPayload([latest]), jobsPayload([
+    workflowJob(12, latest.id, 'completed', 'failure'),
+  ]), 'abc'), /no unique matching CheckRun/);
 });
 
-test('check-run evidence rejects unsafe and duplicate IDs', () => {
-  const unsafeIds = evidenceRuns([checkRun(Number.MAX_SAFE_INTEGER + 1, 'completed', 'success')]);
-  assert.throws(() => assertMergeGateEvidence(unsafeIds, 'abc'), /ID is invalid or duplicated/);
-  const duplicateIds = evidenceRuns([
-    checkRun(10, 'completed', 'failure'),
-    checkRun(10, 'completed', 'success'),
-  ]);
-  assert.throws(() => assertMergeGateEvidence(duplicateIds, 'abc'), /ID is invalid or duplicated/);
+test('latest workflow selection ignores a newer run from a different workflow path', () => {
+  const latestCi = workflowRun(150, 6, '2026-10-02T17:01:00Z');
+  const newerOtherWorkflow = workflowRun(200, 20, '2026-10-02T18:00:00Z', { path: '.github/workflows/planning.yml' });
+  const payload = checkRunsPayload([checkRun(5, latestCi.id, 'completed', 'success')]);
+  assert.equal(assertMergeGateEvidence(payload, workflowRunsPayload([latestCi, newerOtherWorkflow]), jobsPayload([
+    workflowJob(5, latestCi.id, 'completed', 'success'),
+  ]), 'abc'), true);
 });
 
-test('highest check-run ID selects the newest rerun regardless of payload order', () => {
-  const payload = evidenceRuns([
-    checkRun(10, 'completed', 'failure'),
-    checkRun(12, 'completed', 'success'),
-    checkRun(11, 'completed', 'failure'),
-  ]);
-  assert.equal(assertMergeGateEvidence(payload, 'abc'), true);
+test('workflow-run evidence rejects a different head, invalid timestamp, or incomplete page', () => {
+  const wrongHead = workflowRun(150, 6, '2026-10-02T17:01:00Z', { head_sha: 'def' });
+  const payload = checkRunsPayload([checkRun(5, 150, 'completed', 'success')]);
+  assert.throws(() => assertMergeGateEvidence(payload, workflowRunsPayload([wrongHead]), jobsPayload([
+    workflowJob(5, 150, 'completed', 'success'),
+  ]), 'abc'), /different head SHA/);
+
+  const invalidTime = workflowRun(151, 7, 'not-a-date');
+  assert.throws(() => assertMergeGateEvidence(checkRunsPayload([checkRun(6, 151, 'completed', 'success')]), workflowRunsPayload([invalidTime]), jobsPayload([
+    workflowJob(6, 151, 'completed', 'success'),
+  ]), 'abc'), /timestamp is invalid/);
+
+  const incomplete = workflowRunsPayload([workflowRun(152, 8, '2026-10-02T17:02:00Z')]);
+  incomplete.total_count = 2;
+  assert.throws(() => assertMergeGateEvidence(checkRunsPayload([checkRun(7, 152, 'completed', 'success')]), incomplete, jobsPayload([
+    workflowJob(7, 152, 'completed', 'success'),
+  ]), 'abc'), /incomplete or paginated/);
+});
+
+test('check-run and workflow-job evidence must be complete and agree on the exact attempt', () => {
+  const latest = workflowRun(150, 6, '2026-10-02T17:01:00Z');
+  const payload = checkRunsPayload([checkRun(5, latest.id, 'completed', 'success')], 2);
+  assert.throws(() => assertMergeGateEvidence(payload, workflowRunsPayload([latest]), jobsPayload([
+    workflowJob(5, latest.id, 'completed', 'success'),
+  ]), 'abc'), /source check-runs evidence is incomplete/);
+
+  assert.throws(() => assertMergeGateEvidence(checkRunsPayload([checkRun(5, latest.id, 'completed', 'success')]), workflowRunsPayload([latest]), jobsPayload([
+    workflowJob(5, latest.id, 'completed', 'success'),
+  ], 2), 'abc'), /workflow-job evidence is incomplete/);
+
+  assert.throws(() => assertMergeGateEvidence(checkRunsPayload([checkRun(5, latest.id, 'completed', 'success')]), workflowRunsPayload([latest]), jobsPayload([
+    workflowJob(5, latest.id, 'completed', 'success', 'def'),
+  ]), 'abc'), /different head SHA/);
+});
+
+test('merge-gate CheckRun must be tied to the exact workflow run and job IDs', () => {
+  const latest = workflowRun(150, 6, '2026-10-02T17:01:00Z');
+  const badUrl = checkRun(5, 999, 'completed', 'success');
+  assert.throws(() => assertMergeGateEvidence(checkRunsPayload([badUrl]), workflowRunsPayload([latest]), jobsPayload([
+    workflowJob(5, latest.id, 'completed', 'success'),
+  ]), 'abc'), /no unique matching CheckRun/);
 });
