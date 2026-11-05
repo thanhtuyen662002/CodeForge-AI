@@ -225,13 +225,22 @@ function validateCheckRuns(payload, headSha, expectedConclusion) {
   if (!isObject(payload) || !Number.isInteger(payload.total_count) || !Array.isArray(payload.check_runs)) fail('check-runs payload is malformed');
   if (payload.total_count < 1 || payload.check_runs.length < 1) fail('no merge-gate check-runs found');
   if (payload.total_count !== payload.check_runs.length) fail('check-runs evidence is incomplete or paginated');
+  const seenIds = new Set();
   for (const run of payload.check_runs) {
     if (run?.name !== 'merge-gate') fail('unexpected check name in evidence');
     if (run?.app?.id !== ACTIONS_APP_ID) fail('merge-gate evidence is not from GitHub Actions');
     if (run?.head_sha !== headSha) fail('merge-gate evidence is for a different head SHA');
-    if (run?.status !== 'completed') fail('merge-gate evidence is not completed');
-    if (run?.conclusion !== expectedConclusion) fail(`merge-gate conclusion must be ${expectedConclusion}`);
+    if (!Number.isSafeInteger(run?.id) || run.id < 1 || seenIds.has(run.id)) fail('merge-gate check-run ID is invalid or duplicated');
+    seenIds.add(run.id);
+    if (typeof run.created_at !== 'string' || !Number.isFinite(Date.parse(run.created_at))) fail('merge-gate check-run creation time is invalid');
   }
+  // GitHub retains superseded attempts for the same SHA. Evaluate the newest
+  // created check-run, using its unique ID as a deterministic tie-breaker.
+  const latestRun = [...payload.check_runs].sort((a, b) =>
+    Date.parse(a.created_at) - Date.parse(b.created_at) || a.id - b.id
+  )[payload.check_runs.length - 1];
+  if (latestRun.status !== 'completed') fail('latest merge-gate check-run is not completed');
+  if (latestRun.conclusion !== expectedConclusion) fail(`latest merge-gate conclusion must be ${expectedConclusion}`);
   return true;
 }
 
