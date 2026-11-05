@@ -44,7 +44,15 @@ function live(overrides = {}) {
 }
 
 function evidence(conclusion, head = 'abc') {
-  return { total_count: 1, check_runs: [{ name: 'merge-gate', app: { id: 15368 }, head_sha: head, status: 'completed', conclusion }] };
+  return { total_count: 1, check_runs: [{ id: 1, created_at: '2026-01-01T00:00:00Z', name: 'merge-gate', app: { id: 15368 }, head_sha: head, status: 'completed', conclusion }] };
+}
+
+function checkRun(id, createdAt, status, conclusion) {
+  return { id, created_at: createdAt, name: 'merge-gate', app: { id: 15368 }, head_sha: 'abc', status, conclusion };
+}
+
+function evidenceRuns(check_runs) {
+  return { total_count: check_runs.length, check_runs };
 }
 
 test('creation spec accepts reviewed minimal policy', () => assert.equal(validateCreationSpec(expected), true));
@@ -152,3 +160,61 @@ test('positive evidence rejects wrong head', () => assert.throws(() => assertMer
 test('positive evidence rejects incomplete page', () => assert.throws(() => assertMergeGateEvidence({ ...evidence('success'), total_count: 2 }, 'abc'), /incomplete/));
 test('negative evidence requires failure', () => assert.equal(assertNegativeControlEvidence(evidence('failure'), 'abc'), true));
 test('negative evidence rejects success', () => assert.throws(() => assertNegativeControlEvidence(evidence('success'), 'abc'), /must be failure/));
+
+test('positive evidence accepts a successful latest rerun after an older failure', () => {
+  const payload = evidenceRuns([
+    checkRun(10, '2026-01-01T00:00:00Z', 'completed', 'failure'),
+    checkRun(11, '2026-01-01T00:01:00Z', 'completed', 'success'),
+  ]);
+  assert.equal(assertMergeGateEvidence(payload, 'abc'), true);
+});
+
+test('positive evidence rejects a newer failed rerun after an older success', () => {
+  const payload = evidenceRuns([
+    checkRun(10, '2026-01-01T00:00:00Z', 'completed', 'success'),
+    checkRun(11, '2026-01-01T00:01:00Z', 'completed', 'failure'),
+  ]);
+  assert.throws(() => assertMergeGateEvidence(payload, 'abc'), /latest merge-gate conclusion must be success/);
+});
+
+test('positive evidence rejects a newer queued rerun despite an older success', () => {
+  const payload = evidenceRuns([
+    checkRun(10, '2026-01-01T00:00:00Z', 'completed', 'success'),
+    checkRun(11, '2026-01-01T00:01:00Z', 'queued', null),
+  ]);
+  assert.throws(() => assertMergeGateEvidence(payload, 'abc'), /latest merge-gate check-run is not completed/);
+});
+
+test('negative-control evidence accepts the latest failed run after an older success', () => {
+  const payload = evidenceRuns([
+    checkRun(10, '2026-01-01T00:00:00Z', 'completed', 'success'),
+    checkRun(11, '2026-01-01T00:01:00Z', 'completed', 'failure'),
+  ]);
+  assert.equal(assertNegativeControlEvidence(payload, 'abc'), true);
+});
+
+test('negative-control evidence rejects a newer successful rerun after an older failure', () => {
+  const payload = evidenceRuns([
+    checkRun(10, '2026-01-01T00:00:00Z', 'completed', 'failure'),
+    checkRun(11, '2026-01-01T00:01:00Z', 'completed', 'success'),
+  ]);
+  assert.throws(() => assertNegativeControlEvidence(payload, 'abc'), /latest merge-gate conclusion must be failure/);
+});
+
+test('check-run evidence rejects invalid creation timestamps and duplicate IDs', () => {
+  const invalidTime = evidenceRuns([checkRun(10, 'not-a-date', 'completed', 'success')]);
+  assert.throws(() => assertMergeGateEvidence(invalidTime, 'abc'), /creation time is invalid/);
+  const duplicateIds = evidenceRuns([
+    checkRun(10, '2026-01-01T00:00:00Z', 'completed', 'failure'),
+    checkRun(10, '2026-01-01T00:01:00Z', 'completed', 'success'),
+  ]);
+  assert.throws(() => assertMergeGateEvidence(duplicateIds, 'abc'), /ID is invalid or duplicated/);
+});
+
+test('check-run ID deterministically breaks equal creation-time ties', () => {
+  const payload = evidenceRuns([
+    checkRun(11, '2026-01-01T00:00:00Z', 'completed', 'failure'),
+    checkRun(12, '2026-01-01T00:00:00Z', 'completed', 'success'),
+  ]);
+  assert.equal(assertMergeGateEvidence(payload, 'abc'), true);
+});
