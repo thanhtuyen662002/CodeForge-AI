@@ -20,7 +20,8 @@ trap 'rm -f "$result"' EXIT
 
 # Verify every merge-gate run belongs to the live foundation branch HEAD and succeeded.
 foundation_head="$(gh api "repos/$repo/branches/foundation%2Flearner-first-design" --jq '.commit.sha')"
-gh api --paginate --slurp "repos/$repo/commits/$foundation_head/check-runs?per_page=100" --jq --arg sha "$foundation_head" '{
+# Include queued/in-progress attempts as well as completed runs; latest-only filtering can hide a pending rerun.
+gh api --paginate --slurp "repos/$repo/commits/$foundation_head/check-runs?filter=all&per_page=100" --jq --arg sha "$foundation_head" '{
   total_count: ([.[].check_runs[] | select(.name == "merge-gate" and .app.id == 15368 and .head_sha == $sha)] | length),
   check_runs: [.[].check_runs[] | select(.name == "merge-gate" and .app.id == 15368 and .head_sha == $sha)]
 }' > "$result"
