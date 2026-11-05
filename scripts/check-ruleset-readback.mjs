@@ -232,13 +232,11 @@ function validateCheckRuns(payload, headSha, expectedConclusion) {
     if (run?.head_sha !== headSha) fail('merge-gate evidence is for a different head SHA');
     if (!Number.isSafeInteger(run?.id) || run.id < 1 || seenIds.has(run.id)) fail('merge-gate check-run ID is invalid or duplicated');
     seenIds.add(run.id);
-    if (typeof run.created_at !== 'string' || !Number.isFinite(Date.parse(run.created_at))) fail('merge-gate check-run creation time is invalid');
   }
-  // GitHub retains superseded attempts for the same SHA. Evaluate the newest
-  // created check-run, using its unique ID as a deterministic tie-breaker.
-  const latestRun = [...payload.check_runs].sort((a, b) =>
-    Date.parse(a.created_at) - Date.parse(b.created_at) || a.id - b.id
-  )[payload.check_runs.length - 1];
+  // GitHub's CheckRun response omits created_at. Select the newest run by its
+  // monotonically allocated numeric ID; the caller requests filter=all so a
+  // queued or in-progress rerun cannot be hidden by completed_at filtering.
+  const latestRun = [...payload.check_runs].sort((a, b) => b.id - a.id)[0];
   if (latestRun.status !== 'completed') fail('latest merge-gate check-run is not completed');
   if (latestRun.conclusion !== expectedConclusion) fail(`latest merge-gate conclusion must be ${expectedConclusion}`);
   return true;
