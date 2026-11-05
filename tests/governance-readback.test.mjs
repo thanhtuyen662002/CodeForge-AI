@@ -219,7 +219,7 @@ test('CLI output is parsed by the same Bash tab-delimited handoff', () => {
   const fixture = join(directory, 'workflow-runs.json');
   try {
     writeFileSync(fixture, JSON.stringify(workflowRunsPayload([
-      workflowRun(123, 7, '2026-10-02T17:01:00Z'),
+      workflowRun(123, 7, '2026-10-02T17:01:00Z', { run_attempt: 7 }),
     ])));
     const cli = spawnSync(process.execPath, [
       new URL('../scripts/check-ruleset-readback.mjs', import.meta.url).pathname,
