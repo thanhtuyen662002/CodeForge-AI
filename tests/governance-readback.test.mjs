@@ -1,5 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   validateCreationSpec,
   validateExistingTarget,
@@ -208,4 +212,29 @@ test('merge-gate CheckRun must be tied to the exact workflow run and job IDs', (
   assert.throws(() => assertMergeGateEvidence(checkRunsPayload([badUrl]), workflowRunsPayload([latest]), jobsPayload([
     workflowJob(5, latest.id, 'completed', 'success'),
   ]), 'abc'), /no unique matching CheckRun/);
+});
+
+test('CLI output is parsed by the same Bash tab-delimited handoff', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'codeforge-readback-'));
+  const fixture = join(directory, 'workflow-runs.json');
+  try {
+    writeFileSync(fixture, JSON.stringify(workflowRunsPayload([
+      workflowRun(123, 7, '2026-10-02T17:01:00Z'),
+    ])));
+    const cli = spawnSync(process.execPath, [
+      new URL('../scripts/check-ruleset-readback.mjs', import.meta.url).pathname,
+      '--select-latest-workflow-run',
+      fixture,
+      'abc',
+    ], { encoding: 'utf8' });
+    assert.equal(cli.status, 0, cli.stderr);
+    assert.equal(cli.stdout, '123\t7\n');
+
+    const bashScript = "IFS=$'\\t' read -r run_id attempt <<< \"$1\"; printf '%s:%s' \"$run_id\" \"$attempt\"";
+    const parsed = spawnSync('bash', ['-c', bashScript, 'bash', cli.stdout], { encoding: 'utf8' });
+    assert.equal(parsed.status, 0, parsed.stderr);
+    assert.equal(parsed.stdout, '123:7');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
