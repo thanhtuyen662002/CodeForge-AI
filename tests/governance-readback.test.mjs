@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -370,4 +370,11 @@ test('latest workflow evidence must remain stable through the ruleset validation
   assert.throws(() => assertLatestWorkflowRunStable(
     workflowRunsPayload([initialRun]), workflowRunsPayload([initialRun, newerRun]), 'abc'),
   /latest foundation workflow attempt changed during validation/);
+});
+
+test('gh api variable bindings are passed to jq, not unsupported gh api flags', () => {
+  const applyScript = readFileSync(new URL('../scripts/apply-ruleset.sh', import.meta.url), 'utf8');
+  assert.ok(applyScript.includes('gh api --paginate --slurp "repos/$repo/commits/$foundation_head/check-runs?filter=all&per_page=100" | jq --arg sha "$foundation_head"'));
+  assert.ok(applyScript.includes('gh api "repos/$repo/collaborators?per_page=100" --paginate | jq --arg owner "$owner" --arg actor "$actor"'));
+  assert.doesNotMatch(applyScript, /gh api[^\\n]*--jq\\s+--arg/);
 });
