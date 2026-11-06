@@ -376,5 +376,5 @@ test('gh api variable bindings are passed to jq, not unsupported gh api flags', 
   const applyScript = readFileSync(new URL('../scripts/apply-ruleset.sh', import.meta.url), 'utf8');
   assert.ok(applyScript.includes('gh api --paginate --slurp "repos/$repo/commits/$foundation_head/check-runs?filter=all&per_page=100" | jq --arg sha "$foundation_head"'));
   assert.ok(applyScript.includes('gh api "repos/$repo/collaborators?per_page=100" --paginate | jq --arg owner "$owner" --arg actor "$actor"'));
-  assert.doesNotMatch(applyScript, /gh api[^\\n]*--jq\\s+--arg/);
+  assert.doesNotMatch(applyScript, /gh api[^\n]*--jq\s+--arg/);
 });
