@@ -270,6 +270,16 @@ function selectLatestWorkflowRun(payload, headSha) {
   return latest;
 }
 
+export function assertLatestWorkflowRunStable(initialPayload, currentPayload, headSha) {
+  const initial = selectLatestWorkflowRun(initialPayload, headSha);
+  const current = selectLatestWorkflowRun(currentPayload, headSha);
+  if (initial.id !== current.id || initial.run_attempt !== current.run_attempt ||
+      initial.run_started_at !== current.run_started_at) {
+    fail('latest foundation workflow attempt changed during validation');
+  }
+  return true;
+}
+
 function validateCheckRuns(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha, expectedConclusion) {
   if (!isObject(checkRunsPayload) || !Number.isInteger(checkRunsPayload.total_count) || !Array.isArray(checkRunsPayload.check_runs)) {
     fail('check-runs payload is malformed');
@@ -341,7 +351,7 @@ function readJson(path) {
 }
 
 function usage() {
-  console.error('Usage: check-ruleset-readback.mjs --validate-spec SPEC | --validate-existing-target SPEC LIVE | --compare SPEC LIVE | --select-latest-workflow-run WORKFLOW_RUNS HEAD_SHA | --validate-merge-gate CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA | --validate-negative-control CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA');
+  console.error('Usage: check-ruleset-readback.mjs --validate-spec SPEC | --validate-existing-target SPEC LIVE | --compare SPEC LIVE | --select-latest-workflow-run WORKFLOW_RUNS HEAD_SHA | --assert-latest-workflow-run-stable INITIAL CURRENT HEAD_SHA | --validate-merge-gate CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA | --validate-negative-control CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA');
   process.exit(2);
 }
 
@@ -354,6 +364,9 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
     else if (mode === '--select-latest-workflow-run' && args.length === 2) {
       const run = selectLatestWorkflowRun(readJson(args[0]), args[1]);
       process.stdout.write(String(run.id) + '\t' + String(run.run_attempt) + '\n');
+    }
+    else if (mode === '--assert-latest-workflow-run-stable' && args.length === 3) {
+      assertLatestWorkflowRunStable(readJson(args[0]), readJson(args[1]), args[2]);
     }
     else if (mode === '--validate-merge-gate' && args.length === 4) assertMergeGateEvidence(readJson(args[0]), readJson(args[1]), readJson(args[2]), args[3]);
     else if (mode === '--validate-negative-control' && args.length === 4) assertNegativeControlEvidence(readJson(args[0]), readJson(args[1]), readJson(args[2]), args[3]);
