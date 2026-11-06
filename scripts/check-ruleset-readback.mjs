@@ -247,7 +247,7 @@ function selectLatestWorkflowRun(payload, headSha) {
         run.pull_requests[0]?.head?.ref !== FOUNDATION_BRANCH ||
         run.pull_requests[0]?.head?.sha !== headSha ||
         run.pull_requests[0]?.base?.ref !== 'main') {
-      fail('workflow run is not the exact PR #1 targeting main');
+      fail('workflow run PR association does not uniquely match PR #1 targeting main');
     }
     if (!Number.isSafeInteger(run.id) || run.id < 1 || seenIds.has(run.id)) fail('workflow-run ID is invalid or duplicated');
     if (!Number.isSafeInteger(run.run_number) || run.run_number < 1) fail('workflow run number is invalid');

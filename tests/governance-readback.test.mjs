@@ -199,7 +199,7 @@ test('latest workflow selection rejects evidence when only a non-PR event exists
   ]), 'abc'), /no Foundation CI run found/);
 });
 
-test('workflow evidence must identify PR #1 targeting main', () => {
+test('workflow PR association must uniquely match PR #1 targeting main', () => {
   const wrongPr = workflowRun(301, 9, '2026-10-02T18:00:00Z', {
     pull_requests: [{ number: 2, head: { ref: 'foundation/learner-first-design', sha: 'abc' }, base: { ref: 'main' } }],
   });
@@ -207,10 +207,16 @@ test('workflow evidence must identify PR #1 targeting main', () => {
     pull_requests: [{ number: 1, head: { ref: 'foundation/learner-first-design', sha: 'abc' }, base: { ref: 'release' } }],
   });
   const missingAssociation = workflowRun(303, 11, '2026-10-02T18:02:00Z', { pull_requests: [] });
-  for (const candidate of [wrongPr, wrongBase, missingAssociation]) {
+  const multipleAssociations = workflowRun(304, 12, '2026-10-02T18:03:00Z', {
+    pull_requests: [
+      { number: 1, head: { ref: 'foundation/learner-first-design', sha: 'abc' }, base: { ref: 'main' } },
+      { number: 2, head: { ref: 'foundation/learner-first-design', sha: 'abc' }, base: { ref: 'release' } },
+    ],
+  });
+  for (const candidate of [wrongPr, wrongBase, missingAssociation, multipleAssociations]) {
     const payload = checkRunsPayload([checkRun(20, candidate.id, 'completed', 'success')]);
     assert.throws(() => assertMergeGateEvidence(payload, workflowRunsPayload([candidate]), jobsPayload([]), 'abc'),
-      /not the exact PR #1 targeting main/);
+      /PR association does not uniquely match PR #1 targeting main/);
   }
 });
 
