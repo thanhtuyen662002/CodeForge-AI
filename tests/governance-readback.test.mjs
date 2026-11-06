@@ -48,17 +48,23 @@ function live(overrides = {}) {
 }
 
 function workflowRun(id, run_number, created_at, options = {}) {
+  const headSha = options.head_sha ?? 'abc';
+  const headBranch = options.head_branch ?? 'foundation/learner-first-design';
+  const event = options.event ?? 'pull_request';
   return {
     id,
     name: 'Foundation CI',
     path: options.path ?? '.github/workflows/ci.yml',
-    head_sha: options.head_sha ?? 'abc',
-    head_branch: options.head_branch ?? 'foundation/learner-first-design',
+    head_sha: headSha,
+    head_branch: headBranch,
     run_number,
     run_attempt: options.run_attempt ?? 1,
-    event: options.event ?? 'pull_request',
+    event,
     created_at,
     run_started_at: Object.hasOwn(options, 'run_started_at') ? options.run_started_at : created_at,
+    pull_requests: options.pull_requests ?? (event === 'pull_request'
+      ? [{ number: 1, head: { ref: headBranch, sha: headSha }, base: { ref: 'main' } }]
+      : []),
   };
 }
 
@@ -193,6 +199,21 @@ test('latest workflow selection rejects evidence when only a non-PR event exists
   ]), 'abc'), /no Foundation CI run found/);
 });
 
+test('workflow evidence must identify PR #1 targeting main', () => {
+  const wrongPr = workflowRun(301, 9, '2026-10-02T18:00:00Z', {
+    pull_requests: [{ number: 2, head: { ref: 'foundation/learner-first-design', sha: 'abc' }, base: { ref: 'main' } }],
+  });
+  const wrongBase = workflowRun(302, 10, '2026-10-02T18:01:00Z', {
+    pull_requests: [{ number: 1, head: { ref: 'foundation/learner-first-design', sha: 'abc' }, base: { ref: 'release' } }],
+  });
+  const missingAssociation = workflowRun(303, 11, '2026-10-02T18:02:00Z', { pull_requests: [] });
+  for (const candidate of [wrongPr, wrongBase, missingAssociation]) {
+    const payload = checkRunsPayload([checkRun(20, candidate.id, 'completed', 'success')]);
+    assert.throws(() => assertMergeGateEvidence(payload, workflowRunsPayload([candidate]), jobsPayload([]), 'abc'),
+      /not the exact PR #1 targeting main/);
+  }
+});
+
 test('workflow-run evidence rejects a different head, invalid timestamp, or incomplete page', () => {
   const wrongHead = workflowRun(150, 6, '2026-10-02T17:01:00Z', { head_sha: 'def' });
   const payload = checkRunsPayload([checkRun(5, 150, 'completed', 'success')]);
@@ -262,16 +283,16 @@ test('CLI output is parsed by the same Bash tab-delimited handoff', () => {
 });
 
 
-test('equal workflow-run timestamps use run_number, not CheckRun ID, as the deterministic tie-breaker', () => {
+test('equal latest-attempt start timestamps are ambiguous and fail closed', () => {
   const lowerRunNumber = workflowRun(200, 7, '2026-10-02T17:00:00Z');
   const higherRunNumber = workflowRun(100, 8, '2026-10-02T17:00:00Z');
   const payload = checkRunsPayload([
     checkRun(900, lowerRunNumber.id, 'completed', 'failure'),
     checkRun(3, higherRunNumber.id, 'completed', 'success'),
   ]);
-  assert.equal(assertMergeGateEvidence(payload, workflowRunsPayload([lowerRunNumber, higherRunNumber]), jobsPayload([
+  assert.throws(() => assertMergeGateEvidence(payload, workflowRunsPayload([lowerRunNumber, higherRunNumber]), jobsPayload([
     workflowJob(3, higherRunNumber.id, 'completed', 'success'),
-  ]), 'abc'), true);
+  ]), 'abc'), /latest foundation workflow attempt timestamp is ambiguous/);
 });
 
 
