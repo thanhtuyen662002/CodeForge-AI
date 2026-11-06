@@ -10,6 +10,7 @@ import {
   validateLiveRuleset,
   assertMergeGateEvidence,
   assertNegativeControlEvidence,
+  assertLatestWorkflowRunStable,
 } from '../scripts/check-ruleset-readback.mjs';
 
 const expected = {
@@ -342,4 +343,31 @@ test('a matching queued re-run without a start timestamp fails closed', () => {
   assert.throws(() => assertMergeGateEvidence(payload, workflowRunsPayload([newerCreatedRun, queuedRerun]), jobsPayload([
     workflowJob(6, newerCreatedRun.id, 'completed', 'success'),
   ]), 'abc'), /latest-attempt start timestamp is invalid/);
+});
+
+
+test('latest workflow evidence must remain stable through the ruleset validation window', () => {
+  const initialRun = workflowRun(500, 20, '2026-10-02T17:00:00Z', {
+    run_attempt: 1,
+    run_started_at: '2026-10-02T17:00:00Z',
+  });
+  const unchanged = workflowRun(500, 20, '2026-10-02T17:00:00Z', {
+    run_attempt: 1,
+    run_started_at: '2026-10-02T17:00:00Z',
+  });
+  assert.equal(assertLatestWorkflowRunStable(
+    workflowRunsPayload([initialRun]), workflowRunsPayload([unchanged]), 'abc'), true);
+
+  const rerunStarted = workflowRun(500, 20, '2026-10-02T17:00:00Z', {
+    run_attempt: 2,
+    run_started_at: '2026-10-02T18:00:00Z',
+  });
+  assert.throws(() => assertLatestWorkflowRunStable(
+    workflowRunsPayload([initialRun]), workflowRunsPayload([rerunStarted]), 'abc'),
+  /latest foundation workflow attempt changed during validation/);
+
+  const newerRun = workflowRun(501, 21, '2026-10-02T18:00:00Z');
+  assert.throws(() => assertLatestWorkflowRunStable(
+    workflowRunsPayload([initialRun]), workflowRunsPayload([initialRun, newerRun]), 'abc'),
+  /latest foundation workflow attempt changed during validation/);
 });
