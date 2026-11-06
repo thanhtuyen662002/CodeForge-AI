@@ -58,6 +58,7 @@ function workflowRun(id, run_number, created_at, options = {}) {
     run_attempt: options.run_attempt ?? 1,
     event: options.event ?? 'pull_request',
     created_at,
+    run_started_at: Object.hasOwn(options, 'run_started_at') ? options.run_started_at : created_at,
   };
 }
 
@@ -271,4 +272,47 @@ test('equal workflow-run timestamps use run_number, not CheckRun ID, as the dete
   assert.equal(assertMergeGateEvidence(payload, workflowRunsPayload([lowerRunNumber, higherRunNumber]), jobsPayload([
     workflowJob(3, higherRunNumber.id, 'completed', 'success'),
   ]), 'abc'), true);
+});
+
+
+test('latest attempt uses run_started_at when an older workflow run is re-run later', () => {
+  const olderRunRerun = workflowRun(200, 7, '2026-10-02T17:00:00Z', {
+    run_attempt: 2,
+    run_started_at: '2026-10-02T19:00:00Z',
+  });
+  const newerCreatedRun = workflowRun(100, 8, '2026-10-02T18:00:00Z');
+  const payload = checkRunsPayload([
+    checkRun(5, olderRunRerun.id, 'completed', 'success'),
+    checkRun(6, newerCreatedRun.id, 'completed', 'failure'),
+  ]);
+  assert.equal(assertMergeGateEvidence(payload, workflowRunsPayload([newerCreatedRun, olderRunRerun]), jobsPayload([
+    workflowJob(5, olderRunRerun.id, 'completed', 'success'),
+  ]), 'abc'), true);
+});
+
+test('a later failure from a re-run of an older workflow run blocks a newer-created success', () => {
+  const olderRunRerun = workflowRun(200, 7, '2026-10-02T17:00:00Z', {
+    run_attempt: 2,
+    run_started_at: '2026-10-02T19:00:00Z',
+  });
+  const newerCreatedRun = workflowRun(100, 8, '2026-10-02T18:00:00Z');
+  const payload = checkRunsPayload([
+    checkRun(5, olderRunRerun.id, 'completed', 'failure'),
+    checkRun(6, newerCreatedRun.id, 'completed', 'success'),
+  ]);
+  assert.throws(() => assertMergeGateEvidence(payload, workflowRunsPayload([newerCreatedRun, olderRunRerun]), jobsPayload([
+    workflowJob(5, olderRunRerun.id, 'completed', 'failure'),
+  ]), 'abc'), /latest merge-gate conclusion must be success/);
+});
+
+test('a matching queued re-run without a start timestamp fails closed', () => {
+  const queuedRerun = workflowRun(200, 7, '2026-10-02T17:00:00Z', {
+    run_attempt: 2,
+    run_started_at: null,
+  });
+  const newerCreatedRun = workflowRun(100, 8, '2026-10-02T18:00:00Z');
+  const payload = checkRunsPayload([checkRun(6, newerCreatedRun.id, 'completed', 'success')]);
+  assert.throws(() => assertMergeGateEvidence(payload, workflowRunsPayload([newerCreatedRun, queuedRerun]), jobsPayload([
+    workflowJob(6, newerCreatedRun.id, 'completed', 'success'),
+  ]), 'abc'), /latest-attempt start timestamp is invalid/);
 });
