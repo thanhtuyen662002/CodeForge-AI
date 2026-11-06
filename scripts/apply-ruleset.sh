@@ -38,7 +38,7 @@ gh api --paginate --slurp "repos/$repo/actions/runs/$latest_run_id/attempts/$lat
   total_count: (.[0].total_count // 0),
   jobs: [.[].jobs[]]
 }' > "$jobs_result"
-gh api --paginate --slurp "repos/$repo/commits/$foundation_head/check-runs?filter=all&per_page=100" --jq --arg sha "$foundation_head" '{
+gh api --paginate --slurp "repos/$repo/commits/$foundation_head/check-runs?filter=all&per_page=100" | jq --arg sha "$foundation_head" '{
   source_total_count: (.[0].total_count // 0),
   source_check_runs: [.[].check_runs[]],
   total_count: ([.[].check_runs[] | select(.name == "merge-gate" and .app.id == 15368 and .head_sha == $sha)] | length),
@@ -49,7 +49,7 @@ node "$root/scripts/check-ruleset-readback.mjs" --validate-merge-gate "$result" 
 # Do not activate a rule that would deadlock the owner: require a real non-owner reviewer with write-capable permission.
 owner="$(gh api "repos/$repo" --jq '.owner.login')"
 actor="$(gh api user --jq '.login')"
-reviewers="$(gh api "repos/$repo/collaborators?per_page=100" --paginate --jq --arg owner "$owner" --arg actor "$actor" '.[] | select(.login != $owner and .login != $actor and (.permissions.push == true or .permissions.maintain == true or .permissions.admin == true)) | .login')"
+reviewers="$(gh api "repos/$repo/collaborators?per_page=100" --paginate | jq --arg owner "$owner" --arg actor "$actor" '.[] | select(.login != $owner and .login != $actor and (.permissions.push == true or .permissions.maintain == true or .permissions.admin == true)) | .login')"
 if [[ -z "$reviewers" ]]; then
   echo 'No independent collaborator other than the repository owner/current actor has push/maintain/admin permission; refusing to change the live ruleset.' >&2
   exit 5
