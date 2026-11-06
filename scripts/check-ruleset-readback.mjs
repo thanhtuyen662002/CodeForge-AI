@@ -246,14 +246,18 @@ function selectLatestWorkflowRun(payload, headSha) {
     if (!Number.isSafeInteger(run.run_number) || run.run_number < 1) fail('workflow run number is invalid');
     if (!Number.isSafeInteger(run.run_attempt) || run.run_attempt < 1) fail('workflow run attempt is invalid');
     if (typeof run.created_at !== 'string' || !Number.isFinite(Date.parse(run.created_at))) fail('workflow run creation timestamp is invalid');
+    // created_at stays fixed when a run is re-run; run_started_at resets for each attempt.
+    if (typeof run.run_started_at !== 'string' || !Number.isFinite(Date.parse(run.run_started_at))) {
+      fail('workflow run latest-attempt start timestamp is invalid');
+    }
     seenIds.add(run.id);
     candidates.push(run);
   }
   if (candidates.length < 1) fail('no Foundation CI run found for the exact foundation branch and head SHA');
 
-  candidates.sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at) || a.run_number - b.run_number);
+  candidates.sort((a, b) => Date.parse(a.run_started_at) - Date.parse(b.run_started_at) || a.run_number - b.run_number);
   const latest = candidates[candidates.length - 1];
-  const tied = candidates.filter((run) => run.created_at === latest.created_at && run.run_number === latest.run_number);
+  const tied = candidates.filter((run) => run.run_started_at === latest.run_started_at && run.run_number === latest.run_number);
   if (tied.length !== 1) fail('latest foundation workflow run is ambiguous');
   return latest;
 }
