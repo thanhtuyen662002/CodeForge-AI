@@ -17,8 +17,9 @@ command -v node >/dev/null
 root="$(cd "$(dirname "$0")/.." && pwd)"
 result="$(mktemp)"
 workflow_runs_result="$(mktemp)"
+latest_workflow_runs_result="$(mktemp)"
 jobs_result="$(mktemp)"
-trap 'rm -f "$result" "$workflow_runs_result" "$jobs_result"' EXIT
+trap 'rm -f "$result" "$workflow_runs_result" "$latest_workflow_runs_result" "$jobs_result"' EXIT
 
 # CheckRun has no created_at. Bind evidence to the latest Foundation CI workflow run
 # on the exact foundation branch, then to the jobs returned for that run's latest attempt.
@@ -65,6 +66,17 @@ if [[ -n "$existing" ]]; then
   id="$existing"
   gh api "repos/$repo/rulesets/$id" > "$result"
   node "$root/scripts/check-ruleset-readback.mjs" --validate-existing-target "$root/.github/rulesets/main.json" "$result"
+fi
+
+# Re-read immediately before mutation. A new run or rerun during evidence collection
+# invalidates the earlier success snapshot; fail closed instead of activating on stale evidence.
+gh api --paginate --slurp "repos/$repo/actions/runs?head_sha=$foundation_head&per_page=100" --jq '{
+  total_count: (.[0].total_count // 0),
+  workflow_runs: [.[].workflow_runs[]]
+}' > "$latest_workflow_runs_result"
+node "$root/scripts/check-ruleset-readback.mjs" --assert-latest-workflow-run-stable "$workflow_runs_result" "$latest_workflow_runs_result" "$foundation_head"
+
+if [[ -n "$existing" ]]; then
   gh api --method PUT "repos/$repo/rulesets/$id" --input "$root/.github/rulesets/main.json" > "$result"
   action=updated
 else
