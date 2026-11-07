@@ -156,6 +156,12 @@ export function validateExistingTarget(expected, actual) {
   const expectedStatus = getRule(expected.rules, 'required_status_checks').parameters;
   const actualStatus = getRule(actual.rules, 'required_status_checks').parameters;
   assertExactKeys(actualStatus, Object.keys(expectedStatus), 'existing required_status_checks parameters');
+  if (typeof actualStatus.strict_required_status_checks_policy !== 'boolean') {
+    fail('existing strict status-check policy is malformed');
+  }
+  if (typeof actualStatus.do_not_enforce_on_create !== 'boolean') {
+    fail('existing create enforcement flag is malformed');
+  }
   if (actualStatus.strict_required_status_checks_policy === true && expectedStatus.strict_required_status_checks_policy === false) {
     fail('existing strict status-check policy is stronger than target');
   }
