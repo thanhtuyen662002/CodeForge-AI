@@ -102,6 +102,22 @@ function jobsPayload(jobs, total_count = jobs.length) {
   return { total_count, jobs };
 }
 
+test('existing ruleset read-back rejects malformed required status-check flags', () => {
+  assert.equal(validateExistingTarget(expected, live()), true);
+
+  const missingStrict = live();
+  delete missingStrict.rules.find((rule) => rule.type === 'required_status_checks')
+    .parameters.strict_required_status_checks_policy;
+  assert.throws(() => validateExistingTarget(expected, missingStrict),
+    /existing strict status-check policy is malformed/);
+
+  const invalidEnforcement = live();
+  invalidEnforcement.rules.find((rule) => rule.type === 'required_status_checks')
+    .parameters.do_not_enforce_on_create = null;
+  assert.throws(() => validateExistingTarget(expected, invalidEnforcement),
+    /existing create enforcement flag is malformed/);
+});
+
 test('positive evidence follows the latest exact-branch workflow attempt, not the largest CheckRun ID', () => {
   const older = workflowRun(100, 5, '2026-10-02T17:00:00Z');
   const latest = workflowRun(150, 6, '2026-10-02T17:01:00Z');
