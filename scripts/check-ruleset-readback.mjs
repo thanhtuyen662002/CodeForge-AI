@@ -2,6 +2,8 @@
 import fs from 'node:fs';
 
 const ACTIONS_APP_ID = 15368;
+const FOUNDATION_BRANCH = 'foundation/learner-first-design';
+const FOUNDATION_WORKFLOW_PATH = '.github/workflows/ci.yml';
 const EXPECTED_RULE_TYPES = [
   'deletion',
   'non_fast_forward',
@@ -154,6 +156,12 @@ export function validateExistingTarget(expected, actual) {
   const expectedStatus = getRule(expected.rules, 'required_status_checks').parameters;
   const actualStatus = getRule(actual.rules, 'required_status_checks').parameters;
   assertExactKeys(actualStatus, Object.keys(expectedStatus), 'existing required_status_checks parameters');
+  if (typeof actualStatus.strict_required_status_checks_policy !== 'boolean') {
+    fail('existing strict status-check policy is malformed');
+  }
+  if (typeof actualStatus.do_not_enforce_on_create !== 'boolean') {
+    fail('existing create enforcement flag is malformed');
+  }
   if (actualStatus.strict_required_status_checks_policy === true && expectedStatus.strict_required_status_checks_policy === false) {
     fail('existing strict status-check policy is stronger than target');
   }
@@ -221,26 +229,127 @@ export function validateLiveRuleset(expected, actual) {
   return true;
 }
 
-function validateCheckRuns(payload, headSha, expectedConclusion) {
-  if (!isObject(payload) || !Number.isInteger(payload.total_count) || !Array.isArray(payload.check_runs)) fail('check-runs payload is malformed');
-  if (payload.total_count < 1 || payload.check_runs.length < 1) fail('no merge-gate check-runs found');
-  if (payload.total_count !== payload.check_runs.length) fail('check-runs evidence is incomplete or paginated');
-  for (const run of payload.check_runs) {
-    if (run?.name !== 'merge-gate') fail('unexpected check name in evidence');
-    if (run?.app?.id !== ACTIONS_APP_ID) fail('merge-gate evidence is not from GitHub Actions');
-    if (run?.head_sha !== headSha) fail('merge-gate evidence is for a different head SHA');
-    if (run?.status !== 'completed') fail('merge-gate evidence is not completed');
-    if (run?.conclusion !== expectedConclusion) fail(`merge-gate conclusion must be ${expectedConclusion}`);
+function selectLatestWorkflowRun(payload, headSha) {
+  if (!isObject(payload) || !Number.isInteger(payload.total_count) || !Array.isArray(payload.workflow_runs)) {
+    fail('workflow-runs payload is malformed');
+  }
+  if (payload.total_count !== payload.workflow_runs.length) {
+    fail('workflow-runs evidence is incomplete or paginated');
+  }
+  if (payload.workflow_runs.length < 1) fail('no workflow runs found for the foundation head');
+
+  const candidates = [];
+  const seenIds = new Set();
+  for (const run of payload.workflow_runs) {
+    if (!isObject(run)) fail('workflow run is malformed');
+    if (run.head_sha !== headSha) fail('workflow-run evidence is for a different head SHA');
+    if (typeof run.path !== 'string') fail('workflow run is missing its workflow path');
+    const path = run.path.split('@')[0];
+    if (path !== FOUNDATION_WORKFLOW_PATH || run.head_branch !== FOUNDATION_BRANCH) continue;
+    if (typeof run.event !== 'string') fail('workflow run event is invalid');
+    if (run.event !== 'pull_request') continue;
+    if (!Array.isArray(run.pull_requests) || run.pull_requests.length !== 1 ||
+        run.pull_requests[0]?.number !== 1 ||
+        run.pull_requests[0]?.head?.ref !== FOUNDATION_BRANCH ||
+        run.pull_requests[0]?.head?.sha !== headSha ||
+        run.pull_requests[0]?.base?.ref !== 'main') {
+      fail('workflow run PR association does not uniquely match PR #1 targeting main');
+    }
+    if (!Number.isSafeInteger(run.id) || run.id < 1 || seenIds.has(run.id)) fail('workflow-run ID is invalid or duplicated');
+    if (!Number.isSafeInteger(run.run_number) || run.run_number < 1) fail('workflow run number is invalid');
+    if (!Number.isSafeInteger(run.run_attempt) || run.run_attempt < 1) fail('workflow run attempt is invalid');
+    if (typeof run.created_at !== 'string' || !Number.isFinite(Date.parse(run.created_at))) fail('workflow run creation timestamp is invalid');
+    // created_at stays fixed when a run is re-run; run_started_at resets for each attempt.
+    if (typeof run.run_started_at !== 'string' || !Number.isFinite(Date.parse(run.run_started_at))) {
+      fail('workflow run latest-attempt start timestamp is invalid');
+    }
+    seenIds.add(run.id);
+    candidates.push(run);
+  }
+  if (candidates.length < 1) fail('no Foundation CI run found for the exact foundation branch and head SHA');
+
+  candidates.sort((a, b) => Date.parse(a.run_started_at) - Date.parse(b.run_started_at));
+  const latest = candidates[candidates.length - 1];
+  const latestStartedAt = Date.parse(latest.run_started_at);
+  const tied = candidates.filter((run) => Date.parse(run.run_started_at) === latestStartedAt);
+  if (tied.length !== 1) fail('latest foundation workflow attempt timestamp is ambiguous');
+  return latest;
+}
+
+export function assertLatestWorkflowRunStable(initialPayload, currentPayload, headSha) {
+  const initial = selectLatestWorkflowRun(initialPayload, headSha);
+  const current = selectLatestWorkflowRun(currentPayload, headSha);
+  if (initial.id !== current.id || initial.run_attempt !== current.run_attempt ||
+      initial.run_started_at !== current.run_started_at) {
+    fail('latest foundation workflow attempt changed during validation');
   }
   return true;
 }
 
-export function assertMergeGateEvidence(payload, headSha) {
-  return validateCheckRuns(payload, headSha, 'success');
+function validateCheckRuns(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha, expectedConclusion) {
+  if (!isObject(checkRunsPayload) || !Number.isInteger(checkRunsPayload.total_count) || !Array.isArray(checkRunsPayload.check_runs)) {
+    fail('check-runs payload is malformed');
+  }
+  if (!Number.isInteger(checkRunsPayload.source_total_count) || !Array.isArray(checkRunsPayload.source_check_runs) ||
+      checkRunsPayload.source_total_count !== checkRunsPayload.source_check_runs.length) {
+    fail('source check-runs evidence is incomplete or paginated');
+  }
+  if (checkRunsPayload.total_count !== checkRunsPayload.check_runs.length) fail('filtered check-runs evidence count is inconsistent');
+  if (checkRunsPayload.total_count < 1) fail('no merge-gate check-runs found');
+
+  const seenIds = new Set();
+  for (const run of checkRunsPayload.check_runs) {
+    if (run?.name !== 'merge-gate') fail('unexpected check name in evidence');
+    if (run?.app?.id !== ACTIONS_APP_ID) fail('merge-gate evidence is not from GitHub Actions');
+    if (run?.head_sha !== headSha) fail('merge-gate evidence is for a different head SHA');
+    if (!Number.isSafeInteger(run?.id) || run.id < 1 || seenIds.has(run.id)) fail('merge-gate check-run ID is invalid or duplicated');
+    if (typeof run.details_url !== 'string') fail('merge-gate check-run is missing its workflow-job URL');
+    seenIds.add(run.id);
+  }
+
+  const latestWorkflowRun = selectLatestWorkflowRun(workflowRunsPayload, headSha);
+  if (!isObject(jobsPayload) || !Number.isInteger(jobsPayload.total_count) || !Array.isArray(jobsPayload.jobs)) {
+    fail('workflow-job payload is malformed');
+  }
+  if (jobsPayload.total_count !== jobsPayload.jobs.length) fail('workflow-job evidence is incomplete or paginated');
+  if (jobsPayload.jobs.length < 1) fail('latest workflow attempt has no jobs');
+
+  const jobIds = new Set();
+  for (const job of jobsPayload.jobs) {
+    if (!Number.isSafeInteger(job?.id) || job.id < 1 || jobIds.has(job.id)) fail('workflow-job ID is invalid or duplicated');
+    if (job?.run_id !== latestWorkflowRun.id) fail('workflow-job belongs to a different workflow run');
+    if (job?.head_sha !== headSha) fail('workflow-job belongs to a different head SHA');
+    jobIds.add(job.id);
+  }
+
+  const mergeGateJobs = jobsPayload.jobs.filter((job) => job.name === 'merge-gate');
+  if (mergeGateJobs.length !== 1) fail('latest workflow attempt must contain exactly one merge-gate job');
+  const latestJob = mergeGateJobs[0];
+
+  const matchingCheckRuns = checkRunsPayload.check_runs.filter((run) => {
+    const match = run.details_url.match(/\/actions\/runs\/(\d+)\/job\/(\d+)(?:$|[?#])/);
+    return match && Number(match[1]) === latestWorkflowRun.id && Number(match[2]) === latestJob.id && run.id === latestJob.id;
+  });
+  if (matchingCheckRuns.length !== 1) fail('latest workflow attempt merge-gate job has no unique matching CheckRun');
+  const latestCheckRun = matchingCheckRuns[0];
+
+  if (latestCheckRun.status !== latestJob.status || latestCheckRun.conclusion !== latestJob.conclusion) {
+    fail('latest workflow attempt job and CheckRun status/conclusion disagree');
+  }
+  if (latestJob.status !== 'completed' || latestCheckRun.status !== 'completed') {
+    fail('latest merge-gate workflow attempt is not completed');
+  }
+  if (latestJob.conclusion !== expectedConclusion || latestCheckRun.conclusion !== expectedConclusion) {
+    fail('latest merge-gate conclusion must be ' + expectedConclusion);
+  }
+  return true;
+}
+export function assertMergeGateEvidence(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha) {
+  return validateCheckRuns(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha, 'success');
 }
 
-export function assertNegativeControlEvidence(payload, headSha) {
-  return validateCheckRuns(payload, headSha, 'failure');
+export function assertNegativeControlEvidence(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha) {
+  return validateCheckRuns(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha, 'failure');
 }
 
 function readJson(path) {
@@ -248,7 +357,7 @@ function readJson(path) {
 }
 
 function usage() {
-  console.error('Usage: check-ruleset-readback.mjs --validate-spec SPEC | --validate-existing-target SPEC LIVE | --compare SPEC LIVE | --validate-merge-gate EVIDENCE HEAD_SHA | --validate-negative-control EVIDENCE HEAD_SHA');
+  console.error('Usage: check-ruleset-readback.mjs --validate-spec SPEC | --validate-existing-target SPEC LIVE | --compare SPEC LIVE | --select-latest-workflow-run WORKFLOW_RUNS HEAD_SHA | --assert-latest-workflow-run-stable INITIAL CURRENT HEAD_SHA | --validate-merge-gate CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA | --validate-negative-control CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA');
   process.exit(2);
 }
 
@@ -258,8 +367,15 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
     if (mode === '--validate-spec' && args.length === 1) validateCreationSpec(readJson(args[0]));
     else if (mode === '--validate-existing-target' && args.length === 2) validateExistingTarget(readJson(args[0]), readJson(args[1]));
     else if (mode === '--compare' && args.length === 2) validateLiveRuleset(readJson(args[0]), readJson(args[1]));
-    else if (mode === '--validate-merge-gate' && args.length === 2) assertMergeGateEvidence(readJson(args[0]), args[1]);
-    else if (mode === '--validate-negative-control' && args.length === 2) assertNegativeControlEvidence(readJson(args[0]), args[1]);
+    else if (mode === '--select-latest-workflow-run' && args.length === 2) {
+      const run = selectLatestWorkflowRun(readJson(args[0]), args[1]);
+      process.stdout.write(String(run.id) + '\t' + String(run.run_attempt) + '\n');
+    }
+    else if (mode === '--assert-latest-workflow-run-stable' && args.length === 3) {
+      assertLatestWorkflowRunStable(readJson(args[0]), readJson(args[1]), args[2]);
+    }
+    else if (mode === '--validate-merge-gate' && args.length === 4) assertMergeGateEvidence(readJson(args[0]), readJson(args[1]), readJson(args[2]), args[3]);
+    else if (mode === '--validate-negative-control' && args.length === 4) assertNegativeControlEvidence(readJson(args[0]), readJson(args[1]), readJson(args[2]), args[3]);
     else usage();
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
