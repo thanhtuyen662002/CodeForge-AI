@@ -7,6 +7,8 @@ import { join } from 'node:path';
 import {
   validateCreationSpec,
   validateMainWorkflowPin,
+  validateFoundationPr,
+  assertFoundationPrStable,
   validateExistingTarget,
   validateLiveRuleset,
   assertMergeGateEvidence,
@@ -87,6 +89,17 @@ function workflowRun(id, run_number, created_at, options = {}) {
 
 function workflowRunsPayload(workflow_runs) {
   return { total_count: workflow_runs.length, workflow_runs };
+}
+
+function foundationPr(overrides = {}) {
+  return {
+    number: 1,
+    state: 'open',
+    head: { ref: 'foundation/learner-first-design', sha: 'abc' },
+    base: { ref: 'main', sha: 'base123' },
+    mergeable: true,
+    ...overrides,
+  };
 }
 
 function workflowJob(id, run_id, status, conclusion, head = 'abc') {
@@ -172,6 +185,32 @@ test('existing ruleset read-back rejects malformed required status-check flags',
     .parameters.do_not_enforce_on_create = null;
   assert.throws(() => validateExistingTarget(expected, invalidEnforcement),
     /existing create enforcement flag is malformed/);
+});
+
+test('foundation PR must be open, mergeable, and based on the exact current main and head SHA', () => {
+  assert.equal(validateFoundationPr(foundationPr(), 'abc', 'base123'), true);
+  assert.throws(() => validateFoundationPr(foundationPr({ base: { ref: 'main', sha: 'old-main' } }), 'abc', 'base123'),
+    /exact current main and head SHA/);
+  assert.throws(() => validateFoundationPr(foundationPr({ mergeable: false }), 'abc', 'base123'),
+    /exact current main and head SHA/);
+  assert.throws(() => validateFoundationPr(foundationPr({ head: { ref: 'foundation/learner-first-design', sha: 'changed' } }), 'abc', 'base123'),
+    /exact current main and head SHA/);
+});
+
+test('foundation PR snapshot is revalidated immediately before ruleset mutation', () => {
+  const initial = foundationPr();
+  assert.equal(assertFoundationPrStable(initial, foundationPr(), 'abc', 'base123'), true);
+  assert.throws(() => assertFoundationPrStable(initial,
+    foundationPr({ base: { ref: 'main', sha: 'new-main' } }), 'abc', 'base123'),
+  /exact current main and head SHA/);
+});
+
+test('workflow run evidence rejects a PR run against a stale main base SHA', () => {
+  const staleBase = workflowRun(150, 6, '2026-10-02T17:01:00Z', { base_sha: 'old-main' });
+  const payload = checkRunsPayload([checkRun(5, staleBase.id, 'completed', 'success')]);
+  assert.throws(() => assertMergeGateEvidence(payload, workflowRunsPayload([staleBase]), jobsPayload([
+    workflowJob(5, staleBase.id, 'completed', 'success'),
+  ]), 'abc', 'current-main'), /exact current base SHA/);
 });
 
 test('positive evidence follows the latest exact-branch workflow attempt, not the largest CheckRun ID', () => {
@@ -274,7 +313,7 @@ test('latest workflow selection rejects evidence when only a non-PR event exists
 
 test('workflow PR association must uniquely match PR #1 targeting main', () => {
   const wrongPr = workflowRun(301, 9, '2026-10-02T18:00:00Z', {
-    pull_requests: [{ number: 2, head: { ref: 'foundation/learner-first-design', sha: 'abc' }, base: { ref: 'main' } }],
+    pull_requests: [{ number: 2, head: { ref: 'foundation/learner-first-design', sha: 'abc' }, base: { ref: 'main', sha: options.base_sha ?? 'base123' } }],
   });
   const wrongBase = workflowRun(302, 10, '2026-10-02T18:01:00Z', {
     pull_requests: [{ number: 1, head: { ref: 'foundation/learner-first-design', sha: 'abc' }, base: { ref: 'release' } }],
@@ -348,6 +387,7 @@ test('CLI output is parsed by the same Bash tab-delimited handoff', () => {
       '--select-latest-workflow-run',
       fixture,
       'abc',
+      'base123',
     ], { encoding: 'utf8' });
     assert.equal(cli.status, 0, cli.stderr);
     assert.equal(cli.stdout, '123\t7\n');
@@ -450,4 +490,7 @@ test('gh api variable bindings are passed to jq, not unsupported gh api flags', 
   assert.ok(applyScript.includes('gh api "repos/$repo/collaborators?per_page=100" --paginate | jq --arg owner "$owner" --arg actor "$actor"'));
   assert.doesNotMatch(applyScript, /gh api[^\n]*--jq\s+--arg/);
   assert.equal((applyScript.match(/--validate-main-workflow-pin/g) || []).length, 2);
+  assert.ok(applyScript.includes('--validate-foundation-pr "$pr_result" "$foundation_head" "$main_head"'));
+  assert.ok(applyScript.includes('--assert-foundation-pr-stable "$pr_result" "$latest_pr_result" "$foundation_head" "$main_head"'));
+  assert.ok(applyScript.includes('--validate-merge-gate "$result" "$workflow_runs_result" "$jobs_result" "$foundation_head" "$main_head"'));
 });
