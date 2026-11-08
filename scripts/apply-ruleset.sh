@@ -21,6 +21,10 @@ latest_workflow_runs_result="$(mktemp)"
 jobs_result="$(mktemp)"
 trap 'rm -f "$result" "$workflow_runs_result" "$latest_workflow_runs_result" "$jobs_result"' EXIT
 
+# The required workflow must be pinned to the exact current main commit, never a PR-controlled workflow copy.
+main_head="$(gh api "repos/$repo/branches/main" --jq '.commit.sha')"
+node "$root/scripts/check-ruleset-readback.mjs" --validate-main-workflow-pin "$root/.github/rulesets/main.json" "$main_head"
+
 # CheckRun has no created_at. Bind evidence to the latest Foundation CI workflow run
 # on the exact foundation branch, then to the jobs returned for that run's latest attempt.
 foundation_head="$(gh api "repos/$repo/branches/foundation%2Flearner-first-design" --jq '.commit.sha')"
@@ -75,6 +79,10 @@ gh api --paginate --slurp "repos/$repo/actions/runs?head_sha=$foundation_head&pe
   workflow_runs: [.[].workflow_runs[]]
 }' > "$latest_workflow_runs_result"
 node "$root/scripts/check-ruleset-readback.mjs" --assert-latest-workflow-run-stable "$workflow_runs_result" "$latest_workflow_runs_result" "$foundation_head"
+
+# Re-read main immediately before the ruleset write; a stale workflow SHA must never be applied.
+main_head_before_mutation="$(gh api "repos/$repo/branches/main" --jq '.commit.sha')"
+node "$root/scripts/check-ruleset-readback.mjs" --validate-main-workflow-pin "$root/.github/rulesets/main.json" "$main_head_before_mutation"
 
 if [[ -n "$existing" ]]; then
   gh api --method PUT "repos/$repo/rulesets/$id" --input "$root/.github/rulesets/main.json" > "$result"

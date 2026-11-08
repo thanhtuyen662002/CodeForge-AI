@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   validateCreationSpec,
+  validateMainWorkflowPin,
   validateExistingTarget,
   validateLiveRuleset,
   assertMergeGateEvidence,
@@ -33,6 +34,15 @@ const expected = {
       do_not_enforce_on_create: false,
       required_status_checks: [{ context: 'merge-gate', integration_id: 15368 }],
     } },
+    { type: 'workflows', parameters: {
+      do_not_enforce_on_create: false,
+      workflows: [{
+        path: '.github/workflows/planning.yml',
+        ref: 'main',
+        repository_id: 1402071360,
+        sha: '4ea8f8dc8401bfa3790e6aeabf3ffb80b8b28989',
+      }],
+    } },
   ],
 };
 
@@ -46,6 +56,12 @@ function live(overrides = {}) {
       : rule),
     ...overrides,
   };
+}
+
+function liveWithoutWorkflowRule(overrides = {}) {
+  const snapshot = live(overrides);
+  snapshot.rules = snapshot.rules.filter((rule) => rule.type !== 'workflows');
+  return snapshot;
 }
 
 function workflowRun(id, run_number, created_at, options = {}) {
@@ -101,6 +117,46 @@ function checkRunsPayload(check_runs, source_total_count = check_runs.length) {
 function jobsPayload(jobs, total_count = jobs.length) {
   return { total_count, jobs };
 }
+
+test('ruleset requires the pinned trusted planning workflow and exact current-main SHA', () => {
+  assert.equal(validateCreationSpec(expected), true);
+  assert.equal(validateMainWorkflowPin(expected, '4ea8f8dc8401bfa3790e6aeabf3ffb80b8b28989'), true);
+  assert.throws(() => validateMainWorkflowPin(expected, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+    /trusted workflow pin does not match current main HEAD/);
+
+  const missing = structuredClone(expected);
+  missing.rules = missing.rules.filter((rule) => rule.type !== 'workflows');
+  assert.throws(() => validateCreationSpec(missing), /must contain exactly/);
+
+  for (const [field, value] of [
+    ['path', '.github/workflows/untrusted.yml'],
+    ['ref', 'refs/heads/attacker'],
+    ['repository_id', 123],
+    ['sha', 'not-a-commit'],
+  ]) {
+    const invalid = structuredClone(expected);
+    invalid.rules.find((rule) => rule.type === 'workflows').parameters.workflows[0][field] = value;
+    assert.throws(() => validateCreationSpec(invalid));
+  }
+});
+
+test('existing ruleset can add a missing trusted workflow but refuses a different existing pin', () => {
+  assert.equal(validateExistingTarget(expected, liveWithoutWorkflowRule()), true);
+  const wrongPin = live();
+  wrongPin.rules.find((rule) => rule.type === 'workflows').parameters.workflows[0].sha =
+    'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  assert.throws(() => validateExistingTarget(expected, wrongPin),
+    /existing trusted workflow pin differs from target/);
+});
+
+test('live read-back requires the exact trusted workflow pin', () => {
+  assert.equal(validateLiveRuleset(expected, live()), true);
+  assert.throws(() => validateLiveRuleset(expected, liveWithoutWorkflowRule()), /must contain exactly/);
+  const wrongPath = live();
+  wrongPath.rules.find((rule) => rule.type === 'workflows').parameters.workflows[0].path =
+    '.github/workflows/untrusted.yml';
+  assert.throws(() => validateLiveRuleset(expected, wrongPath), /trusted workflow path mismatch/);
+});
 
 test('existing ruleset read-back rejects malformed required status-check flags', () => {
   assert.equal(validateExistingTarget(expected, live()), true);
@@ -393,4 +449,5 @@ test('gh api variable bindings are passed to jq, not unsupported gh api flags', 
   assert.ok(applyScript.includes('gh api --paginate --slurp "repos/$repo/commits/$foundation_head/check-runs?filter=all&per_page=100" | jq --arg sha "$foundation_head"'));
   assert.ok(applyScript.includes('gh api "repos/$repo/collaborators?per_page=100" --paginate | jq --arg owner "$owner" --arg actor "$actor"'));
   assert.doesNotMatch(applyScript, /gh api[^\n]*--jq\s+--arg/);
+  assert.equal((applyScript.match(/--validate-main-workflow-pin/g) || []).length, 2);
 });

@@ -10,6 +10,7 @@ const EXPECTED_RULE_TYPES = [
   'required_linear_history',
   'pull_request',
   'required_status_checks',
+  'workflows',
 ];
 
 function fail(message) {
@@ -26,7 +27,7 @@ function assertExactKeys(object, allowed, label) {
   if (extras.length) fail(`${label} contains unsupported keys: ${extras.join(', ')}`);
 }
 
-function assertRuleSetShape(rules, label) {
+function assertRuleSetShape(rules, label, { allowMissingWorkflows = false } = {}) {
   if (!Array.isArray(rules)) fail(`${label}.rules must be an array`);
   const types = rules.map((rule, index) => {
     if (!isObject(rule) || typeof rule.type !== 'string') fail(`${label}.rules[${index}] has invalid type`);
@@ -35,9 +36,38 @@ function assertRuleSetShape(rules, label) {
   if (new Set(types).size !== types.length) fail(`${label}.rules contains duplicate rule types`);
   const sorted = [...types].sort();
   const expected = [...EXPECTED_RULE_TYPES].sort();
-  if (JSON.stringify(sorted) !== JSON.stringify(expected)) {
-    fail(`${label}.rules must contain exactly: ${EXPECTED_RULE_TYPES.join(', ')}`);
+  const withoutWorkflows = expected.filter((type) => type !== 'workflows');
+  const exact = JSON.stringify(sorted) === JSON.stringify(expected);
+  const safeToAddWorkflow = allowMissingWorkflows && JSON.stringify(sorted) === JSON.stringify(withoutWorkflows);
+  if (!exact && !safeToAddWorkflow) {
+    fail(`${label}.rules must contain exactly: ${EXPECTED_RULE_TYPES.join(', ')}${allowMissingWorkflows ? ' (or omit workflows only before adding the trusted pin)' : ''}`);
   }
+}
+
+function validateWorkflowParameters(parameters, label) {
+  assertExactKeys(parameters, ['do_not_enforce_on_create', 'workflows'], label);
+  if (parameters.do_not_enforce_on_create !== false) fail(`${label} must enforce on create`);
+  if (!Array.isArray(parameters.workflows) || parameters.workflows.length !== 1) {
+    fail(`${label} must contain exactly one trusted workflow`);
+  }
+  const workflow = parameters.workflows[0];
+  assertExactKeys(workflow, ['path', 'ref', 'repository_id', 'sha'], `${label}.workflows[0]`);
+  if (workflow.path !== '.github/workflows/planning.yml') fail('trusted workflow path mismatch');
+  if (workflow.ref !== 'main') fail('trusted workflow ref must be main');
+  if (workflow.repository_id !== 1402071360) fail('trusted workflow repository ID mismatch');
+  if (typeof workflow.sha !== 'string' || !/^[0-9a-f]{40}$/.test(workflow.sha)) {
+    fail('trusted workflow commit SHA is invalid');
+  }
+}
+
+function workflowPinMatches(expectedParameters, actualParameters) {
+  const expectedWorkflow = expectedParameters.workflows[0];
+  const actualWorkflow = actualParameters.workflows[0];
+  return expectedParameters.do_not_enforce_on_create === actualParameters.do_not_enforce_on_create &&
+    expectedWorkflow.path === actualWorkflow.path &&
+    expectedWorkflow.ref === actualWorkflow.ref &&
+    expectedWorkflow.repository_id === actualWorkflow.repository_id &&
+    expectedWorkflow.sha === actualWorkflow.sha;
 }
 
 export function validateCreationSpec(spec) {
@@ -87,6 +117,11 @@ export function validateCreationSpec(spec) {
       }
       continue;
     }
+    if (rule.type === 'workflows') {
+      assertExactKeys(rule, ['type', 'parameters'], 'workflows rule');
+      validateWorkflowParameters(rule.parameters, 'workflows parameters');
+      continue;
+    }
     if (rule.type === 'required_status_checks') {
       assertExactKeys(rule, ['type', 'parameters'], 'required_status_checks rule');
       assertExactKeys(rule.parameters, [
@@ -103,6 +138,16 @@ export function validateCreationSpec(spec) {
       if (check.context !== 'merge-gate' || check.integration_id !== ACTIONS_APP_ID) fail('merge-gate must come from GitHub Actions app 15368');
     }
   }
+  return true;
+}
+
+export function validateMainWorkflowPin(spec, mainSha) {
+  validateCreationSpec(spec);
+  if (typeof mainSha !== 'string' || !/^[0-9a-f]{40}$/.test(mainSha)) {
+    fail('current main commit SHA is invalid');
+  }
+  const workflow = getRule(spec.rules, 'workflows').parameters.workflows[0];
+  if (workflow.sha !== mainSha) fail('trusted workflow pin does not match current main HEAD');
   return true;
 }
 
@@ -126,7 +171,7 @@ export function validateExistingTarget(expected, actual) {
       !Array.isArray(ref.exclude) || ref.exclude.length !== 0) fail('existing ruleset is not scoped only to the default branch');
 
   // Refuse an update that would remove an extra rule or weaken an existing stronger setting.
-  assertRuleSetShape(actual.rules, 'existing ruleset');
+  assertRuleSetShape(actual.rules, 'existing ruleset', { allowMissingWorkflows: true });
   for (const type of ['deletion', 'non_fast_forward', 'required_linear_history']) {
     assertExactKeys(getRule(actual.rules, type), ['type'], `existing rule ${type}`);
   }
@@ -151,6 +196,15 @@ export function validateExistingTarget(expected, actual) {
       actualPr.allowed_merge_methods.some((method) => !expectedPr.allowed_merge_methods.includes(method)) ||
       expectedPr.allowed_merge_methods.some((method) => !actualPr.allowed_merge_methods.includes(method))) {
     fail('existing merge methods differ from target; refusing to broaden or silently change them');
+  }
+
+  const expectedWorkflow = getRule(expected.rules, 'workflows').parameters;
+  const actualWorkflowRules = actual.rules.filter((rule) => rule.type === 'workflows');
+  if (actualWorkflowRules.length === 1) {
+    validateWorkflowParameters(actualWorkflowRules[0].parameters, 'existing workflows parameters');
+    if (!workflowPinMatches(expectedWorkflow, actualWorkflowRules[0].parameters)) {
+      fail('existing trusted workflow pin differs from target; refusing to replace it');
+    }
   }
 
   const expectedStatus = getRule(expected.rules, 'required_status_checks').parameters;
@@ -191,6 +245,12 @@ export function validateLiveRuleset(expected, actual) {
     fail('live ruleset branch conditions mismatch');
   }
   assertRuleSetShape(actual.rules, 'live ruleset');
+  const expectedWorkflow = getRule(expected.rules, 'workflows').parameters;
+  const liveWorkflow = getRule(actual.rules, 'workflows');
+  validateWorkflowParameters(liveWorkflow.parameters, 'live workflows parameters');
+  if (!workflowPinMatches(expectedWorkflow, liveWorkflow.parameters)) {
+    fail('live trusted workflow pin mismatch');
+  }
 
   for (const type of ['deletion', 'non_fast_forward', 'required_linear_history']) {
     const rule = getRule(actual.rules, type);
@@ -357,7 +417,7 @@ function readJson(path) {
 }
 
 function usage() {
-  console.error('Usage: check-ruleset-readback.mjs --validate-spec SPEC | --validate-existing-target SPEC LIVE | --compare SPEC LIVE | --select-latest-workflow-run WORKFLOW_RUNS HEAD_SHA | --assert-latest-workflow-run-stable INITIAL CURRENT HEAD_SHA | --validate-merge-gate CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA | --validate-negative-control CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA');
+  console.error('Usage: check-ruleset-readback.mjs --validate-spec SPEC | --validate-main-workflow-pin SPEC MAIN_SHA | --validate-existing-target SPEC LIVE | --compare SPEC LIVE | --select-latest-workflow-run WORKFLOW_RUNS HEAD_SHA | --assert-latest-workflow-run-stable INITIAL CURRENT HEAD_SHA | --validate-merge-gate CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA | --validate-negative-control CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA');
   process.exit(2);
 }
 
@@ -365,6 +425,7 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
   try {
     const [mode, ...args] = process.argv.slice(2);
     if (mode === '--validate-spec' && args.length === 1) validateCreationSpec(readJson(args[0]));
+    else if (mode === '--validate-main-workflow-pin' && args.length === 2) validateMainWorkflowPin(readJson(args[0]), args[1]);
     else if (mode === '--validate-existing-target' && args.length === 2) validateExistingTarget(readJson(args[0]), readJson(args[1]));
     else if (mode === '--compare' && args.length === 2) validateLiveRuleset(readJson(args[0]), readJson(args[1]));
     else if (mode === '--select-latest-workflow-run' && args.length === 2) {
