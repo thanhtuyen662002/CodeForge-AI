@@ -82,7 +82,7 @@ function workflowRun(id, run_number, created_at, options = {}) {
     created_at,
     run_started_at: Object.hasOwn(options, 'run_started_at') ? options.run_started_at : created_at,
     pull_requests: options.pull_requests ?? (event === 'pull_request'
-      ? [{ number: 1, head: { ref: headBranch, sha: headSha }, base: { ref: 'main' } }]
+      ? [{ number: 1, head: { ref: headBranch, sha: headSha }, base: { ref: 'main', sha: options.base_sha ?? 'base123' } }]
       : []),
   };
 }
@@ -313,7 +313,7 @@ test('latest workflow selection rejects evidence when only a non-PR event exists
 
 test('workflow PR association must uniquely match PR #1 targeting main', () => {
   const wrongPr = workflowRun(301, 9, '2026-10-02T18:00:00Z', {
-    pull_requests: [{ number: 2, head: { ref: 'foundation/learner-first-design', sha: 'abc' }, base: { ref: 'main', sha: options.base_sha ?? 'base123' } }],
+    pull_requests: [{ number: 2, head: { ref: 'foundation/learner-first-design', sha: 'abc' }, base: { ref: 'main', sha: 'base123' } }],
   });
   const wrongBase = workflowRun(302, 10, '2026-10-02T18:01:00Z', {
     pull_requests: [{ number: 1, head: { ref: 'foundation/learner-first-design', sha: 'abc' }, base: { ref: 'release' } }],
