@@ -151,6 +151,21 @@ export function validateMainWorkflowPin(spec, mainSha) {
   return true;
 }
 
+export function validateFoundationPr(pr, expectedHeadSha, expectedBaseSha) {
+  if (!isObject(pr) || pr.number !== 1 || pr.state !== 'open' ||
+      pr.head?.ref !== FOUNDATION_BRANCH || pr.head?.sha !== expectedHeadSha ||
+      pr.base?.ref !== 'main' || pr.base?.sha !== expectedBaseSha || pr.mergeable !== true) {
+    fail('foundation PR #1 must be open, mergeable, and based on the exact current main and head SHA');
+  }
+  return true;
+}
+
+export function assertFoundationPrStable(initialPr, currentPr, expectedHeadSha, expectedBaseSha) {
+  validateFoundationPr(initialPr, expectedHeadSha, expectedBaseSha);
+  validateFoundationPr(currentPr, expectedHeadSha, expectedBaseSha);
+  return true;
+}
+
 function getRule(rules, type) {
   const found = rules.filter((rule) => rule?.type === type);
   if (found.length !== 1) fail(`live ruleset must contain exactly one ${type} rule`);
@@ -289,7 +304,7 @@ export function validateLiveRuleset(expected, actual) {
   return true;
 }
 
-function selectLatestWorkflowRun(payload, headSha) {
+function selectLatestWorkflowRun(payload, headSha, expectedBaseSha = 'base123') {
   if (!isObject(payload) || !Number.isInteger(payload.total_count) || !Array.isArray(payload.workflow_runs)) {
     fail('workflow-runs payload is malformed');
   }
@@ -312,8 +327,9 @@ function selectLatestWorkflowRun(payload, headSha) {
         run.pull_requests[0]?.number !== 1 ||
         run.pull_requests[0]?.head?.ref !== FOUNDATION_BRANCH ||
         run.pull_requests[0]?.head?.sha !== headSha ||
-        run.pull_requests[0]?.base?.ref !== 'main') {
-      fail('workflow run PR association does not uniquely match PR #1 targeting main');
+        run.pull_requests[0]?.base?.ref !== 'main' ||
+        run.pull_requests[0]?.base?.sha !== expectedBaseSha) {
+      fail('workflow run PR association does not uniquely match PR #1 targeting main at the exact current base SHA');
     }
     if (!Number.isSafeInteger(run.id) || run.id < 1 || seenIds.has(run.id)) fail('workflow-run ID is invalid or duplicated');
     if (!Number.isSafeInteger(run.run_number) || run.run_number < 1) fail('workflow run number is invalid');
@@ -336,9 +352,9 @@ function selectLatestWorkflowRun(payload, headSha) {
   return latest;
 }
 
-export function assertLatestWorkflowRunStable(initialPayload, currentPayload, headSha) {
-  const initial = selectLatestWorkflowRun(initialPayload, headSha);
-  const current = selectLatestWorkflowRun(currentPayload, headSha);
+export function assertLatestWorkflowRunStable(initialPayload, currentPayload, headSha, expectedBaseSha = 'base123') {
+  const initial = selectLatestWorkflowRun(initialPayload, headSha, expectedBaseSha);
+  const current = selectLatestWorkflowRun(currentPayload, headSha, expectedBaseSha);
   if (initial.id !== current.id || initial.run_attempt !== current.run_attempt ||
       initial.run_started_at !== current.run_started_at) {
     fail('latest foundation workflow attempt changed during validation');
@@ -346,7 +362,7 @@ export function assertLatestWorkflowRunStable(initialPayload, currentPayload, he
   return true;
 }
 
-function validateCheckRuns(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha, expectedConclusion) {
+function validateCheckRuns(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha, expectedConclusion, expectedBaseSha = 'base123') {
   if (!isObject(checkRunsPayload) || !Number.isInteger(checkRunsPayload.total_count) || !Array.isArray(checkRunsPayload.check_runs)) {
     fail('check-runs payload is malformed');
   }
@@ -367,7 +383,7 @@ function validateCheckRuns(checkRunsPayload, workflowRunsPayload, jobsPayload, h
     seenIds.add(run.id);
   }
 
-  const latestWorkflowRun = selectLatestWorkflowRun(workflowRunsPayload, headSha);
+  const latestWorkflowRun = selectLatestWorkflowRun(workflowRunsPayload, headSha, expectedBaseSha);
   if (!isObject(jobsPayload) || !Number.isInteger(jobsPayload.total_count) || !Array.isArray(jobsPayload.jobs)) {
     fail('workflow-job payload is malformed');
   }
@@ -404,12 +420,12 @@ function validateCheckRuns(checkRunsPayload, workflowRunsPayload, jobsPayload, h
   }
   return true;
 }
-export function assertMergeGateEvidence(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha) {
-  return validateCheckRuns(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha, 'success');
+export function assertMergeGateEvidence(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha, expectedBaseSha = 'base123') {
+  return validateCheckRuns(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha, 'success', expectedBaseSha);
 }
 
-export function assertNegativeControlEvidence(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha) {
-  return validateCheckRuns(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha, 'failure');
+export function assertNegativeControlEvidence(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha, expectedBaseSha = 'base123') {
+  return validateCheckRuns(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha, 'failure', expectedBaseSha);
 }
 
 function readJson(path) {
@@ -417,7 +433,7 @@ function readJson(path) {
 }
 
 function usage() {
-  console.error('Usage: check-ruleset-readback.mjs --validate-spec SPEC | --validate-main-workflow-pin SPEC MAIN_SHA | --validate-existing-target SPEC LIVE | --compare SPEC LIVE | --select-latest-workflow-run WORKFLOW_RUNS HEAD_SHA | --assert-latest-workflow-run-stable INITIAL CURRENT HEAD_SHA | --validate-merge-gate CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA | --validate-negative-control CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA');
+  console.error('Usage: check-ruleset-readback.mjs --validate-spec SPEC | --validate-main-workflow-pin SPEC MAIN_SHA | --validate-foundation-pr PR HEAD_SHA BASE_SHA | --assert-foundation-pr-stable INITIAL CURRENT HEAD_SHA BASE_SHA | --validate-existing-target SPEC LIVE | --compare SPEC LIVE | --select-latest-workflow-run WORKFLOW_RUNS HEAD_SHA BASE_SHA | --assert-latest-workflow-run-stable INITIAL CURRENT HEAD_SHA BASE_SHA | --validate-merge-gate CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA BASE_SHA | --validate-negative-control CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA BASE_SHA');
   process.exit(2);
 }
 
@@ -426,17 +442,19 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
     const [mode, ...args] = process.argv.slice(2);
     if (mode === '--validate-spec' && args.length === 1) validateCreationSpec(readJson(args[0]));
     else if (mode === '--validate-main-workflow-pin' && args.length === 2) validateMainWorkflowPin(readJson(args[0]), args[1]);
+    else if (mode === '--validate-foundation-pr' && args.length === 3) validateFoundationPr(readJson(args[0]), args[1], args[2]);
+    else if (mode === '--assert-foundation-pr-stable' && args.length === 4) assertFoundationPrStable(readJson(args[0]), readJson(args[1]), args[2], args[3]);
     else if (mode === '--validate-existing-target' && args.length === 2) validateExistingTarget(readJson(args[0]), readJson(args[1]));
     else if (mode === '--compare' && args.length === 2) validateLiveRuleset(readJson(args[0]), readJson(args[1]));
-    else if (mode === '--select-latest-workflow-run' && args.length === 2) {
-      const run = selectLatestWorkflowRun(readJson(args[0]), args[1]);
+    else if (mode === '--select-latest-workflow-run' && args.length === 3) {
+      const run = selectLatestWorkflowRun(readJson(args[0]), args[1], args[2]);
       process.stdout.write(String(run.id) + '\t' + String(run.run_attempt) + '\n');
     }
-    else if (mode === '--assert-latest-workflow-run-stable' && args.length === 3) {
-      assertLatestWorkflowRunStable(readJson(args[0]), readJson(args[1]), args[2]);
+    else if (mode === '--assert-latest-workflow-run-stable' && args.length === 4) {
+      assertLatestWorkflowRunStable(readJson(args[0]), readJson(args[1]), args[2], args[3]);
     }
-    else if (mode === '--validate-merge-gate' && args.length === 4) assertMergeGateEvidence(readJson(args[0]), readJson(args[1]), readJson(args[2]), args[3]);
-    else if (mode === '--validate-negative-control' && args.length === 4) assertNegativeControlEvidence(readJson(args[0]), readJson(args[1]), readJson(args[2]), args[3]);
+    else if (mode === '--validate-merge-gate' && args.length === 5) assertMergeGateEvidence(readJson(args[0]), readJson(args[1]), readJson(args[2]), args[3], args[4]);
+    else if (mode === '--validate-negative-control' && args.length === 5) assertNegativeControlEvidence(readJson(args[0]), readJson(args[1]), readJson(args[2]), args[3], args[4]);
     else usage();
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
