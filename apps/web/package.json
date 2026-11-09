@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "prelint": "node scripts/check-minimatch-compat.mjs"
   },
   "dependencies": {
     "next": "16.4.6",
