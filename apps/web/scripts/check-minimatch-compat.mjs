@@ -24,6 +24,11 @@ assert.equal(minimatch("x\\*.js", escapedBackslash), true);
 assert.equal(minimatch("x\\*.ts", escapedBackslash), true);
 assert.equal(minimatch("x\\anything.js", escapedBackslash), false);
 
+// GHSA-c859-jr93-m5j4: braces supplied by untrusted literal text also trigger expansion.
+const escapedUserBraces = escape("x\\*{,}");
+assert.equal(minimatch("x\\*", escapedUserBraces), true);
+assert.equal(minimatch("x\\anything", escapedUserBraces), false);
+
 // GHSA-c859-jr93-m5j4 Windows-path + magical-braces regression.
 const windowsBraceOptions = { windowsPathsNoEscape: true, magicalBraces: true };
 const escapedBraces = escape("x{a,b}", windowsBraceOptions);
