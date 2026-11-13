@@ -19,15 +19,15 @@ for (const options of [{}, { windowsPathsNoEscape: true }]) {
 }
 
 // Escaping a literal backslash+star must survive a caller-supplied brace expansion.
-const escapedBackslash = `${escape("x\\\\*")}.{js,ts}`;
-assert.equal(minimatch("x\\\\*.js", escapedBackslash), true);
-assert.equal(minimatch("x\\\\*.ts", escapedBackslash), true);
-assert.equal(minimatch("x\\\\anything.js", escapedBackslash), false);
+const escapedBackslash = `${escape("x\\*")}.{js,ts}`;
+assert.equal(minimatch("x\\*.js", escapedBackslash), true);
+assert.equal(minimatch("x\\*.ts", escapedBackslash), true);
+assert.equal(minimatch("x\\anything.js", escapedBackslash), false);
 
 // GHSA-c859-jr93-m5j4: braces supplied by untrusted literal text also trigger expansion.
-const escapedUserBraces = escape("x\\\\*{,}");
-assert.equal(minimatch("x\\\\*", escapedUserBraces), true);
-assert.equal(minimatch("x\\\\anything", escapedUserBraces), false);
+const escapedUserBraces = escape("x\\*{,}");
+assert.equal(minimatch("x\\*", escapedUserBraces), true);
+assert.equal(minimatch("x\\anything", escapedUserBraces), false);
 
 // GHSA-c859-jr93-m5j4 Windows-path + magical-braces regression.
 const windowsBraceOptions = { windowsPathsNoEscape: true, magicalBraces: true };
