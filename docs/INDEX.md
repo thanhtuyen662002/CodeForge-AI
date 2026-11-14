@@ -18,6 +18,6 @@ Checked 2026-11-14. Start with [Founder decision](DECISION_MEMO.md), then [curre
 
 ## Evidence discipline
 
-The owner-authorized full implementation scope is recorded in PR #28; this PR is still open and must not be treated as merged. Authorization does not mean validation, implementation, deployment or production acceptance has passed. Read [RELEASE_GATES.md](RELEASE_GATES.md) for the evidence required by each gate and verify live GitHub/provider state before changing a status.
+The owner-authorized full implementation scope is recorded in PR #28; this PR is still open and must not be treated as merged. Authorization does not mean validation, implementation, deployment or production acceptance has passed. Read [RELEASE_GATES.md](RELEASE_GATES.md) for the evidence required by each gate and verify live GitHub/provider state before changing a status. The detailed architecture, API, data, sandbox, content, privacy, UX and deployment contracts remain on the verified PR #1 head `42b5a6aa678baabf711e1000e9b4127e870aecff`; PR #1 is still open, so those contracts are not represented as merged into main.
 
 FACT = checked observable statement/source, not vendor efficacy validation. INFERENCE = interpretation. HYPOTHESIS = untested customer/economic/architecture assumption. Unknown data stays unknown. Raw critique refers to draft v1$29/24h; reconciled canonical v2 is$49/40h before launch, with no customer exposure yet.
