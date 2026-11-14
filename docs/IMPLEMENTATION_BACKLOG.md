@@ -1,6 +1,6 @@
 # Implementation backlog
 
-Issue IDs below are stable local work-item keys; GitHub issue numbers may differ. Each item should be split further if a PR becomes difficult to review. Dependency list makes parallel work explicit.
+CF-01 through CF-15 map one-to-one to the existing GitHub issues #2 through #16, respectively. The separate P0 validation workstream is tracked by issues #20–#22; it does not replace or renumber these implementation keys. Re-read each live issue and its dependencies before assignment: an open issue is not proof that work is executable, started, or complete. Each item should be split further if a PR becomes difficult to review. Dependency list makes parallel work explicit.
 
 | Key | Deliverable / acceptance | Depends on | Role |
 |---|---|---|---|
