@@ -1,7 +1,7 @@
 # Release Gates — evidence-linked acceptance
 
-**Status snapshot checked:** 2026-11-14  
-**Verified main:** `4ea8f8dc8401bfa3790e6aeabf3ffb80b8b28989`  
+**Status snapshot checked:** 2026-11-14
+**Verified main:** `4ea8f8dc8401bfa3790e6aeabf3ffb80b8b28989`
 **Scope:** full owner-authorized requirements traceability and production acceptance, pending the owner-scope reconciliation PR #28. This document is a gate contract and point-in-time evidence ledger, not a claim that any capability is implemented.
 
 A gate is PASS only when its evidence is linked and independently reproducible. A design document, code comment, agent self-review, skipped CI job, stale SHA or successful planning-only check is not a substitute for runtime evidence.
@@ -31,7 +31,7 @@ Unknown is not zero. Never convert NOT_RUN into PASS, or close a gate because a 
 
 ## G0 — Repository governance and trusted integration
 
-**Enables:** safe integration to `main`.  
+**Enables:** safe integration to `main`.
 **Current status: BLOCKED.**
 
 - [ ] Read back the effective ruleset on the current default branch; record rule ID, enforcement, exact required contexts and source integration.
