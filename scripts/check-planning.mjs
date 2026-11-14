@@ -23,6 +23,10 @@ for (const file of docs) {
 }
 
 const state = json('docs/PROJECT_STATE.yaml');
+const releaseGates = read('docs/RELEASE_GATES.md');
+assert.ok(releaseGates.includes('Release-G0'), 'Release governance gate must use the Release-G0 namespace');
+assert.ok(releaseGates.includes('P0-G0'), 'P0 market-validation gate must be distinguished from Release-G0');
+assert.ok(releaseGates.includes('docs/VALIDATION_PLAN.md'), 'Release-G0 must cross-reference the separate P0 validation protocol');
 const model = json('docs/research/economics-model.json');
 json('docs/research/repository-snapshot.json');
 const sum = values => values.reduce((a, b) => a + b, 0);
