@@ -21,7 +21,8 @@ latest_workflow_runs_result="$(mktemp)"
 jobs_result="$(mktemp)"
 pr_result="$(mktemp)"
 latest_pr_result="$(mktemp)"
-trap 'rm -f "$result" "$workflow_runs_result" "$latest_workflow_runs_result" "$jobs_result" "$pr_result" "$latest_pr_result"' EXIT
+reviewers_result="$(mktemp)"
+trap 'rm -f "$result" "$workflow_runs_result" "$latest_workflow_runs_result" "$jobs_result" "$pr_result" "$latest_pr_result" "$reviewers_result"' EXIT
 
 # The required workflow must be pinned to the exact current main commit, never a PR-controlled workflow copy.
 main_head="$(gh api "repos/$repo/branches/main" --jq '.commit.sha')"
@@ -57,11 +58,13 @@ node "$root/scripts/check-ruleset-readback.mjs" --validate-merge-gate "$result" 
 # Do not activate a rule that would deadlock the owner: require a real non-owner reviewer with write-capable permission.
 owner="$(gh api "repos/$repo" --jq '.owner.login')"
 actor="$(gh api user --jq '.login')"
-reviewers="$(gh api "repos/$repo/collaborators?per_page=100" --paginate | jq --arg owner "$owner" --arg actor "$actor" '.[] | select(.login != $owner and .login != $actor and (.permissions.push == true or .permissions.maintain == true or .permissions.admin == true)) | .login')"
-if [[ -z "$reviewers" ]]; then
-  echo 'No independent collaborator other than the repository owner/current actor has push/maintain/admin permission; refusing to change the live ruleset.' >&2
+reviewer="${CODEFORGE_REVIEWER_LOGIN:-}"
+if [[ -z "$reviewer" ]]; then
+  echo 'Set CODEFORGE_REVIEWER_LOGIN to an owner-confirmed independent human GitHub User collaborator; refusing to change the live ruleset.' >&2
   exit 5
 fi
+gh api --paginate --slurp "repos/$repo/collaborators?per_page=100" > "$reviewers_result"
+node "$root/scripts/check-ruleset-readback.mjs" --validate-independent-reviewer "$reviewers_result" "$owner" "$actor" "$reviewer"
 
 existing="$(gh api "repos/$repo/rulesets?per_page=100" --paginate --jq '.[] | select(.name == "CodeForge main") | .id')"
 existing_count="$(printf '%s\n' "$existing" | awk 'NF { count++ } END { print count + 0 }')"

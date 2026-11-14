@@ -14,6 +14,7 @@ import {
   assertMergeGateEvidence,
   assertNegativeControlEvidence,
   assertLatestWorkflowRunStable,
+  validateIndependentReviewer,
 } from '../scripts/check-ruleset-readback.mjs';
 
 const expected = {
@@ -487,10 +488,30 @@ test('latest workflow evidence must remain stable through the ruleset validation
 test('gh api variable bindings are passed to jq, not unsupported gh api flags', () => {
   const applyScript = readFileSync(new URL('../scripts/apply-ruleset.sh', import.meta.url), 'utf8');
   assert.ok(applyScript.includes('gh api --paginate --slurp "repos/$repo/commits/$foundation_head/check-runs?filter=all&per_page=100" | jq --arg sha "$foundation_head"'));
-  assert.ok(applyScript.includes('gh api "repos/$repo/collaborators?per_page=100" --paginate | jq --arg owner "$owner" --arg actor "$actor"'));
+  assert.ok(applyScript.includes('gh api --paginate --slurp "repos/$repo/collaborators?per_page=100" > "$reviewers_result"'));
+  assert.ok(applyScript.includes('CODEFORGE_REVIEWER_LOGIN'));
+  assert.ok(applyScript.includes('--validate-independent-reviewer "$reviewers_result" "$owner" "$actor" "$reviewer"'));
   assert.doesNotMatch(applyScript, /gh api[^\n]*--jq\s+--arg/);
   assert.equal((applyScript.match(/--validate-main-workflow-pin/g) || []).length, 2);
   assert.ok(applyScript.includes('--validate-foundation-pr "$pr_result" "$foundation_head" "$main_head"'));
   assert.ok(applyScript.includes('--assert-foundation-pr-stable "$pr_result" "$latest_pr_result" "$foundation_head" "$main_head"'));
   assert.ok(applyScript.includes('--validate-merge-gate "$result" "$workflow_runs_result" "$jobs_result" "$foundation_head" "$main_head"'));
+});
+
+
+test('ruleset apply requires an owner-confirmed human GitHub User reviewer with write-capable permission', () => {
+  const collaborators = [
+    { login: 'owner', type: 'User', permissions: { admin: true } },
+    { login: 'actor', type: 'User', permissions: { maintain: true } },
+    { login: 'human-reviewer', type: 'User', permissions: { push: true } },
+    { login: 'automation-reviewer[bot]', type: 'Bot', permissions: { push: true } },
+    { login: 'read-only', type: 'User', permissions: { pull: true } },
+  ];
+  assert.equal(validateIndependentReviewer(collaborators, 'owner', 'actor', 'human-reviewer'), true);
+  assert.throws(() => validateIndependentReviewer(collaborators, 'owner', 'actor', 'automation-reviewer[bot]'), /GitHub User collaborator/);
+  assert.throws(() => validateIndependentReviewer(collaborators, 'owner', 'actor', 'owner'), /GitHub User collaborator/);
+  assert.throws(() => validateIndependentReviewer(collaborators, 'owner', 'actor', 'actor'), /GitHub User collaborator/);
+  assert.throws(() => validateIndependentReviewer(collaborators, 'owner', 'actor', 'read-only'), /GitHub User collaborator/);
+  assert.throws(() => validateIndependentReviewer(collaborators, 'owner', 'actor', ''), /explicit owner-confirmed reviewer login/);
+  assert.throws(() => validateIndependentReviewer([[collaborators[2]]], 'owner', 'actor', 'human-reviewer'), /./);
 });

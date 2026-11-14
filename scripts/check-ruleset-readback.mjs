@@ -428,12 +428,40 @@ export function assertNegativeControlEvidence(checkRunsPayload, workflowRunsPayl
   return validateCheckRuns(checkRunsPayload, workflowRunsPayload, jobsPayload, headSha, 'failure', expectedBaseSha);
 }
 
+export function validateIndependentReviewer(collaboratorsPayload, owner, actor, reviewerLogin) {
+  if (!Array.isArray(collaboratorsPayload)) fail('collaborator payload must be an array');
+  if (typeof owner !== 'string' || owner.length === 0 || typeof actor !== 'string' || actor.length === 0) {
+    fail('repository owner and current actor must be non-empty logins');
+  }
+  if (typeof reviewerLogin !== 'string' || reviewerLogin.length === 0 || reviewerLogin.trim() !== reviewerLogin) {
+    fail('an explicit owner-confirmed reviewer login is required');
+  }
+  const normalize = (value) => value.toLowerCase();
+  const expectedLogin = normalize(reviewerLogin);
+  const excluded = new Set([normalize(owner), normalize(actor)]);
+  const collaborators = collaboratorsPayload.flat(Infinity);
+  const matches = collaborators.filter((collaborator) =>
+    isObject(collaborator) &&
+    typeof collaborator.login === 'string' &&
+    normalize(collaborator.login) === expectedLogin &&
+    collaborator.type === 'User' &&
+    !excluded.has(normalize(collaborator.login)) &&
+    (collaborator.permissions?.push === true ||
+      collaborator.permissions?.maintain === true ||
+      collaborator.permissions?.admin === true),
+  );
+  if (matches.length !== 1) {
+    fail('reviewer must be the explicitly selected, non-owner, non-actor GitHub User collaborator with push/maintain/admin permission');
+  }
+  return true;
+}
+
 function readJson(path) {
   return JSON.parse(fs.readFileSync(path, 'utf8'));
 }
 
 function usage() {
-  console.error('Usage: check-ruleset-readback.mjs --validate-spec SPEC | --validate-main-workflow-pin SPEC MAIN_SHA | --validate-foundation-pr PR HEAD_SHA BASE_SHA | --assert-foundation-pr-stable INITIAL CURRENT HEAD_SHA BASE_SHA | --validate-existing-target SPEC LIVE | --compare SPEC LIVE | --select-latest-workflow-run WORKFLOW_RUNS HEAD_SHA BASE_SHA | --assert-latest-workflow-run-stable INITIAL CURRENT HEAD_SHA BASE_SHA | --validate-merge-gate CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA BASE_SHA | --validate-negative-control CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA BASE_SHA');
+  console.error('Usage: check-ruleset-readback.mjs --validate-spec SPEC | --validate-independent-reviewer COLLABORATORS OWNER ACTOR REVIEWER_LOGIN | --validate-main-workflow-pin SPEC MAIN_SHA | --validate-foundation-pr PR HEAD_SHA BASE_SHA | --assert-foundation-pr-stable INITIAL CURRENT HEAD_SHA BASE_SHA | --validate-existing-target SPEC LIVE | --compare SPEC LIVE | --select-latest-workflow-run WORKFLOW_RUNS HEAD_SHA BASE_SHA | --assert-latest-workflow-run-stable INITIAL CURRENT HEAD_SHA BASE_SHA | --validate-merge-gate CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA BASE_SHA | --validate-negative-control CHECK_RUNS WORKFLOW_RUNS JOBS HEAD_SHA BASE_SHA');
   process.exit(2);
 }
 
@@ -446,6 +474,7 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
     else if (mode === '--assert-foundation-pr-stable' && args.length === 4) assertFoundationPrStable(readJson(args[0]), readJson(args[1]), args[2], args[3]);
     else if (mode === '--validate-existing-target' && args.length === 2) validateExistingTarget(readJson(args[0]), readJson(args[1]));
     else if (mode === '--compare' && args.length === 2) validateLiveRuleset(readJson(args[0]), readJson(args[1]));
+    else if (mode === '--validate-independent-reviewer' && args.length === 4) validateIndependentReviewer(readJson(args[0]), args[1], args[2], args[3]);
     else if (mode === '--select-latest-workflow-run' && args.length === 3) {
       const run = selectLatestWorkflowRun(readJson(args[0]), args[1], args[2]);
       process.stdout.write(String(run.id) + '\t' + String(run.run_attempt) + '\n');
