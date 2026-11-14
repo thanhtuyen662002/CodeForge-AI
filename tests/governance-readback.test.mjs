@@ -490,6 +490,7 @@ test('gh api variable bindings are passed to jq, not unsupported gh api flags', 
   assert.ok(applyScript.includes('gh api --paginate --slurp "repos/$repo/commits/$foundation_head/check-runs?filter=all&per_page=100" | jq --arg sha "$foundation_head"'));
   assert.ok(applyScript.includes('gh api --paginate --slurp "repos/$repo/collaborators?per_page=100" > "$reviewers_result"'));
   assert.ok(applyScript.includes('CODEFORGE_REVIEWER_LOGIN'));
+  assert.ok(applyScript.includes('owner-confirmed independent human collaborator'));
   assert.ok(applyScript.includes('--validate-independent-reviewer "$reviewers_result" "$owner" "$actor" "$reviewer"'));
   assert.doesNotMatch(applyScript, /gh api[^\n]*--jq\s+--arg/);
   assert.equal((applyScript.match(/--validate-main-workflow-pin/g) || []).length, 2);
@@ -513,5 +514,6 @@ test('ruleset apply requires an owner-confirmed human GitHub User reviewer with 
   assert.throws(() => validateIndependentReviewer(collaborators, 'owner', 'actor', 'actor'), /GitHub User collaborator/);
   assert.throws(() => validateIndependentReviewer(collaborators, 'owner', 'actor', 'read-only'), /GitHub User collaborator/);
   assert.throws(() => validateIndependentReviewer(collaborators, 'owner', 'actor', ''), /explicit owner-confirmed reviewer login/);
-  assert.throws(() => validateIndependentReviewer([[collaborators[2]]], 'owner', 'actor', 'human-reviewer'), /./);
+  assert.equal(validateIndependentReviewer([[collaborators[2]]], 'owner', 'actor', 'human-reviewer'), true);
+  assert.throws(() => validateIndependentReviewer([null], 'owner', 'actor', 'human-reviewer'), /GitHub User collaborator/);
 });

@@ -7,8 +7,8 @@ if [[ "$repo" != "thanhtuyen662002/CodeForge-AI" ]]; then
   exit 2
 fi
 if [[ "${CODEFORGE_CONFIRM_RULESET:-}" != apply ]]; then
-  echo 'Review .github/rulesets/main.json and confirm a separate eligible reviewer is available.' >&2
-  echo 'Then run: CODEFORGE_CONFIRM_RULESET=apply bash scripts/apply-ruleset.sh thanhtuyen662002/CodeForge-AI' >&2
+  echo 'Review .github/rulesets/main.json and set CODEFORGE_REVIEWER_LOGIN to an owner-confirmed independent human collaborator.' >&2
+  echo 'Then run: CODEFORGE_REVIEWER_LOGIN=REVIEWER_LOGIN CODEFORGE_CONFIRM_RULESET=apply bash scripts/apply-ruleset.sh thanhtuyen662002/CodeForge-AI' >&2
   exit 2
 fi
 command -v gh >/dev/null
