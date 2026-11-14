@@ -16,11 +16,15 @@ A gate is PASS only when its evidence is linked and independently reproducible. 
 
 Unknown is not zero. Never convert NOT_RUN into PASS, or close a gate because a PR merged.
 
+## Gate namespace
+
+This document uses G0–G7 for **release acceptance**. In cross-document status reports, call its first gate **Release-G0**. `docs/VALIDATION_PLAN.md` separately uses G0 for P0 demand/payment feasibility; call that **P0-G0**. These are independent gates: passing or pausing one does not pass or pause the other. Do not use an unqualified “G0” in cross-document status reports.
+
 ## Current gate summary
 
 | Gate | Current status | Current evidence / next required proof |
 |---|---|---|
-| G0 Governance | **BLOCKED** | [Live ruleset #24379959](https://github.com/thanhtuyen662002/CodeForge-AI/rules/24379959) is ACTIVE and requires strict `merge-gate`, but read-back has zero approving reviews, no required reviewers, latest-push approval disabled and no trusted workflow pin. [PR #40](https://github.com/thanhtuyen662002/CodeForge-AI/pull/40) changes the workflow that emits the only required check. A real eligible independent reviewer and negative-control merge-block proof are not evidenced. |
+| Release-G0 Governance | **BLOCKED** | [Live ruleset #24379959](https://github.com/thanhtuyen662002/CodeForge-AI/rules/24379959) is ACTIVE and requires strict `merge-gate`, but read-back has zero approving reviews, no required reviewers, latest-push approval disabled and no trusted workflow pin. [PR #40](https://github.com/thanhtuyen662002/CodeForge-AI/pull/40) changes the workflow that emits the only required check. A real eligible independent reviewer and negative-control merge-block proof are not evidenced. |
 | G1 Identity/data | **OPEN_NOT_VERIFIED** | The owner-designated Supabase ref is `qvufngaseebmaxzthrdi`; current connector read returned permission denied. Staging identity, Auth, migrations, RLS, grants and private Storage tests are NOT_RUN. Vercel project/environment access is NOT_VERIFIED. |
 | G2 Assessment | **OPEN_NOT_VERIFIED** | Server-authoritative assessment, deadlines, revisions, idempotency, immutable versions, trusted grading and safe DTOs are not proven on a running application. |
 | G3 Execution | **OPEN_NOT_VERIFIED** | No real isolated Python/SQL runtime, deny-egress/resource-limit/cleanup evidence or external trusted-grader proof is available. |
@@ -29,7 +33,7 @@ Unknown is not zero. Never convert NOT_RUN into PASS, or close a gate because a 
 | G6 Content/UX | **OPEN_NOT_VERIFIED** | Full reviewed content, CMS/version/correction flow, exam behavior, accessibility and pilot evidence are not complete. |
 | G7 Operations | **OPEN_NOT_VERIFIED** | No verified Vercel production deployment, post-deploy smoke, privacy/retention approval, export/delete, backup/restore, rollback, observability, budget or on-call evidence. |
 
-## G0 — Repository governance and trusted integration
+## Release-G0 — Repository governance and trusted integration
 
 **Enables:** safe integration to `main`.
 **Current status: BLOCKED.**
@@ -45,7 +49,7 @@ Unknown is not zero. Never convert NOT_RUN into PASS, or close a gate because a 
 
 **Current observations:** ruleset #24379959 is ACTIVE, but `required_approving_review_count=0`, `required_reviewers=[]`, and `require_last_push_approval=false`; no bypass actors are present. The only required `merge-gate` is emitted by `.github/workflows/planning.yml`, which PR #40 modifies. Collaborator `thienvu1996` has READ permission only. The branch-protection API returned 403 and the available GitHub connection exposes ruleset reads but no ruleset-write action. No merge, approval reduction, self-approval or bypass is authorized.
 
-**Evidence:** [ruleset read-back](https://github.com/thanhtuyen662002/CodeForge-AI/rules/24379959) · [PR #40 trust-root finding](https://github.com/thanhtuyen662002/CodeForge-AI/pull/40) · [G0 issue #2](https://github.com/thanhtuyen662002/CodeForge-AI/issues/2).
+**Evidence:** [ruleset read-back](https://github.com/thanhtuyen662002/CodeForge-AI/rules/24379959) · [PR #40 trust-root finding](https://github.com/thanhtuyen662002/CodeForge-AI/pull/40) · [Release-G0 issue #2](https://github.com/thanhtuyen662002/CodeForge-AI/issues/2).
 
 ## G1 — Identity, database and private data isolation
 
@@ -152,6 +156,6 @@ Unknown is not zero. Never convert NOT_RUN into PASS, or close a gate because a 
 
 ## Production acceptance
 
-Mark **PRODUCTION_ACCEPTED** only when all committed traceability scope/content is complete; there is no unresolved P0/P1 or core-flow blocker; code is on main; exact-release-SHA required CI/security and integration/E2E pass; G0–G7 have evidence and required human/owner approvals; the correct Supabase environment and Vercel deployment are proven; sandbox and tutor gates are proven; privacy, export/delete, backup/restore, rollback, observability, budget and accountable owners are ready; and a final acceptance report links every item plus residual risk.
+Mark **PRODUCTION_ACCEPTED** only when all committed traceability scope/content is complete; there is no unresolved P0/P1 or core-flow blocker; code is on main; exact-release-SHA required CI/security and integration/E2E pass; Release-G0–G7 have evidence and required human/owner approvals; the correct Supabase environment and Vercel deployment are proven; sandbox and tutor gates are proven; privacy, export/delete, backup/restore, rollback, observability, budget and accountable owners are ready; and a final acceptance report links every item plus residual risk.
 
 A percentage, a merged PR, a successful planning-only workflow, or a design document is not production acceptance.
