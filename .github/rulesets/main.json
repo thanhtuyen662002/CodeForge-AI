@@ -50,6 +50,20 @@
           }
         ]
       }
+    },
+    {
+      "type": "workflows",
+      "parameters": {
+        "do_not_enforce_on_create": false,
+        "workflows": [
+          {
+            "path": ".github/workflows/planning.yml",
+            "ref": "main",
+            "repository_id": 1402071360,
+            "sha": "4ea8f8dc8401bfa3790e6aeabf3ffb80b8b28989"
+          }
+        ]
+      }
     }
   ]
 }
