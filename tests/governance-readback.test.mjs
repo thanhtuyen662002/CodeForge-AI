@@ -517,3 +517,15 @@ test('ruleset apply requires an owner-confirmed human GitHub User reviewer with 
   assert.equal(validateIndependentReviewer([[collaborators[2]]], 'owner', 'actor', 'human-reviewer'), true);
   assert.throws(() => validateIndependentReviewer([null], 'owner', 'actor', 'human-reviewer'), /GitHub User collaborator/);
 });
+
+
+test('repository-level ruleset apply fails closed for organization-only workflow rules', () => {
+  const applyScript = readFileSync(new URL('../scripts/apply-ruleset.sh', import.meta.url), 'utf8');
+  const guard = applyScript.indexOf('required workflow rules need an organization/enterprise ruleset');
+  const put = applyScript.indexOf('gh api --method PUT');
+  const post = applyScript.indexOf('gh api --method POST');
+  assert.ok(guard >= 0, 'scope guard must explain the unsupported trust-root scope');
+  assert.ok(guard < put && guard < post, 'scope guard must execute before every ruleset mutation');
+  assert.match(applyScript, /exit 6/);
+  assert.match(applyScript, /separately operated GitHub App status-check publisher/);
+});
