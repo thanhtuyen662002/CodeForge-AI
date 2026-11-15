@@ -6,6 +6,13 @@ if [[ "$repo" != "thanhtuyen662002/CodeForge-AI" ]]; then
   echo 'Refusing unexpected target. Pass thanhtuyen662002/CodeForge-AI.' >&2
   exit 2
 fi
+
+# GitHub only supports required-workflow rules at organization/enterprise scope.
+# This helper writes repository-level rulesets, so it cannot apply the configured
+# `workflows` rule safely. Refuse before any API write; do not fall back to a
+# self-modifiable GitHub Actions status check.
+echo 'Unsupported trust-root scope: required workflow rules need an organization/enterprise ruleset. This helper writes repository-level rulesets; refusing mutation. Owner must configure an organization/enterprise ruleset or choose a separately operated GitHub App status-check publisher.' >&2
+exit 6
 if [[ "${CODEFORGE_CONFIRM_RULESET:-}" != apply ]]; then
   echo 'Review .github/rulesets/main.json and set CODEFORGE_REVIEWER_LOGIN to an owner-confirmed independent human collaborator.' >&2
   echo 'Then run: CODEFORGE_REVIEWER_LOGIN=REVIEWER_LOGIN CODEFORGE_CONFIRM_RULESET=apply bash scripts/apply-ruleset.sh thanhtuyen662002/CodeForge-AI' >&2
