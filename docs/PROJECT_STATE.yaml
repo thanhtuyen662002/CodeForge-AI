@@ -41,7 +41,7 @@
   "main_integration": "MERGED_AT_a0e7296d78bec368ef1c22bd022a916c2bf6c754_ON_2026-10-07",
   "independent_agent_red_teams": "COMPLETE_42_FINDINGS_RECONCILED",
   "independent_final_review": "PASS_WITH_EXPLICIT_EXECUTION_BLOCKERS_9_FINDINGS_CORRECTED",
-  "github_approval": "PR23_MERGED_WHILE_EFFECTIVE_REQUIRED_APPROVAL_COUNT_WAS_0; INDEPENDENT_APPROVAL_NOT_OBTAINED; CURRENT_RULESET_24379959_READBACK_HAS_0_REQUIRED_APPROVALS",
+  "github_approval": "PR23_MERGED; INDEPENDENT_APPROVAL_NOT_OBTAINED; CURRENT_RULESET_24379959_READBACK_HAS_0_REQUIRED_APPROVALS",
   "validation_status": "NOT_STARTED",
   "active_phase": "FULL_IMPLEMENTATION_AUTHORIZED_PENDING_EXECUTION_AND_RELEASE_GATES; P0_VALIDATION_PAUSED_AT_FEASIBILITY",
   "execution_start_date": null,
@@ -59,7 +59,7 @@
     "require_last_push_approval": false,
     "trusted_workflow_pin": false,
     "bypass_actors": [],
-    "status": "BLOCKED: required workflow is PR-modifiable and independent approval/trusted source are not enforced by current read-back"
+    "status": "BLOCKED: both the PR-modifiable required workflow and its PR-modifiable scripts/check-planning.mjs validator can be changed while preserving merge-gate; independent approval and trusted source are not enforced by current read-back"
   },
   "primary_thesis": "Finite Python backend verification drill pack",
   "fallback_thesis": "Fixed-scope team review clinic, only after separate manager demand gate",
