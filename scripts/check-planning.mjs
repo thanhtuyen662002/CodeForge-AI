@@ -41,6 +41,8 @@ assert.ok(releaseG0.includes('organization or enterprise'), 'Release-G0 must nam
 assert.ok(releaseG0.includes('GitHub App') && releaseG0.includes('statuses:write'), 'Release-G0 must document an independently operated status publisher');
 assert.ok(releaseG0.includes('expected source'), 'Release-G0 must require the GitHub App as the expected status source');
 assert.ok(releaseG0.includes('pre-existing required status check'), 'Release-G0 must document the required status-check association prerequisite');
+assert.ok(releaseG0.includes('scripts/check-planning.mjs'), 'Release-G0 must record the PR-modifiable planning validator trust root');
+assert.ok(releaseG0.includes('PR #47'), 'Release-G0 must identify the PR that modifies the planning validator');
 const model = json('docs/research/economics-model.json');
 json('docs/research/repository-snapshot.json');
 const sum = values => values.reduce((a, b) => a + b, 0);
