@@ -4,7 +4,37 @@
   "checked_date": "2026-10-07",
   "repository": "thanhtuyen662002/CodeForge-AI",
   "decision": "BUILD_WITH_CONDITIONS",
-  "authorized_strategy_scope": "P0 validation assets and gated demand experiment; not platform implementation",
+  "authorized_strategy_scope": "Historical P0 validation assets and gated demand experiment; this field describes the 2026-10-07 market-validation decision, not the current owner-authorized implementation scope.",
+  "owner_authorized_implementation_scope": {
+    "date": "2026-11-16",
+    "source": "Direct owner instruction; PR #28 remains open/unmerged and is not a prerequisite.",
+    "scope": "Full 39-section requirements traceability, CF-01..CF-15, full MVP modules/content/exam/CMS/tutor/operations, and evidence-linked production acceptance.",
+    "status": "AUTHORIZED_NOT_ACCEPTED",
+    "constraints": "No silent scope reduction. No new spend, external outreach/payment execution, destructive production operation, production migration/deployment, or secret/privileged access without the required explicit approval and rights."
+  },
+  "implementation_workstream": {
+    "tracker_issue": 17,
+    "backlog_issue_range": "#2..#16 (CF-01..CF-15); re-read live state before assignment.",
+    "status": "AUTHORIZED_PENDING_EXECUTION_AND_RELEASE_GATES",
+    "primary_handoff": {
+      "issue": 5,
+      "key": "CF-04A",
+      "status": "HANDOFF_POSTED_CLAIM_NOT_CONFIRMED_START_NOT_VERIFIED",
+      "base": "main@4ea8f8dc8401bfa3790e6aeabf3ffb80b8b28989",
+      "exclusive_paths": [
+        "supabase/migrations/**",
+        "supabase/tests/**",
+        "supabase/config.toml only if required for disposable local tests"
+      ]
+    },
+    "conditional_fallback": {
+      "issue": 5,
+      "key": "CF-03A1",
+      "status": "ELIGIBLE_ONLY_IF_PRIMARY_CANNOT_BE_SAFELY_CLAIMED_OR_DISPOSABLE_LOCAL_SUPABASE_IS_UNAVAILABLE",
+      "path": "apps/web/tests/e2e/zoom-reflow.spec.ts"
+    },
+    "coder_visibility": "No CodeForge Coder automation/claim/branch is visible in the latest live inventory; historical Coder ID is inaccessible. Do not infer private/local work is absent and do not create or modify a Coder schedule."
+  },
   "strategy_status": "PUBLISHED_RECONCILED_PROPOSAL_PENDING_GITHUB_REVIEW",
   "branch": "codex/strategy-validation-20261007",
   "strategy_pr": "https://github.com/thanhtuyen662002/CodeForge-AI/pull/23",
@@ -19,27 +49,123 @@
   "payments": null,
   "product_implemented": false,
   "deployed_application_verified": false,
-  "provider_state": "Historical Supabase report in issue 17; current health/billing not independently verified; Vercel unknown",
+  "provider_state": "2026-11-16 read-only check: designated Supabase ref qvufngaseebmaxzthrdi is not listed and get_project/get_project_url return permission denied; Vercel access NOT_VERIFIED. No provider mutation or deployment attempted.",
+  "release_governance_snapshot": {
+    "checked_date": "2026-11-16",
+    "ruleset_id": 24379959,
+    "enforcement": "active",
+    "required_status_check": "merge-gate (GitHub Actions App 15368)",
+    "required_approving_review_count": 0,
+    "require_last_push_approval": false,
+    "trusted_workflow_pin": false,
+    "bypass_actors": [],
+    "status": "BLOCKED: required workflow is PR-modifiable and independent approval/trusted source are not enforced by current read-back"
+  },
   "primary_thesis": "Finite Python backend verification drill pack",
   "fallback_thesis": "Fixed-scope team review clinic, only after separate manager demand gate",
   "price_hypothesis_usd": 49,
   "paid_labs": 2,
   "static_measurement_probes": 4,
-  "p0_limits": {"working_days": 10, "hours": 20, "cash_usd": 100, "interviews": 15, "eligible_offers": 30, "targeted_contacts": 60},
-  "p0_thresholds": {"concrete_incidents": 8, "self_funded_full_price_payments": 5},
-  "total_90_day_limits": {"hours": 160, "cash_usd": 500, "eligible_offers": 120, "targeted_contacts": 240, "pivots": 1},
+  "p0_limits": {
+    "working_days": 10,
+    "hours": 20,
+    "cash_usd": 100,
+    "interviews": 15,
+    "eligible_offers": 30,
+    "targeted_contacts": 60
+  },
+  "p0_thresholds": {
+    "concrete_incidents": 8,
+    "self_funded_full_price_payments": 5
+  },
+  "total_90_day_limits": {
+    "hours": 160,
+    "cash_usd": 500,
+    "eligible_offers": 120,
+    "targeted_contacts": 240,
+    "pivots": 1
+  },
   "next_executable_issues": [
-    {"number": 20, "url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/20", "scope": "P0 feasibility/protocol", "state": "OPEN_NOT_STARTED"},
-    {"number": 21, "url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/21", "scope": "P0 interviews/fixed offer", "depends_on": [20], "state": "OPEN_NOT_STARTED"},
-    {"number": 22, "url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/22", "scope": "G0 aggregate decision", "depends_on": [20,21], "state": "OPEN_NOT_STARTED"}
+    {
+      "number": 20,
+      "url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/20",
+      "scope": "P0 feasibility/protocol",
+      "state": "OPEN_NOT_STARTED"
+    },
+    {
+      "number": 21,
+      "url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/21",
+      "scope": "P0 interviews/fixed offer",
+      "depends_on": [
+        20
+      ],
+      "state": "OPEN_NOT_STARTED"
+    },
+    {
+      "number": 22,
+      "url": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/22",
+      "scope": "P0 aggregate decision",
+      "depends_on": [
+        20,
+        21
+      ],
+      "state": "OPEN_NOT_STARTED"
+    }
   ],
-  "legacy_backlog": {"issue_numbers": [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17], "pr_numbers": [1,18,19], "disposition": "STRATEGY_HOLD", "github_labels_applied": true},
+  "legacy_backlog": {
+    "issue_numbers": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "pr_numbers": [
+      1,
+      18,
+      19
+    ],
+    "disposition": "HISTORICAL_STRATEGY_HOLD_SUPERSEDED_FOR_IMPLEMENTATION_BY_OWNER_AUTHORIZATION_2026-11-16",
+    "github_labels_applied": true
+  },
   "tracker": "https://github.com/thanhtuyen662002/CodeForge-AI/issues/17",
-  "publication_readback": "Three P0 issues open; sixteen legacy issues and three PRs carry strategy-hold; tracker preserves history with current strategy notice",
-  "ci_evidence": {"checked_commit": "7f857824f2b4c318824a467de63eb2878d0b8ae2", "check": "merge-gate", "result": "SUCCESS", "url": "https://github.com/thanhtuyen662002/CodeForge-AI/actions/runs/37568609720/job/112621953948", "latest_head_authority": "Read live check status on PR23; this is an immutable earlier-commit observation"},
-  "critical_unknowns": ["Self-funded WTP", "Incremental learning value vs agent plus free checklist", "Repeatable distribution and CAC", "Competent independent content reviewer availability", "Actual content/support economics", "Merchant/refund eligibility before charging"],
+  "publication_readback": "Three P0 validation issues remain a separate NOT_STARTED workstream; full implementation scope is directly owner-authorized and coordinated in tracker #17.",
+  "ci_evidence": {
+    "checked_commit": "7f857824f2b4c318824a467de63eb2878d0b8ae2",
+    "check": "merge-gate",
+    "result": "SUCCESS",
+    "url": "https://github.com/thanhtuyen662002/CodeForge-AI/actions/runs/37568609720/job/112621953948",
+    "latest_head_authority": "Read live check status on current main/PR exact heads; this is an immutable earlier-commit observation."
+  },
+  "critical_unknowns": [
+    "Self-funded WTP",
+    "Incremental learning value vs agent plus free checklist",
+    "Repeatable distribution and CAC",
+    "Competent independent content reviewer availability",
+    "Actual content/support economics",
+    "Merchant/refund eligibility before charging",
+    "Supabase staging/project access and environment identity",
+    "Vercel workspace/project access",
+    "Real sandbox isolation, egress, resource limits and cleanup"
+  ],
   "canonical_protocol": "docs/VALIDATION_PLAN.md",
   "protocol_version": 2,
-  "kill_rule": "Do not build platform to rescue failed G0/G3; insufficient sample is PAUSE, observed demand/value failure is STOP per protocol",
-  "prohibited_current_scope": ["Cloud learner-code execution", "AI tutor or judge", "Hiring or verified skills claims", "Leaderboards", "Seasons", "Stored provider API keys", "Product implementation before gate", "PII in public repository"]
+  "kill_rule": "Applies to the separate P0 market-validation thesis; insufficient sample is PAUSE and observed demand/value failure is STOP. It does not override the owner's separate full implementation authorization.",
+  "prohibited_current_scope": [
+    "No learner code execution outside an independently verified isolated sandbox",
+    "No AI-generated score/mastery authority or hidden-answer access",
+    "No hiring/job-readiness claim from sparse evidence",
+    "No production data/secret exposure or PII in public repository"
+  ]
 }
