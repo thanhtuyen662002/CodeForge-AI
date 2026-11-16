@@ -1,6 +1,10 @@
 # Evidence-gated roadmap
 
-2026-10-07. Không phase nào đã chạy. P0 là next executable phase; P1–P6 là options, không backlog cam kết. Canonical thresholds ở [VALIDATION_PLAN](VALIDATION_PLAN.md); effort trong [MVP](MVP.md). Không mở issue cho phase chưa được unlock.
+**Scope boundary — checked 2026-11-16:** This file is the separate P0 market-validation / business-experiment roadmap, not the product implementation backlog. The owner directly authorized the full 39-section scope and CF-01..CF-15 implementation; use [IMPLEMENTATION_BACKLOG](IMPLEMENTATION_BACKLOG.md), [REQUIREMENTS_TRACEABILITY](REQUIREMENTS_TRACEABILITY.md), [RELEASE_GATES](RELEASE_GATES.md) and tracker [#17](https://github.com/thanhtuyen662002/CodeForge-AI/issues/17) for product work. This authorization does not pass P0-G0 or Release-G0 and does not authorize outreach, payments, new spend or provider / production operations.
+
+**Live P0 status:** P0-1 issue [#20](https://github.com/thanhtuyen662002/CodeForge-AI/issues/20) is **CLOSED / PAUSE** because merchant/refund, private-ledger restore, competent reviewer and delivery-feasibility evidence remain NOT_VERIFIED / NOT_RUN. P0-2 [#21](https://github.com/thanhtuyen662002/CodeForge-AI/issues/21) and P0-3 [#22](https://github.com/thanhtuyen662002/CodeForge-AI/issues/22) remain OPEN but BLOCKED by that PAUSE. Validation is still NOT_STARTED; do not execute #21/#22 until the P0-1 prerequisites are proven and owner-only actions are explicitly authorized.
+
+Baseline 2026-10-07. Canonical thresholds ở [VALIDATION_PLAN](VALIDATION_PLAN.md); effort trong [MVP](MVP.md). The phase table below is the conditional market-validation path, not the full approved product implementation schedule.
 
 | Phase | Hypothesis | Deliverable | Acceptance / metric | Cost cap / allowance | Risk | Exit |
 |---|---|---|---|---|---|---|
@@ -30,6 +34,6 @@ Cash allowances total$450; retain$50 overall contingency=$500. P0 $100 hard cap;
 2. **Recruit/interview and run fixed offer:** after prerequisites,15interviews and30eligible offers, separated funding/relationship, all denominators/labour; founder performs/explicitly authorizes communications and payment execution.
 3. **Close G0:** reconcile receipts/refunds/missingness/caps; publish aggregate decision and unlock P1 or STOP/PAUSE. No shifting thresholds after outcome.
 
-Created: [P0-1 feasibility](https://github.com/thanhtuyen662002/CodeForge-AI/issues/20) → [P0-2 demand](https://github.com/thanhtuyen662002/CodeForge-AI/issues/21) → [P0-3 readout](https://github.com/thanhtuyen662002/CodeForge-AI/issues/22). All remain NOT_STARTED. Exact state: [PROJECT_STATE](PROJECT_STATE.yaml). Existing issues#2–#17 are historical strategy-hold, not a parallel delivery roadmap.
+P0 workstream: [P0-1 feasibility](https://github.com/thanhtuyen662002/CodeForge-AI/issues/20) is CLOSED / PAUSE; [P0-2 demand](https://github.com/thanhtuyen662002/CodeForge-AI/issues/21) and [P0-3 readout](https://github.com/thanhtuyen662002/CodeForge-AI/issues/22) remain OPEN / BLOCKED. No interview, offer, payment or validation start is evidenced. Exact state: [PROJECT_STATE](PROJECT_STATE.yaml). Product implementation issues #2–#16 are the separate CF-01..CF-15 backlog and are not put on hold by this P0 market-validation status.
 
 P5 clinic execution assumes the same reviewed G1 assets already exist (e.g. B2C failed at G3). If B2C stops before G1, only manager discovery is available in this plan; do not collect clinic payments or promise delivery from a nonexistent corpus. A confirmed manager opportunity needs a separate frozen fallback protocol/cap decision before content investment, still respecting the one-pivot and overall limits.
