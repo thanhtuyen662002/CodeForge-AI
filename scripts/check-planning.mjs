@@ -23,6 +23,15 @@ for (const file of docs) {
 }
 
 const state = json('docs/PROJECT_STATE.yaml');
+const p0IssueStates = new Map((state.next_executable_issues ?? []).map(issue => [issue.number, issue.state]));
+assert.equal(p0IssueStates.get(20), 'CLOSED_PAUSE_EVIDENCE_GAP', 'P0-1 must remain closed / PAUSE until owner-only evidence is proven');
+assert.equal(p0IssueStates.get(21), 'OPEN_BLOCKED_BY_ISSUE_20_PAUSE', 'P0-2 must not run while P0-1 is paused');
+assert.equal(p0IssueStates.get(22), 'OPEN_BLOCKED_BY_ISSUES_20_21', 'P0-3 must not run before its prerequisites');
+assert.ok(state.strategy_status.includes('MERGED'), 'Merged strategy PR must not remain pending review');
+assert.ok(state.main_integration.startsWith('MERGED_AT_'), 'Strategy integration state must match live PR #23');
+const roadmap = read('docs/ROADMAP.md');
+assert.ok(roadmap.includes('separate P0 market-validation'), 'P0 roadmap must be distinguished from product implementation');
+assert.ok(roadmap.includes('CLOSED / PAUSE'), 'P0 feasibility PAUSE must remain visible');
 const releaseGates = read('docs/RELEASE_GATES.md');
 assert.ok(releaseGates.includes('Release-G0'), 'Release governance gate must use the Release-G0 namespace');
 assert.ok(releaseGates.includes('P0-G0'), 'P0 market-validation gate must be distinguished from Release-G0');
