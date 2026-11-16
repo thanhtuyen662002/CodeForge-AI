@@ -14,7 +14,9 @@ Checked 2026-11-16. Start with [Founder decision](DECISION_MEMO.md), then [curre
 | How would it work safely? | [Conditional architecture](ARCHITECTURE.md), [threat model](SECURITY_THREAT_MODEL.md), [release gates G0–G7](RELEASE_GATES.md) |
 | Why might it fail? | [32-case premortem](RISK_REGISTER.md), [red-team reconciliation](RED_TEAM.md) |
 | Where are the independent attacks? | [Investment committee](reviews/INVESTMENT_RED_TEAM.md), [operations](reviews/OPERATIONS_RED_TEAM.md) |
-| What happens next? | [Roadmap](ROADMAP.md), [quality gate](QUALITY_GATE.md), [independent final review](reviews/FINAL_QUALITY_REVIEW.md), [agent instructions](../AGENTS.md) |
+| What is the next product implementation task? | The single [coordination tracker #17](https://github.com/thanhtuyen662002/CodeForge-AI/issues/17) and current [Coder handoff issue #5](https://github.com/thanhtuyen662002/CodeForge-AI/issues/5) |
+| What is the separate P0 market-validation path? | [Roadmap](ROADMAP.md), [frozen prelaunch protocol](VALIDATION_PLAN.md), [draft validation assets](VALIDATION_ASSETS.md) |
+| What are quality/governance expectations? | [Quality gate](QUALITY_GATE.md), [independent final review](reviews/FINAL_QUALITY_REVIEW.md), [agent instructions](../AGENTS.md) |
 
 ## Evidence discipline
 
