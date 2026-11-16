@@ -1,6 +1,6 @@
 # CodeForge AI — Product, implementation and evidence index
 
-Checked 2026-11-14. Start with [Founder decision](DECISION_MEMO.md), then [current machine state](PROJECT_STATE.yaml) and the [single Lead coordination tracker](https://github.com/thanhtuyen662002/CodeForge-AI/issues/17). This index is a navigation aid, not proof that a design, gate or feature has been implemented.
+Checked 2026-11-16. Start with [Founder decision](DECISION_MEMO.md), then [current machine state](PROJECT_STATE.yaml) and the [single Lead coordination tracker](https://github.com/thanhtuyen662002/CodeForge-AI/issues/17). This index is a navigation aid, not proof that a design, gate or feature has been implemented.
 
 | Question | Durable source |
 |---|---|
