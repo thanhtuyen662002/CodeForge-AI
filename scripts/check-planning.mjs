@@ -23,6 +23,27 @@ for (const file of docs) {
 }
 
 const state = json('docs/PROJECT_STATE.yaml');
+assert.ok(!state.legacy_backlog.issue_numbers.includes(state.implementation_workstream.tracker_issue), 'The coordination tracker must not be classified as a legacy backlog issue');
+const p0IssueStates = new Map((state.next_executable_issues ?? []).map(issue => [issue.number, issue.state]));
+assert.equal(p0IssueStates.get(20), 'CLOSED_PAUSE_EVIDENCE_GAP', 'P0-1 must remain closed / PAUSE until owner-only evidence is proven');
+assert.equal(p0IssueStates.get(21), 'OPEN_BLOCKED_BY_ISSUE_20_PAUSE', 'P0-2 must not run while P0-1 is paused');
+assert.equal(p0IssueStates.get(22), 'OPEN_BLOCKED_BY_ISSUES_20_21', 'P0-3 must not run before its prerequisites');
+assert.ok(state.strategy_status.includes('MERGED'), 'Merged strategy PR must not remain pending review');
+assert.ok(state.main_integration.startsWith('MERGED_AT_'), 'Strategy integration state must match live PR #23');
+const roadmap = read('docs/ROADMAP.md');
+assert.ok(roadmap.includes('separate P0 market-validation'), 'P0 roadmap must be distinguished from product implementation');
+assert.ok(roadmap.includes('CLOSED / PAUSE'), 'P0 feasibility PAUSE must remain visible');
+const releaseGates = read('docs/RELEASE_GATES.md');
+assert.ok(releaseGates.includes('Release-G0'), 'Release governance gate must use the Release-G0 namespace');
+assert.ok(releaseGates.includes('P0-G0'), 'P0 market-validation gate must be distinguished from Release-G0');
+assert.ok(releaseGates.includes('docs/VALIDATION_PLAN.md'), 'Release-G0 must cross-reference the separate P0 validation protocol');
+const releaseG0 = releaseGates.split('## G1')[0];
+assert.ok(releaseG0.includes('organization or enterprise'), 'Release-G0 must name the supported ruleset-workflow scope');
+assert.ok(releaseG0.includes('GitHub App') && releaseG0.includes('statuses:write'), 'Release-G0 must document an independently operated status publisher');
+assert.ok(releaseG0.includes('expected source'), 'Release-G0 must require the GitHub App as the expected status source');
+assert.ok(releaseG0.includes('pre-existing required status check'), 'Release-G0 must document the required status-check association prerequisite');
+assert.ok(releaseG0.includes('scripts/check-planning.mjs'), 'Release-G0 must record the PR-modifiable planning validator trust root');
+assert.ok(releaseG0.includes('PR #47'), 'Release-G0 must identify the PR that modifies the planning validator');
 const model = json('docs/research/economics-model.json');
 json('docs/research/repository-snapshot.json');
 const sum = values => values.reduce((a, b) => a + b, 0);
