@@ -23,6 +23,7 @@ for (const file of docs) {
 }
 
 const state = json('docs/PROJECT_STATE.yaml');
+assert.ok(!state.legacy_backlog.issue_numbers.includes(state.implementation_workstream.tracker_issue), 'The coordination tracker must not be classified as a legacy backlog issue');
 const p0IssueStates = new Map((state.next_executable_issues ?? []).map(issue => [issue.number, issue.state]));
 assert.equal(p0IssueStates.get(20), 'CLOSED_PAUSE_EVIDENCE_GAP', 'P0-1 must remain closed / PAUSE until owner-only evidence is proven');
 assert.equal(p0IssueStates.get(21), 'OPEN_BLOCKED_BY_ISSUE_20_PAUSE', 'P0-2 must not run while P0-1 is paused');
